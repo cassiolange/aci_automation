@@ -1,0 +1,128 @@
+---
+- import_playbook: update.yml
+
+- name : Multipod Provisioning
+  gather_facts: false
+  hosts: all
+  vars:
+     - aci_login: &aci_login
+          host: '{{ ansible_host }}'
+          user: '{{ ansible_user }}'
+          password: '{{ ansible_password }}'
+          validate_certs: "{{ validate_certs }}"
+
+  tasks:
+    - name: Configure POD and TEP Pool
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <ctrlrInst>
+                  <fabricSetupPol>
+                      <fabricSetupP dn="uni/controller/setuppol/setupp-{{item['pod_id']}}" podId="{{item['pod_id']}}" tepPool="{{item['tep_pool']}}"/>
+                  </fabricSetupPol>
+              </ctrlrInst>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ pod_tep_pool }}"
+      when: pod_tep_pool is defined
+      register: result
+      until: result is not failed
+
+    - name: Fabric Connectivity Profile
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="infra" status="modified">
+                  <fvFabricExtConnP descr="" dn="uni/tn-infra/fabricExtConnP-{{item['fabricId']}}" id="{{item['fabricId']}}" rt="extended:as2-nn4:{{item['community_route_target']}}" >
+                      <l3extFabricExtRoutingP descr="" name="{{item['fabric_external_routing_profile']}}" >
+                      </l3extFabricExtRoutingP>
+                      {% if item['use_bgp_password'] == "yes" %}
+                      <fvPeeringP descr="" name="" type="{{item['bgp_peering_type']}}" password="{{item['bgp_password']}}"/>
+                      {% else %}
+                      <fvPeeringP descr="" name="" type="{{item['bgp_peering_type']}}" />
+                      {% endif %}
+                  </fvFabricExtConnP>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ fabric_conn_prof }}"
+      when: fabric_conn_prof is defined
+      register: result
+      until: result is not failed
+
+    - name: POD Connection Profile
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="infra" status="modified">
+                  <fvFabricExtConnP dn="uni/tn-infra/fabricExtConnP-{{item['fabricId']}}" status="modified">
+                      <fvPodConnP descr="" id="{{item['pod_id']}}" name="pod{{item['pod_id']}}">
+                          <fvIp addr="{{item['pod_data_plane_tep']}}"/>
+                      </fvPodConnP>
+                  </fvFabricExtConnP>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ pod_connection_profile }}"
+      when: pod_connection_profile is defined
+      register: result
+      until: result is not failed
+
+    - name: Fabric External Routing Profile
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="infra" status="modified">
+                  <fvFabricExtConnP dn="uni/tn-infra/fabricExtConnP-{{item['fabricId']}}" status ="modified" >
+                      <l3extFabricExtRoutingP name="{{item['fabric_external_routing_profile']}}" status="modified">
+                          <l3extSubnet aggregate="" descr="" ip="{{item['ipn_leaked_subnet']}}" name="" nameAlias="" scope="import-security"/>
+                      </l3extFabricExtRoutingP>
+                  </fvFabricExtConnP>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ fabric_external_routing_profile }}"
+      when: fabric_external_routing_profile is defined
+      register: result
+      until: result is not failed
+
+    - name: DSCP Class CoS Translation Policy For L3 Traffic
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="infra" status="modified">
+              {%- if item['level4'] != "" or item['level5'] != "" or item['level6'] != "" %}
+                  <qosDscpTransPol name= "default" adminSt="{{item['translation_policy_state']}}" level1="{{item['level1']|default('CS1',True)}}" level2="{{item['level2']|default('CS2',True)}}" level3="{{item['level3']|default('CS3',True)}}" level4="{{item['level4']}}" level5="{{item['level5']}}" level6="{{item['level6']}}" control="{{item['control_plane']}}" policy="{{item['policy_plane']}}" span="{{item['span']}}" traceroute="{{item['traceroute']}}" status= "modified" />
+              {% else %}
+                  <qosDscpTransPol name= "default" adminSt="{{item['translation_policy_state']}}" level1="{{item['level1']|default('CS1',True)}}" level2="{{item['level2']|default('CS2',True)}}" level3="{{item['level3']|default('CS3',True)}}" control="{{item['control_plane']|default('CS0',True)}}" policy="{{item['policy_plane']|default('CS4',True)}}" span="{{item['span']|default('CS5',True)}}" traceroute="{{item['traceroute']|default('CS6',True)}}" status= "modified" />
+              {% endif %}
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ dscp_cos_translation }}"
+      when: dscp_cos_translation is defined
+      register: result
+      until: result is not failed
+
+
+
+
+
+
+
+

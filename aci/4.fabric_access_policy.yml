@@ -1,0 +1,375 @@
+---
+- import_playbook: update.yml
+
+- name : Fabric External Access Policy
+  gather_facts: false
+  hosts: all
+  vars:
+     - aci_login: &aci_login
+          host: '{{ ansible_host }}'
+          user: '{{ ansible_user }}'
+          password: '{{ ansible_password }}'
+          validate_certs: "{{ validate_certs }}"
+
+  tasks:
+    - name: Add a new VLAN pool
+      cisco.aci.aci_vlan_pool:
+        <<: *aci_login
+        pool: "{{ item.name }}"
+        pool_allocation_mode: "{{ item.alloc_mode }}"
+        description: "{{ item.description if item.description is defined else omit}}"
+        state:  "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ vlan_pool }}"
+      when: vlan_pool is defined
+
+    - name: Add a new VLAN encap block
+      cisco.aci.aci_vlan_pool_encap_block:
+        <<: *aci_login
+        pool: "{{ item.vlan_pool }}"
+        pool_allocation_mode: "{{ item.poolAllocMode }}"
+        allocation_mode: "{{ item.alloc_mode }}"
+        block_start: "{{ item.start_vlan }}"
+        block_end: "{{ item.stop_vlan }}"
+        block_name: "{{'blk_%s_%s' %(item.start_vlan, item.stop_vlan) }}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ vlan_encap_block }}"
+      when: vlan_encap_block is defined
+
+    - name: Add a new Domain (physical and external routed)
+      cisco.aci.aci_domain:
+        <<: *aci_login
+        domain: "{{ item.name }}"
+        domain_type: "{{ 'l3dom' if item.type == 'external_l3' else 'phys'}}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ domain }}"
+      when: domain is defined and (item.type == 'external_l3' or item.type == 'physical')
+
+    - name: Bind a VMM domain to VLAN pool (physical and external routed)
+      cisco.aci.aci_domain_to_vlan_pool:
+        <<: *aci_login
+        domain: "{{ item.name }}"
+        domain_type: "{{ 'l3dom' if item.type == 'external_l3' else 'phys'}}"
+        state: "{{ item.status }}"
+        pool: "{{ item.vlan_pool}}"
+        pool_allocation_mode: static
+      delegate_to: localhost
+      loop: "{{ domain }}"
+      when: domain is defined and (item.type == 'external_l3' or item.type == 'physical')
+
+    - name: Add a new AEP
+      cisco.aci.aci_aep:
+        <<: *aci_login
+        aep: "{{ item.name }}"
+        description: "{{ item.description if item.description is defined and item.description else omit }}"
+        infra_vlan:  "{{ item.enable_infra_vlan }}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ aaep }}"
+      when: aaep is defined
+
+    - name: Add AEP to domain binding (physical and external routed)
+      cisco.aci.aci_aep_to_domain:
+        <<: *aci_login
+        aep: "{{ item.aaep_name }}"
+        domain: "{{ item.domain_name }}"
+        domain_type: "{{ 'l3dom' if item.domain_type == 'external_l3' else 'phys'}}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ aaep_domain_association }}"
+      when: aaep_domain_association is defined and (item.domain_type == 'external_l3' or item.domain_type == 'physical')
+
+    - name: Create CDP Interface Policy to enable CDP
+      cisco.aci.aci_interface_policy_cdp:
+        <<: *aci_login
+        name: "{{ item.name }}"
+        admin_state: "{{'yes' if item.cdp_state == 'enabled' else 'no' }}"
+        state: "{{ item.status }}"
+        description: "{{ item.description if item.description is defined else omit}}"
+      delegate_to: localhost
+      loop: "{{ intpol_cdp }}"
+      when: intpol_cdp is defined
+
+    - name: Add a Layer 2 interface policy
+      cisco.aci.aci_interface_policy_l2:
+        <<: *aci_login
+        l2_policy: "{{ item.name }}"
+        qinq: "{{ item.qinq }}"
+        vlan_scope: '{{ item.vlan_scope }}'
+        description: "{{ item.description if item.description is defined else omit}}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ intpol_l2 }}"
+      when: intpol_l2 is defined
+
+    - name: Add a Link Level Policy
+      cisco.aci.aci_interface_policy_link_level:
+        <<: *aci_login
+        link_level_policy: "{{ item.name }}"
+        description: "{{ item.description if item.description is defined else omit}}"
+        auto_negotiation: "{{ item.autoneg }}"
+        speed: "{{ item.speed }}"
+        link_debounce_interval: "{{ item.debounce if item.debounce is defined and item.debounce else omit }}"
+        forwarding_error_correction: "{{ item.fec_mode if item.fec_mode is defined and item.fec_mode else omit}}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ intpol_link }}"
+      when: intpol_link is defined
+
+    - name: Add a LLDP interface policy
+      cisco.aci.aci_interface_policy_lldp:
+        <<: *aci_login
+        lldp_policy: "{{ item.name }}"
+        description: "{{ item.description if item.description is defined else omit}}"
+        receive_state: "{{ 'yes' if item.lldp_receive == 'enabled' else 'no' }}"
+        transmit_state: "{{ 'yes' if item.lldp_transmit == 'enabled' else 'no' }}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ intpol_lldp }}"
+      when: intpol_lldp is defined
+
+    - name: Add a MCP interface policy
+      cisco.aci.aci_interface_policy_mcp:
+        <<: *aci_login
+        mcp: "{{ item.name }}"
+        description: "{{ item.description if item.description is defined else omit}}"
+        admin_state: "{{ 'yes' if item.mcp_state == 'enabled' else 'no' }}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ intpol_mcp }}"
+      when: intpol_mcp is defined
+
+    - name: Add a port channel interface policy
+      cisco.aci.aci_interface_policy_port_channel:
+        <<: *aci_login
+        port_channel: "{{ item.name }}"
+        description: "{{ item.description if item.description is defined else omit}}"
+        min_links: "{{ item.min_links }}"
+        max_links: "{{ item.max_links }}"
+        mode: "{{ item.pc_mode }}"
+        state: "{{ item.status }}"
+        suspend_individual: "{{ item.suspend_individual }}"
+        symmetric_hash: "{{ item.symmetrical_hash }}"
+        graceful_convergence: "{{ item.gracefull_converge }}"
+        fast_select: "{{ item.fast_select_hot_stdby }}"
+      delegate_to: localhost
+      loop: "{{ intpol_port_channel }}"
+      when: intpol_port_channel is defined
+
+    - name: Add Storm Control interface policy
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+                  {% if item['type'] == "percentage" %}
+                  <stormctrlIfPol name="{{item['name']}}" type="all" rate="{{item['rate']}}" burstRate="{{item['max_burst']}}" />
+                  {% endif %}
+                  {% if item['type'] == "packets_per_second" %}
+                  <stormctrlIfPol name="{{item['name']}}" type="all" ratePps="{{item['rate']}}" burstPps="{{item['max_burst']}}" />
+                  {% endif %}
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ intpol_storm }}"
+      when: intpol_storm is defined
+
+    - name: Add Spanning Tree interface policy
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+                  <stpIfPol name="{{item['name']}}" descr="{{item['description']}}" ctrl="{{item['stp_control']}}" />
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ intpol_stp }}"
+      when: intpol_stp is defined
+
+    - name: Create a Leaf Interface Policy Group
+      cisco.aci.aci_interface_policy_leaf_policy_group:
+        <<: *aci_login
+        policy_group: "{{ item.name }}"
+        description: "{{ item.description if item.description is defined else omit}}"
+        lag_type: "{{ 'leaf' if item.interface_policy_group_type == 'Access' else 'link' if item.interface_policy_group_type == 'PC' else 'node' if item.interface_policy_group_type == 'vPC' }}"
+        link_level_policy: "{{ item.link_pol if item.link_pol is defined else omit }}"
+        cdp_policy: "{{ item.cdp_pol if item.cdp_pol is defined else omit  }}"
+        mcp_policy: "{{ item.mcp_pol if item.mcp_pol is defined else omit }}"
+        lldp_policy: "{{ item.lldp_pol if item.lldp_pol is defined else omit  }}"
+        stp_interface_policy: "{{ item.stp_pol if item.stp_pol is defined else omit  }}"
+        port_channel_policy: "{{ item.lacp_pol if item.lacp_pol is  defined and item.interface_policy_group_type != 'Access' else omit }}"
+        storm_control_interface_policy: "{{ item.storm_pol if item.storm_pol is defined else omit }}"
+        l2_interface_policy: "{{ item.l2_int_pol if item.l2_int_pol is defined else omit }}"
+        aep: "{{ item.aaep if item.aaep is defined else omit }}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      with_items: "{{ interface_policy_group }}"
+      when: interface_policy_group is defined and item.switch_type == 'leaf'
+
+    - name: Create a Spine Interface Policy Group
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+          		<infraFuncP>
+                    <infraSpAccPortGrp descr="{{item['description']}}"  name="{{item['name']}}" >
+                    	<infraRsHIfPol tnFabricHIfPolName="{{item['link_pol']}}"/>
+                    	<infraRsCdpIfPol tnCdpIfPolName="{{item['cdp_pol']}}"/>
+                    	<infraRsAttEntP tDn="uni/infra/attentp-{{item['aaep']}}"/>
+                    </infraSpAccPortGrp>
+                 </infraFuncP>
+          	  </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ interface_policy_group }}"
+      when: interface_policy_group is defined and item.switch_type == 'spine'
+
+    - name: Add a new Leaf interface profile
+      cisco.aci.aci_interface_policy_leaf_profile:
+        <<: *aci_login
+        interface_profile: "{{ item.name }}"
+        description: "{{ item.description if item.description is defined else omit}}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      with_items: "{{ interface_profile }}"
+      when: interface_profile is defined and item.profile_type == 'leaf'
+
+    - name: Add a new a Spine interface profile
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+                  <infraSpAccPortP descr="{{item['description']}}" name="{{item['name']}}" >
+                  </infraSpAccPortP>
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ interface_profile }}"
+      when: interface_profile is defined and item.profile_type == 'spine'
+
+    - name: Associating an Leaf interface selector profile to a switch policy leaf profile
+      cisco.aci.aci_interface_selector_to_switch_policy_leaf_profile:
+        <<: *aci_login
+        leaf_profile: "{{ item.switch_profile }}"
+        interface_selector: "{{ item.interface_profile }}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      with_items: "{{ associate_switchprof_intprof }}"
+      when: associate_switchprof_intprof is defined and item.switch_profile_type == 'leaf'
+
+    - name: Associating an Spine interface selector profile to a switch policy leaf profile
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+                  <infraSpineP name="{{item['switch_profile']}}" status="modified" >
+                    <infraRsSpAccPortP tDn="uni/infra/spaccportprof-{{item['interface_profile']}}"/>
+                  </infraSpineP>
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ associate_switchprof_intprof }}"
+      when: associate_switchprof_intprof is defined and item.switch_profile_type == 'spine'
+
+    - name: Create an Interface Access Port Selector to an Interface Policy Leaf Profile with a Policy Group
+      cisco.aci.aci_access_port_to_interface_policy_leaf_profile:
+        <<: *aci_login
+        interface_profile: "{{ item.interface_profile }}"
+        access_port_selector: "{{ item.name }}"
+        description: "{{ item.description if item.description is defined else omit}}"
+        policy_group: "{{ item.interface_policy_group }}"
+        interface_type: "{{ 'vpc' if item.interface_polgroup_type == 'vPC' else 'port_channel' if item.interface_polgroup_type == 'PC' else 'switch_port' if item.interface_polgroup_type == 'Access' }}"
+        type: "{{ item.interface_profile_type }}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ interface_selector }}"
+      when: interface_selector is defined and item.interface_profile_type == 'leaf'
+
+    - name: Associate an access port block (single port) to an interface selector
+      cisco.aci.aci_access_port_block_to_access_port:
+        <<: *aci_login
+        interface_profile: "{{ item.interface_profile }}"
+        access_port_selector: "{{ item.name }}"
+        port_blk: "{{ 'blk_%s_%s_%s_%s' %(item.from_port, item.from_port, item.to_port, item.to_port) }}"
+        from_port: "{{ item.from_port }}"
+        to_port: "{{ item.to_port }}"
+        from_card: "{{ item.from_slot }}"
+        to_card: "{{ item.to_slot }}"
+        port_blk_description: "{{ item.description if item.description is defined else omit}}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ interface_selector }}"
+      when: interface_selector is defined and item.interface_profile_type == 'leaf'
+
+    - name: Spine Interface Selector
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+                  <infraSpAccPortP name="{{item['interface_profile']}}" status="modified" >
+                      <infraSHPortS descr="{{item['description']}}" name="{{item['name']}}" type="range" >
+                        <infraPortBlk descr="{{item['port_block_description']}}" fromCard="{{item['from_slot']}}" fromPort="{{item['from_port']}}" name="Block{{item['from_slot']}}{{item['to_slot']}}{{item['from_port']}}{{item['to_port']}}" toCard="{{item['from_slot']}}" toPort="{{item['from_port']}}" />
+                          {# Can Preconfigure InterfaceSelector without assigning Policy-Group #}
+                          {% if item['interface_policy_group'] != "" %}
+                              <infraRsSpAccGrp tDn="uni/infra/funcprof/spaccportgrp-{{item['interface_policy_group']}}" />
+                          {% endif %}
+                      </infraSHPortS>
+                  </infraSpAccPortP>
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ interface_selector }}"
+      when: interface_selector is defined and item.interface_profile_type == 'spine'
+
+    - name: Error Disabled Recovery Policy
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+                  <edrErrDisRecoverPol name="default" errDisRecovIntvl="{{item['errdis_recovery_interval']|default(300,True)}}">
+                      <edrEventP event="event-ep-move" recover="{{item['recover_events_endpoint_move']|default('no',True)}}"/>
+                      <edrEventP event="event-bpduguard" recover="{{item['recover_events_endpoint_bpduguard']|default('no',True)}}"/>
+                      <edrEventP event="event-mcp-loop" recover="{{item['recover_events_mcp_loop']|default('no',True)}}"/>
+                  </edrErrDisRecoverPol>
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ err_disabled_recovery_policy }}"
+      when: err_disabled_recovery_policy is defined
+
+    - name: MCP Instance Policy
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+                  <mcpInstPol name="default" adminSt="{{item['admin_state']}}" ctrl="{{item['control']}}" key="{{item['mcp_key']}}" loopDetectMult="{{item['loop_detect_mult_factor']|default(3,True)}}" loopProtectAct="{{item['loop_protection_action']|default('port-disable',True)}}" initDelayTime="{{item['initial_delay']|default(180,True)}}" txFreq="{{item['transmission_frequency']|default(2,True)}}"/>
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ mcp_instance_policy }}"
+      when: mcp_instance_policy is defined

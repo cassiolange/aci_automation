@@ -1,0 +1,12 @@
+---
+- name : Update host vars
+  gather_facts: false
+  hosts: localhost
+
+  tasks:
+
+    - name: Update host vars
+      ansible.builtin.shell: source /Users/calange/venv/bin/activate; python3 /Users/calange/PycharmProjects/pycharm/aci_automation/excel_to_yaml/excel_to_yaml.py
+      args:
+        executable: /bin/zsh
+      delegate_to: localhost

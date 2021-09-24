@@ -1,0 +1,230 @@
+---
+- import_playbook: update.yml
+
+- name : Node Provisioning
+  gather_facts: false
+  hosts: all
+  vars_files:
+   - "{{ aci_variable_filename }}"
+  vars:
+     - aci_login: &aci_login
+          host: '{{ ansible_host }}'
+          user: '{{ ansible_user }}'
+          password: '{{ ansible_password }}'
+          validate_certs: "{{ validate_certs }}"
+  tasks:
+    - name: Add fabric node
+      cisco.aci.aci_fabric_node:
+        <<: *aci_login
+        serial: "{{ item.serial_number }}"
+        node_id: "{{ item.node_id }}"
+        switch: "{{ item.name }}"
+        pod_id: "{{ item.pod_id}}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ node_provisioning }}"
+      when: node_provisioning is defined
+
+    - name: Add Leaf address to out of band interface
+      cisco.aci.aci_static_node_mgmt_address:
+        <<: *aci_login
+        epg: default
+        pod_id: "{{ item.pod_id }}"
+        type: out_of_band
+        node_id: "{{ item.node_id }}"
+        ipv4_address: "{{ item.oob_ip }}"
+        ipv4_gw: "{{ item.oob_gw }}"
+        ipv6_address: "{{ item.oob_ipv6 if item.oob_ipv6 is defined else omit }}"
+        ipv6_gw: "{{ item.oob_ipv6_gw if item.oob_ipv6 is defined else omit }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ node_provisioning }}"
+      when: node_provisioning is defined and item.oob_ip != ""
+
+    - name: Add APIC address to out-of-band interface
+      cisco.aci.aci_static_node_mgmt_address:
+        <<: *aci_login
+        epg: default
+        pod_id: "{{ item.pod_id }}"
+        type: out_of_band
+        node_id: "{{ item.apic_id }}"
+        ipv4_address: "{{ item.oob_ipv4 }}"
+        ipv4_gw: "{{ item.oob_ipv4_gw }}"
+        ipv6_address: "{{ item.oob_ipv6 if item.oob_ipv6 is defined else omit }}"
+        ipv6_gw: "{{ item.oob_ipv6_gw if item.oob_ipv6 is defined else omit }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ apic_controller }}"
+      when: apic_controller is defined and item.inband_ipv4 != ""
+
+    - name: Add in band mgmt epg
+      cisco.aci.aci_node_mgmt_epg:
+        <<: *aci_login
+        epg: "{{ item.name }}"
+        type: in_band
+        encap: "vlan-{{ item.encap_vlan_id }}"
+        bd: "{{ item.bridge_domain }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ inb_mgmt_epg }}"
+      when: inb_mgmt_epg is defined
+
+    - name: Add APIC address to in band mgmt interface
+      cisco.aci.aci_static_node_mgmt_address:
+        <<: *aci_login
+        epg: default
+        pod_id: "{{ item.pod_id }}"
+        type: in_band
+        node_id: "{{ item.apic_id }}"
+        ipv4_address: "{{ item.inband_ipv4 }}"
+        ipv4_gw: "{{ item.inband_ipv4_gw }}"
+        ipv6_address: "{{ item.inband_ipv6 if item.inband_ipv6 else omit }}"
+        ipv6_gw: "{{ item.inband_ipv6_gw if item.inband_ipv6 else omit }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ apic_controller }}"
+      when: apic_controller is defined and item.inband_ipv4 != "" and inb_mgmt_epg is defined
+
+    - name: Add Leaf address to in band mgmt interface
+      cisco.aci.aci_static_node_mgmt_address:
+        <<: *aci_login
+        epg: default
+        pod_id: "{{ item.pod_id }}"
+        type: in_band
+        node_id: "{{ item.node_id }}"
+        ipv4_address: "{{ item.inband_ip }}"
+        ipv4_gw: "{{ item.inband_gw }}"
+        ipv6_address: "{{ item.inband_ipv6 if item.inband_ipv6 else omit }}"
+        ipv6_gw: "{{ item.inband_ipv6_gw if item.inband_ipv6 else omit }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ node_provisioning }}"
+      when: node_provisioning is defined and item.inband_ip != "" and inb_mgmt_epg is defined
+
+    - name: Configure the APIC Connectivity Preference
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fabricInst>
+                  <mgmtConnectivityPrefs dn="uni/fabric/connectivityPrefs" interfacePref="{{item['apic_connectivity_preference']|default('ooband',True)}}"/>
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ apic_con_pref }}"
+      when: apic_con_pref is defined
+
+    - name: Create Spine Access Switch Policy Group
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+                  <infraFuncP>
+                      <infraSpineAccNodePGrp name="{{item['name']}}" descr="{{item['description']}}" >
+                          <infraRsSpineCoppProfile tnCoppSpineProfileName="{{item['copp_spine_policy']|default('default',True)}}"/>
+                          <infraRsSpineBfdIpv6InstPol tnBfdIpv6InstPolName="{{item['bfd_ipv6_policy']}}"/>
+          	            <infraRsSpineBfdIpv4InstPol tnBfdIpv4InstPolName="{{item['bfd_ipv4_policy']}}"/>
+          	            <infraRsIaclSpineProfile tnIaclSpineProfileName="{{item['copp_pre_filter']}}"/>
+                      </infraSpineAccNodePGrp>
+                  </infraFuncP>
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ access_spine_policy_group }}"
+      when: access_spine_policy_group is defined
+
+    - name: Create Leaf Access Switch Policy Group
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+                  <infraFuncP>
+                      <infraAccNodePGrp name="{{item['name']}}" descr="{{item['description']}}">
+                          <infraRsMstInstPol tnStpInstPolName="{{item['spanning_tree_policy']}}"/>
+                          <infraRsBfdIpv4InstPol tnBfdIpv4InstPolName="{{item['bfd_ipv4_policy']}}"/>
+                          <infraRsBfdIpv6InstPol tnBfdIpv6InstPolName="{{item['bfd_ipv6_policy']}}"/>
+                          <infraRsFcInstPol tnFcInstPolName="{{item['fibre_channel_node_policy']}}"/>
+                          <infraRsFcFabricPol tnFcFabricPolName="{{item['fibre_channel_san_policy']}}"/>
+                          <infraRsMonNodeInfraPol tnMonInfraPolName="{{item['monitoring_policy']}}"/>
+                          <infraRsNetflowNodePol tnNetflowNodePolName="{{item['netflow_node_policy']}}"/>
+                          <infraRsLeafCoppProfile tnCoppLeafProfileName="{{item['leaf_copp_policy']}}"/>
+                          <infraRsTopoctrlFwdScaleProfPol tnTopoctrlFwdScaleProfilePolName="{{item['forward_scale_profile']}}"/>
+                          <infraRsTopoctrlFastLinkFailoverInstPol tnTopoctrlFastLinkFailoverInstPolName="{{item['fast_link_failover_policy']}}"/>
+                          <infraRsL2NodeAuthPol tnL2NodeAuthPolName="{{item['do1x_node_auth_policy']}}"/>
+                          <infraRsIaclLeafProfile tnIaclLeafProfileName="{{item['copp_pre_filter_policy']}}"/>
+                      </infraAccNodePGrp>
+                  </infraFuncP>
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ access_leaf_policy_group }}"
+      when: access_leaf_policy_group is defined
+
+    - name: Creating a Leaf Profile
+      cisco.aci.aci_switch_policy_leaf_profile:
+        <<: *aci_login
+        leaf_profile: "{{ item.name }}"
+        description: "{{ item.description if item.description else omit}}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ switch_profile }}"
+      when: switch_profile is defined and item.switch_profile_type == 'leaf'
+
+    - name: Creating a Spine Profile
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+                    <infraSpineP descr="{{item['description']}}" name="{{item['name']}}" >
+                        <infraSpineS name="{{item['switch_selector']}}" type="range">
+                            {% if item['switch_policy_group'] != "" %}
+                            <infraRsSpineAccNodePGrp tDn="uni/infra/funcprof/spaccnodepgrp-{{item['switch_policy_group']}}"/>
+                            {% endif %}
+                            <infraNodeBlk descr="" from_="{{item['from_node_id']}}" name="bl{{item['from_node_id']}}{{item['to_node_id']}}" to_="{{item['to_node_id']}}" />
+                        </infraSpineS>
+                    </infraSpineP>
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ switch_profile }}"
+      when: switch_profile is defined and item.switch_profile_type == 'spine'
+
+    - name: Adding a switch policy leaf profile selector associated Node Block range with policy group
+      cisco.aci.aci_switch_leaf_selector:
+        <<: *aci_login
+        leaf_profile: "{{ item.name }}"
+        leaf: "{{ item.switch_selector }}"
+        leaf_node_blk: "{{'node-%s-%s' % (item.from_node_id, item.to_node_id) }}"
+        from: "{{ item.from_node_id }}"
+        to: "{{ item.to_node_id }}"
+        policy_group: "{{ item.switch_policy_group }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ switch_profile }}"
+      when: switch_profile is defined and item.switch_profile_type == 'leaf'
+
+    - name: Add vPC Protection Group
+      cisco.aci.aci_switch_policy_vpc_protection_group:
+        <<: *aci_login
+        protection_group: "{{ item.name }}"
+        protection_group_id: "{{ item.logical_pair_id }}"
+        switch_1_id: "{{ item.left_node_id }}"
+        switch_2_id: "{{ item.right_node_id }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ vpc_domain }}"
+      when: vpc_domain is defined
+
+
+

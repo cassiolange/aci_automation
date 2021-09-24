@@ -1,0 +1,28 @@
+---
+- ansible.builtin.import_playbook: update.yml
+
+- name : Add Site
+  gather_facts: false
+  hosts: all
+  vars:
+    - aci_login: &mso_login
+        hostname: "{{ ansible_host }}"
+        username: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        validate_certs: "{{ validate_certs }}"
+  tasks:
+
+    - name: Add a new site
+      cisco.mso.mso_site:
+        <<: *mso_login
+        site: "{{ item.name }}"
+        apic_site_id: "{{ item.apic_site_id }}"
+        apic_username: "{{ item.apic_username }}"
+        apic_password: "{{ item.apic_password }}"
+        urls: "{{ item.apic_one_url }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ site }}"
+      when: site is defined
+
+

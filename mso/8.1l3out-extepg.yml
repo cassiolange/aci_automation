@@ -1,0 +1,31 @@
+---
+- name : Layer 3Outs
+  gather_facts: false
+  hosts: all
+  vars:
+    - aci_login: &mso_login
+        hostname: "{{ ansible_host }}"
+        username: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        validate_certs: "{{ validate_certs }}"
+  tasks:
+
+
+    - name: Add a new external EPG
+      cisco.mso.mso_schema_template_external_epg:
+        <<: *mso_login
+        external_epg: "{{ item.name }}"
+        schema: "{{ item.schema_name }}"
+        template: "{{ item.template_name }}"
+        l3out:
+          name: "{{ item.l3out_name }}"
+          schema: "{{ item.l3out_schema_name }}"
+          template: "{{ item.l3out_template_name }}"
+        vrf:
+          name: "{{ item.vrf_name }}"
+          schema: "{{ item.vrf_schema_name}}"
+          template: "{{ item.vrf_template_name }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ external_epg }}"
+      when: external_epg is defined

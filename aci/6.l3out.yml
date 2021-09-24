@@ -1,0 +1,220 @@
+---
+- import_playbook: update.yml
+
+- name : L3Out Provisioning
+  gather_facts: false
+  hosts: all
+  vars_files:
+   - "{{ aci_variable_filename }}"
+  vars:
+     - aci_login: &aci_login
+          host: '{{ ansible_host }}'
+          user: '{{ ansible_user }}'
+          password: '{{ ansible_password }}'
+          validate_certs: "{{ validate_certs }}"
+
+  tasks:
+    - name: Add ospf interface policy
+      cisco.aci.aci_interface_policy_ospf:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        ospf: "{{ item.name }}"
+        state: "{{ item.status }}"
+        description: "{{ item.description if item.description is defined and item.description else omit }}"
+        dead_interval: "{{ item.dead_interval if item.dead_interval is defined and item.dead_interval else omit }}"
+        hello_interval: "{{ item.hello_interval if item.hello_interval is defined and item.hello_interval else omit }}"
+        retransmit_interval: "{{ item.retransmit_interval if item.retransmit_interval is defined and item.retransmit_interval else omit }}"
+        transmit_delay: "{{ item.transmit_delay if item.transmit_delay is defined and item.transmit_delay else omit }}"
+        cost: "{{ item.interface_cost if item.interface_cost is defined and item.interface_cost else omit }}"
+        priority: "{{ item.priority if item.priority is defined and item.priority else omit }}"
+        network_type: "{{ item.network_type }}"
+        controls:
+#          - "{{ 'passive' if item.passive_participation is defined and item.passive_participation == 'yes' }}"
+          - "{{ 'bfd' if item.use_bfd is defined and item.use_bfd == 'yes' }}"
+          - "{{ 'mtu-ignore' if item.mtu_ignore is defined and item.mtu_ignore == 'yes' }}"
+          - "{{ 'advert-subnet' if item.advertise_subnet is defined and item.advertise_subnet == 'yes' }}"
+      delegate_to: localhost
+      loop: "{{ ospf_int_pol }}"
+      when: ospf_int_pol is defined
+
+    - name: BFD Policy
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+          	<fvTenant name="{{item['tenant']}}" status="modified">
+                  <bfdIfPol adminSt="enabled" annotation="" ctrl="" descr="" dn="uni/tn-{{item['tenant']}}/bfdIfPol-{{item['name']}}" echoAdminSt="enabled" echoRxIntvl="{{item['echo_receive']}}" minRxIntvl="{{item['minimum_receive']}}" minTxIntvl="{{item['minimum_transmit']}}" name="{{item['name']}}" detectMult="{{item['detection_multiplier']}}" nameAlias="" ownerKey="" ownerTag=""/>
+            </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ bfd_policy }}"
+      when: bfd_policy is defined
+
+    - name: Add a new L3Out
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+          	<fvTenant name="{{item['tenant']}}" status="modified">
+          	  <l3extOut descr="" enforceRtctrl="{{item['route_control_enforcement']|default('export',True)}}" name="{{item['name']}}" targetDscp="unspecified">
+          		<l3extRsEctx tnFvCtxName="{{item['vrf']}}" />
+          		<l3extRsL3DomAtt tDn="uni/l3dom-{{item['l3out_domain']}}" />
+              {% if item['enable_pim'] == "yes" %}
+              <pimExtP enabledAf="ipv4-mcast" name="pim"/>
+              {% endif %}
+          		{% if item['consumer_label'] and item['consumer_label'] != "" %}
+              <l3extConsLbl descr="" name="{{item['consumer_label']}}" owner="infra" tag="yellow-green" />
+              {% endif %}
+              {% if item['provider_label'] and item['provider_label'] != "" %}
+              <l3extProvLbl descr="" name="{{item['provider_label']}}" tag="yellow-green" />
+              {% endif %}
+              {% if item['enable_ospf'] == "yes" %}
+              <ospfExtP areaCost="{{item['ospf_area_cost']|default('1',True)}}" areaCtrl="redistribute,summary" areaId="{{item['ospf_area_id']}}" areaType="{{item['ospf_area_type']}}"  />
+              {% endif %}
+              {% if item['enable_bgp'] == "yes" %}
+              <bgpExtP />
+              {% endif %}
+          	  </l3extOut>
+          	</fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ l3out }}"
+      when: l3out is defined
+
+    - name: Add a new L3Out Node profile
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% if item['enable_mpod'] == "yes" %}
+          	{% set fabricExtCtrlPeering %}yes{% endset %}
+          {% else %}
+          	{% set fabricExtCtrlPeering %}no{% endset %}
+          {% endif %}
+          <polUni>
+          	<fvTenant name="{{item['tenant']}}" status="modified">
+          	 <l3extOut name="{{item['l3out']}}" status="modified">
+          	  <l3extLNodeP descr="" name="{{item['name']}}" tag="yellow-green" targetDscp="unspecified"  >
+                  <l3extRsNodeL3OutAtt rtrId="{{item['router_id']}}" rtrIdLoopBack="{{item['router_id_as_loopback']}}" tDn="topology/pod-{{item['pod_id']}}/node-{{item['node_id']}}" >
+          			{% if item['router_id_as_loopback'] == "no" and item['loopback_ip'] != "" %}
+          			<l3extLoopBackIfP addr="{{item['loopback_ip']}}" />
+          			{% endif %}
+          			<l3extInfraNodeP fabricExtCtrlPeering="{{fabricExtCtrlPeering}}" fabricExtIntersiteCtrlPeering="no" />
+          		</l3extRsNodeL3OutAtt>
+          	  </l3extLNodeP>
+          	 </l3extOut>
+          	</fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ l3out_node_profile }}"
+      when: l3out_node_profile is defined
+
+    - name: L3Out Interface Profile
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+               <l3extOut name="{{item['l3out']}}" status="modified">
+                  <l3extLNodeP name="{{item['l3out_node_profile']}}" status="modified">
+                      <l3extLIfP descr="" name="{{item['name']}}" tag="yellow-green" >
+                              {% if item['use_bfd'] == 'yes' %}
+                              <bfdIfP descr="" keyId="1" name="bfdIfPolicy" nameAlias="" type="none">
+                                  {% if item['bfd_policy'] %}
+                                  <bfdRsIfPol dn="uni/tn-{{item['tenant']}}/out-{{item['l3out']}}/lnodep-{{item['l3out_node_profile']}}/lifp-{{item['name']}}/bfdIfP/rsIfPol" tnBfdIfPolName="{{item['bfd_policy']}}" />
+                                  {% else %}
+                                  <bfdRsIfPol dn="uni/tn-{{item['tenant']}}/out-{{item['l3out']}}/lnodep-{{item['l3out_node_profile']}}/lifp-{{item['name']}}/bfdIfP/rsIfPol" tnBfdIfPolName="default" />
+                                  {% endif %}
+                              </bfdIfP>
+                              {% endif %}
+                              <ospfIfP name="ospfIfPolicy" authKeyId="1" authType="none">
+                                  <ospfRsIfPol dn="uni/tn-{{item['tenant']}}/out-{{item['l3out']}}/lnodep-{{item['l3out_node_profile']}}/lifp-{{item['name']}}/ospfIfP/rsIfPol" tnOspfIfPolName="{{item['ospf_interface_policy']}}"/>
+                              </ospfIfP>
+                              {% if item['path_type'] == 'vPC' %}
+                                      {% set path %}topology/pod-{{item['pod_id']}}/protpaths-{{item['left_node_id']}}-{{item['right_node_id']}}/pathep-{{item['int_pol_group']}}{% endset %}
+                              <l3extRsPathL3OutAtt addr="0.0.0.0" descr="" encap="vlan-{{item['vlan_encap_id']}}" encapScope="local" ifInstT="ext-svi" autostate="{{item['autostate']}}" mode="{{item['trunk_mode']}}" mtu="{{item['mtu']}}" tDn="{{path}}" targetDscp="unspecified">
+                                  <l3extMember addr="{{item['ip_addr_side_a']}}" descr=""  name="side_a" side="A" >
+                                  {% if item['secondary_ip'] is defined and item['secondary_ip'] != '' %}
+                                      <l3extIp addr="{{item['secondary_ip']}}" annotation="" descr="" name="" nameAlias=""/>
+                                  {% endif %}
+                                  </l3extMember>
+                                  <l3extMember addr="{{item['ip_addr_side_b']}}" descr="" name="side_b" side="B" >
+                                  {% if item['secondary_ip'] is defined and item['secondary_ip'] != '' %}
+                                      <l3extIp addr="{{item['secondary_ip']}}" annotation="" descr="" name="" nameAlias=""/>
+                                  {% endif %}
+                                  </l3extMember>
+                              </l3extRsPathL3OutAtt>
+                              {% else %}
+                                      {% if item['path_type'] == 'PC' %}
+                                              {% set path %}topology/pod-{{item['pod_id']}}/paths-{{item['left_node_id']}}/pathep-[{{item['int_pol_group']}}]{% endset %}
+                                      {% else %}
+                                              {% set path %}topology/pod-{{item['pod_id']}}/paths-{{item['left_node_id']}}/pathep-[eth{{item['port_id']}}]{% endset %}
+                                      {% endif %}
+                                      {% if item['interface_type'] == 'svi' %}
+                                              {% set iftype = "ext-svi" %}
+                                              {% set encap %}vlan-{{item['vlan_encap_id']}}{% endset %}
+                                      {% elif item['interface_type'] == 'routed_sub' %}
+                                              {% set iftype ="sub-interface" %}
+                                              {% set encap %}vlan-{{item['vlan_encap_id']}}{% endset %}
+                                      {% else %}
+                                              {% set iftype ="l3-port" %}
+                                              {% set encap = "unknown" %}
+                                      {% endif %}
+                              <l3extRsPathL3OutAtt addr="{{item['ip_addr_side_a']}}" descr="" encap="{{encap}}" encapScope="local" ifInstT="{{iftype}}" autostate="{{item['autostate']}}" mode="{{item['trunk_mode']}}" mtu="{{item['mtu']}}" tDn="{{path}}" targetDscp="unspecified">
+                              {% if item['secondary_ip'] is defined and item['secondary_ip'] != '' %}
+                                  <l3extIp addr="{{item['secondary_ip']}}" annotation="" descr="" name="" nameAlias=""/>
+                              {% endif %}
+                              </l3extRsPathL3OutAtt>
+                              {% endif %}
+                              {#
+                              <l3extRsNdIfPol tnNdIfPolName=""/>
+                              <l3extRsIngressQosDppPol tnQosDppPolName=""/>
+                              <l3extRsEgressQosDppPol tnQosDppPolName=""/>
+                               #}
+                          </l3extLIfP>
+                      </l3extLNodeP>
+                  </l3extOut>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ l3out_int_profile }}"
+      when: l3out_int_profile is defined
+
+    - name: Add a new ExtEpg
+      cisco.aci.aci_l3out_extepg:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        l3out: "{{ item.l3_out }}"
+        name: "{{ item.name }}"
+        description: "{{ item.description if item.description else omit}}"
+        state: "{{ item.status if item.status is defined else omit }}"
+        dscp: "{{ item.dscp if item.dscp is defined and item.dscp !='' else omit }}"
+        preferred_group: "{{ item.preferred_group if item.preferred_group is defined and item.preferred_group !='' else omit }}"
+      delegate_to: localhost
+      loop: "{{ external_epg }}"
+      when: external_epg is defined
+
+    - name: Add a new External Subnet
+      cisco.aci.aci_l3out_extsubnet:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        l3out: "{{ item.l3_out }}"
+        extepg: "{{ item.external_epg }}"
+        description: "{{ item.description if item.description is defined else omit}}"
+        network: "{{ item.external_subnet }}"
+        scope:
+          - "{{ 'export-rtctrl' if item.external_subnet_for_external_epg == 'yes' }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ external_epg_subnet }}"
+      when: external_epg_subnet is defined
+
+
+

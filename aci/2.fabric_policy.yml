@@ -1,0 +1,279 @@
+---
+- ansible.builtin.import_playbook: update.yml
+
+- name : Node Provisioning
+  gather_facts: false
+  hosts: all
+  vars_files:
+   - "{{ aci_variable_filename }}"
+  vars:
+     - aci_login: &aci_login
+          host: '{{ ansible_host }}'
+          user: '{{ ansible_user }}'
+          password: '{{ ansible_password }}'
+          validate_certs: "{{ validate_certs }}"
+
+  tasks:
+    - name: Add Power Supply Policies
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fabricInst>
+          		  <psuInstPol name="{{item['name']}}" descr="{{item['description']}}" adminRdnM="{{item['power_state']}}"/>
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ power_supply_policy }}"
+      when: power_supply_policy is defined
+
+    - name: Add Fabric Node Controls Policies
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+          	<fabricInst>
+                  {% if item['enable_dom'] == "yes" %}{% set dom_mode="Dom" %}{% endif %}
+          		<fabricNodeControl name="{{item['name']}}" descr="{{item['description']}}"  featureSel="{{item['feature_selection']}}" control="{{dom_mode}}"/>
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ node_control }}"
+      when: node_control is defined
+
+    - name: Add Fabric Spine Switch Policy Group
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fabricInst>
+                  <fabricFuncP>
+                      <fabricSpNodePGrp name="{{item['name']}}" descr="{{item['description']}}">
+                          <fabricRsMonInstFabricPol tnMonFabricPolName="{{item['monitoring_policy']}}"/>
+                          <fabricRsNodeTechSupP tnDbgexpTechSupPName="{{item['techsupport_export_policy']}}"/>
+                          <fabricRsNodeCoreP tnDbgexpCorePName="{{item['core_export_policy']}}"/>
+                          <fabricRsCallhomeInvPol tnCallhomeInvPName="{{item['callhome_policy']}}"/>
+                          <fabricRsPsuInstPol tnPsuInstPolName="{{item['power_supply_policy']}}"/>
+                          <fabricRsNodeCtrl tnFabricNodeControlName="{{item['node_control_policy']}}"/>
+                      </fabricSpNodePGrp>
+                  </fabricFuncP>
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ fabric_spine_policy_group }}"
+      when: fabric_spine_policy_group is defined
+
+    - name: Add Fabric Leaf Switch Policy Group
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fabricInst>
+                  <fabricFuncP>
+                      <fabricLeNodePGrp name="{{item['name']}}" descr="{{item['description']}}" >
+                          <fabricRsMonInstFabricPol tnMonFabricPolName="{{item['monitoring_policy']}}"/>
+                          <fabricRsNodeTechSupP tnDbgexpTechSupPName="{{item['techsupport_export_policy']}}"/>
+                          <fabricRsNodeCoreP tnDbgexpCorePName="{{item['core_export_policy']}}"/>
+                          <fabricRsCallhomeInvPol tnCallhomeInvPName="{{item['callhome_policy']}}"/>
+                          <fabricRsPsuInstPol tnPsuInstPolName="{{item['power_supply_policy']}}"/>
+                          <fabricRsNodeCtrl tnFabricNodeControlName="{{item['node_control_policy']}}"/>
+                      </fabricLeNodePGrp>
+                  </fabricFuncP>
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ fabric_leaf_policy_group }}"
+      when: fabric_leaf_policy_group is defined
+
+    - name: Add Spine Fabric Switch Profile
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fabricInst>
+                  <fabricSpineP annotation="" descr="{{item['description']}}"  name="{{item['name']}}" >
+                      <fabricSpineS  name="{{item['switch_selector']}}" type="range">
+                          {% if item['switch_policy_group'] and item['switch_policy_group'] != "" %}
+                            <fabricRsSpNodePGrp tDn="uni/fabric/funcprof/spnodepgrp-{{item['switch_policy_group']}}"/>
+                          {% endif %}
+                            <fabricNodeBlk descr="" from_="{{item['from_node_id']}}" name="{{item['from_node_id']}}{{item['to_node_id']}}" to_="{{item['to_node_id']}}"/>
+                      </fabricSpineS>
+                  </fabricSpineP>
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ fabric_switch_profile }}"
+      when: fabric_switch_profile is defined and item.switch_profile_type == 'spine'
+
+    - name: Add Leaf Fabric Switch Profile
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fabricInst>
+                  <fabricLeafP  descr="{{item['description']}}" name="{{item['name']}}">
+                      <fabricLeafS  name="{{item['switch_selector']}}"  type="range">
+                        {% if item['switch_policy_group'] and item['switch_policy_group'] != "" %}
+                          <fabricRsLeNodePGrp  tDn="uni/fabric/funcprof/lenodepgrp-{{item['switch_policy_group']}}"/>
+                        {% endif %}
+                          <fabricNodeBlk  descr="" from_="{{item['from_node_id']}}" name="{{item['from_node_id']}}{{item['to_node_id']}}" to_="{{item['to_node_id']}}"/>
+                      </fabricLeafS>
+                  </fabricLeafP>
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ fabric_switch_profile }}"
+      when: fabric_switch_profile is defined and item.switch_profile_type == 'leaf'
+
+    - name: BGP AS and Route Reflector
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fabricInst>
+                  <bgpInstPol descr="" name="default" >
+                      <bgpAsP asn="{{item['fabric_bgp_as']}}" name="bgp{{item['fabric_bgp_as']}}"/>
+                      <bgpRRP name="rr{{item['fabric_bgp_as']}}" >
+                          {% if item['bgp_rr_node_id'] !="" %}
+                          <bgpRRNodePEp id="{{item['bgp_rr_node_id']}}" podId="{{item['pod_id']}}"/>
+                          {% endif %}
+                      </bgpRRP>
+                  </bgpInstPol>
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ bgp_rr }}"
+      when: bgp_rr is defined
+
+    - name: POD Policy Group
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fabricInst>
+                  <fabricFuncP>
+                      <fabricPodPGrp descr="{{item['description']}}" name="{{item['name']}}" >
+                          <fabricRsSnmpPol  tnSnmpPolName="{{item['snmp_pol']}}"/>
+                          <fabricRsPodPGrpIsisDomP  tnIsisDomPolName="{{item['isis_pol']}}"/>
+                          <fabricRsPodPGrpCoopP  tnCoopPolName="{{item['coop_pol']}}"/>
+                          <fabricRsPodPGrpBGPRRP  tnBgpInstPolName="{{item['bgp_pol']}}"/>
+                          <fabricRsTimePol  tnDatetimePolName="{{item['date_time_pol']}}"/>
+                          <fabricRsMacsecPol  tnMacsecFabIfPolName="{{item['macsec_pol']}}"/>
+                          <fabricRsCommPol  tnCommPolName="{{item['com_pol']}}"/>
+                      </fabricPodPGrp>
+                  </fabricFuncP>
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ pod_policy_group }}"
+      when: pod_policy_group is defined
+
+    - name: POD Profile
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fabricInst>
+                  <fabricPodP  descr="{{item['description']}}" name="{{item['name']}}">
+                      <fabricPodS  name="default" type="ALL">
+                          <fabricRsPodPGrp  tDn="uni/fabric/funcprof/podpgrp-{{item['pod_policy_group']}}"/>
+                      </fabricPodS>
+                  </fabricPodP>
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ pod_profile }}"
+      when: pod_profile is defined
+
+    - name: DNS Profile
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fabricInst>
+                  <dnsProfile IPVerPreference="IPv4" descr="{{item['description']}}"  name="{{item['name']}}">
+                      <dnsRsProfileToEpg tDn="uni/tn-mgmt/mgmtp-default/{{item['management_epg']}}-default"/>
+                      {% if item['domain_name'] and item['domain_name'] != "" %}
+                      <dnsDomain descr="" isDefault="{{item['is_default_domain']|default('no',True)}}" name="{{item['domain_name']}}" />
+                      {% endif %}
+                  </dnsProfile>
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ dns_profile }}"
+      when: dns_profile is defined
+
+    - name: DNS Provider
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fabricInst>
+                  <dnsProfile name="{{item['dns_profile_name']}}" status="modified">
+                      <dnsProv addr="{{item['dns_server_address']}}" name="{{item['dns_server_name']}}" preferred="{{item['is_preferred_dns']|default(0,'no')}}" />
+                  </dnsProfile>
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ dns_provider }}"
+      when: dns_provider is defined
+
+    - name: Datetime Policy
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fabricInst>
+                  <datetimePol StratumValue="{{item['stratum_value']|default('8',True)}}" adminSt="{{item['admin_state']}}" authSt="{{item['authentication_state']}}" descr="{{item['description']}}"  masterMode="{{item['master_mode']|default('disabled',True)}}" name="{{item['name']|default('default',True)}}" serverState="{{item['server_state']|default('disabled',True)}}">
+                  </datetimePol>
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ datetime_pol }}"
+      when: datetime_pol is defined
+
+    - name: Datetime NTP Provider
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fabricInst>
+                  <datetimePol name="{{item['datetime_pol_name']}}" status="modified">
+                      <datetimeNtpProv descr="{{item['description']}}" keyId="{{item['key_id']|default('0',True)}}" maxPoll="{{item['max_poll']|default('6',True)}}" minPoll="{{item['min_poll']|default('4',True)}}" name="{{item['name']}}" preferred="{{item['is_preferred']|default('no',True)}}">
+                          <datetimeRsNtpProvToEpg tDn="uni/tn-mgmt/mgmtp-default/{{item['management_epg']}}-default"/>
+                          {% if item['key_id'] != "" and item['key_id'] != "0" %}
+                              <datetimeRsNtpProvToNtpAuthKey tnDatetimeNtpAuthKeyId="{{item['key_id']}}"/>
+                          {% endif %}
+                      </datetimeNtpProv>
+                  </datetimePol>
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ datetime_ntp_prov }}"
+      when: datetime_ntp_prov is defined

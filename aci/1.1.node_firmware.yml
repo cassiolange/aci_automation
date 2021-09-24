@@ -1,0 +1,74 @@
+---
+- import_playbook: update.yml
+
+- name : Node Firmware and Upgrade groups
+  gather_facts: false
+  hosts: all
+  vars:
+     - aci_login: &aci_login
+          host: '{{ ansible_host }}'
+          user: '{{ ansible_user }}'
+          password: '{{ ansible_password }}'
+          validate_certs: "{{ validate_certs }}"
+  tasks:
+    - name: firmware policy
+      cisco.aci.aci_firmware_policy:
+        <<: *aci_login
+        name: "{{ item.name }}"
+        version: "{{ item.firmware_version }}"
+        ignoreCompat: True
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ firmware_group }}"
+      when: firmware_group is defined
+
+    - name: firmware group
+      cisco.aci.aci_firmware_group:
+        <<: *aci_login
+        group: "{{ item.name }}"
+        firmwarepol: "{{ item.name }}"
+      delegate_to: localhost
+      loop: "{{ firmware_group }}"
+      when: firmware_group is defined
+
+    - name: add firmware group node
+      cisco.aci.aci_firmware_group_node:
+        <<: *aci_login
+        group: "{{ item.firmware_group }}"
+        node: "{{ item.node_id }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ node_provisioning }}"
+      when: node_provisioning is defined and item.maintenance_group != "" and node_provisioning is defined
+
+    - name: Ensure maintenance policy is present
+      cisco.aci.aci_maintenance_policy:
+        <<: *aci_login
+        name: "{{ item.name }}"
+        scheduler: simpleScheduler
+        runmode: pauseNever
+        state: "{{ item.status if item.status is defined else omit }}"
+        adminst: triggered
+      delegate_to: localhost
+      loop: "{{ maintenance_groups }}"
+      when: maintenance_groups is defined
+
+    - name: maintenance group
+      cisco.aci.aci_maintenance_group:
+        <<: *aci_login
+        group: "{{ item.name }}"
+        policy: "{{ item.name }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ maintenance_groups }}"
+      when: maintenance_groups is defined
+
+    - name: Add Nodes to maintenance group
+      cisco.aci.aci_maintenance_group_node:
+        <<: *aci_login
+        group: "{{ item.maintenance_group }}"
+        node: "{{ item.node_id }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ node_provisioning }}"
+      when: node_provisioning is defined and item.firmware_group != "" and node_provisioning is defined

@@ -1,0 +1,41 @@
+---
+- ansible.builtin.import_playbook: update.yml
+
+- name : Layer 3Outs
+  gather_facts: false
+  hosts: all
+  vars:
+    - aci_login: &mso_login
+        hostname: "{{ ansible_host }}"
+        username: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        validate_certs: "{{ validate_certs }}"
+  tasks:
+
+    - name: Add a new L3out
+      cisco.mso.mso_schema_template_l3out:
+        <<: *mso_login
+        schema: "{{ item.schema_name }}"
+        template: "{{ item.template_name }}"
+        l3out: "{{ item.name }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+        vrf:
+          name: "{{ item.vrf_name }}"
+          template: "{{ item.vrf_template }}"
+          schema: "{{ item.vrf_schema }}"
+      delegate_to: localhost
+      loop: "{{ l3out }}"
+      when: l3out is defined
+
+    - name: Add a new site BD l3out
+      cisco.mso.mso_schema_site_bd_l3out:
+        <<: *mso_login
+        schema: "{{ item.schema_name }}"
+        template: "{{ item.template_name }}"
+        site: "{{ item.site_name }}"
+        bd: "{{ item.name }}"
+        l3out: "{{ item.l3out_name }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ bridge_domain_to_l3out }}"
+      when: bridge_domain_to_l3out is defined

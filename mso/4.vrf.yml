@@ -1,0 +1,25 @@
+---
+- ansible.builtin.import_playbook: update.yml
+
+- name : VRFs
+  gather_facts: false
+  hosts: all
+  vars:
+    - aci_login: &mso_login
+        hostname: "{{ ansible_host }}"
+        username: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        validate_certs: "{{ validate_certs }}"
+  tasks:
+
+    - name: Add a new VRF
+      cisco.mso.mso_schema_template_vrf:
+        <<: *mso_login
+        schema: "{{ item.schema_name }}"
+        template: "{{ item.template_name }}"
+        vrf: "{{ item.name }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+        layer3_multicast : "{{ item.enable_l3_multicast }}"
+      delegate_to: localhost
+      loop: "{{ vrf }}"
+      when: vrf is defined

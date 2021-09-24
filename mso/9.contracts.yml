@@ -1,0 +1,84 @@
+---
+- ansible.builtin.import_playbook: update.yml
+- name : Contracts
+  gather_facts: false
+  hosts: all
+  vars:
+    - aci_login: &mso_login
+        hostname: "{{ ansible_host }}"
+        username: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        validate_certs: "{{ validate_certs }}"
+  tasks:
+
+    - name: Add a new filter and filter entry
+      cisco.mso.mso_schema_template_filter_entry:
+        <<: *mso_login
+        schema: "{{ item.schema_name }}"
+        template: "{{ item.template_name }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+        description: "{{ item.description if item.description is defined else omit }}"
+        entry: "{{ item.filter_entry_name }}"
+        filter: "{{ item.name }}"
+        ethertype: "{{ item.etherType if item.etherType is defined and item.etherType !='' else omit }}"
+        ip_protocol: "{{ item.ipProtocol if item.ipProtocol is defined and item.ipProtocol !='' else omit }}"
+        arp_flag: "{{ item.arpFlag if item.arpFlag is defined and item.arpFlag !='' else omit }}"
+        destination_from: "{{ item.destinationFrom | int if item.destinationFrom is defined and item.destinationFrom !='' else omit }}"
+        destination_to: "{{ item.destinationTo | int if item.destinationTo is defined and item.destinationTo !='' else omit }}"
+        icmp_msg_type: "{{ item.icmp_message if item.icmp_message is defined and item.icmp_message !='' else omit }}"
+        icmp6_msg_type: "{{ item.icmpv6_message if item.icmpv6_message is defined and item.icmpv6_message !='' else omit }}"
+        stateful: "{{ item.stateful if item.stateful is defined and item.stateful !='' else omit }}"
+      delegate_to: localhost
+      loop: "{{ filter }}"
+      when: filter is defined
+
+    - name: Add a new contract
+      cisco.mso.mso_schema_template_contract_filter:
+        <<: *mso_login
+        schema: "{{ item.schema_name }}"
+        template: "{{ item.template_name }}"
+        filter_directives: "{{ item.filter_directives }}"
+        contract: "{{ item.name }}"
+        contract_scope: "{{ 'vrf' if item.contract_scope == 'context' else item.contract_scope}}"
+        filter: "{{ item.filter_name }}"
+        filter_schema: "{{ item.filter_schema_name }}"
+        filter_template: "{{ item.filter_template_name }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ contract }}"
+      when: contract is defined
+      register: result
+      until: result is not failed
+
+    - name: Bind contract to an EPG
+      cisco.mso.mso_schema_template_anp_epg_contract:
+        <<: *mso_login
+        schema: "{{ item.epg_schema_name }}"
+        template: "{{ item.epg_template_name }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+        anp: "{{ item.app_profile_name }}"
+        epg: "{{ item.epg_name }}"
+        contract:
+          name: "{{ item.contract_name }}"
+          type: "{{ item.contract_relationship }}"
+          template: "{{ item.contract_template_name }}"
+          schema: "{{ item.contract_schema_name }}"
+      delegate_to: localhost
+      loop: "{{ contract_epg_association }}"
+      when: contract_epg_association is defined
+
+    - name: Bind contract to an External EPG
+      cisco.mso.mso_schema_template_external_epg_contract:
+        <<: *mso_login
+        schema: "{{ item.external_epg_schema }}"
+        template: "{{ item.external_epg_template }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+        external_epg: "{{ item.name }}"
+        contract:
+          name: "{{ item.contract_name }}"
+          type: "{{ item.relationship_type }}"
+          schema: "{{ item.contract_schema_name }}"
+          template: "{{ item.contract_template_name }}"
+      delegate_to: localhost
+      loop: "{{ external_epg_contract  }}"
+      when: external_epg_contract is defined

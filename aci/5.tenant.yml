@@ -1,0 +1,151 @@
+---
+- ansible.builtin.import_playbook: update.yml
+
+- name : Tenant Provisioning
+  gather_facts: false
+  hosts: all
+  vars_files:
+   - "{{ aci_variable_filename }}"
+  vars:
+     - aci_login: &aci_login
+          host: '{{ ansible_host }}'
+          user: '{{ ansible_user }}'
+          password: '{{ ansible_password }}'
+          validate_certs: "{{ validate_certs }}"
+
+  tasks:
+
+    - name: Add a new tenant
+      cisco.aci.aci_tenant:
+        <<: *aci_login
+        tenant:  "{{ item.name }}"
+        description: "{{ item.description if item.description is defined else omit}}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ tenant }}"
+      when: tenant is defined
+
+    - name: Add a new VRF to a tenant
+      cisco.aci.aci_vrf:
+        <<: *aci_login
+        vrf: "{{ item.name }}"
+        tenant: "{{ item.tenant }}"
+        description: "{{ item.description if item.description is defined else omit}}"
+        policy_control_preference: "{{ item.policy_enforcement }}"
+        policy_control_direction:  "{{ item.policy_enforcement_direction }}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ vrf }}"
+      when: vrf is defined
+
+    - name: Add Bridge Domain
+      cisco.aci.aci_bd:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        bd: "{{ item.name }}"
+        mac_address: "{{ item.mac if item.mac is defined and item.mac !='' else omit }}"
+        vrf: "{{ item.vrf }}"
+        enable_multicast: "{{ item.enablePim if item.enablePim is defined and item.enablePim != '' else omit }}"
+        enable_routing: "{{ item.unicast_routing if item.unicast_routing is defined and item.unicast_routing != '' else omit }}"
+        endpoint_move_detect: "{{ item.endpoint_move_detect_mode if item.endpoint_move_detect_mode is defined and item.endpoint_move_detect_mode != '' else omit }}"
+        igmp_snoop_policy: "{{ item.igmp_snoop_policy if item.igmp_snoop_policy is defined and item.igmp_snoop_policy != '' else omit }}"
+        l2_unknown_unicast: "{{ item.l2_unknown_unicast if item.l2_unknown_unicast is defined and item.l2_unknown_unicast != '' else omit }}"
+        l3_unknown_multicast: "{{ item.l3_unknown_multicast if item.l3_unknown_multicast is defined and item.l3_unknown_multicast != '' else omit }}"
+        limit_ip_learn: "{{ item.limit_ip_learning_to_subnet if item.limit_ip_learning_to_subnet is defined and item.limit_ip_learning_to_subnet != '' else omit }}"
+        multi_dest: "{{ item.multi_dest_flood if item.multi_dest_flood is defined  and item.multi_dest_flood != '' else omit }}"
+        name_alias: "{{ item.name_alias if item.name_alias is defined  and item.name_alias != '' else omit }}"
+        arp_flooding: "{{ item.arp_flood if item.arp_flood is defined and item.arp_flood != '' else omit }}"
+        ip_learning: "{{ item.endpoint_data_plane_learning if item.endpoint_data_plane_learning is defined and item.endpoint_data_plane_learning != '' else omit }}"
+        endpoint_retention_policy: "{{ item.endpoint_retention_policy if item.endpoint_retention_policy is defined and item.endpoint_retention_policy != '' else omit }}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ bridge_domain }}"
+      when: bridge_domain is defined
+
+    - name: Create a subnet
+      cisco.aci.aci_bd_subnet:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        bd: "{{ item.bridge_domain }}"
+        gateway: "{{ item.bd_subnet.split('/').0 }}"
+        mask: "{{ item.bd_subnet.split('/').1 }}"
+        state: "{{ item.status }}"
+        scope: "{{ item.subnet_scope }}"
+        preferred: "{{ item.is_primary_address if item.is_primary_address is defined and item.is_primary_address != '' else omit }}"
+        enable_vip: "{{ item.is_virtual_ip if item.is_virtual_ip is defined and item.is_virtual_ip != '' else omit }}"
+        subnet_control: "{{ item.subnet_control if item.subnet_control is defined and item.subnet_control != '' else omit }}"
+        nd_prefix_policy: "{{ item.ndRAprefixPolicy if item.ndRAprefixPolicy is defined and item.ndRAprefixPolicy != '' else omit }}"
+      delegate_to: localhost
+      loop: "{{ bd_subnet }}"
+      when: bd_subnet is defined
+
+    - name: Bind Bridge Domain to L3Out
+      cisco.aci.aci_bd_to_l3out:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        bd: "{{ item.bd_name }}"
+        l3out: "{{ item.l3out_name }}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ bd_l3out }}"
+      when: bd_l3out is defined
+
+    - name: Add a new AP
+      cisco.aci.aci_ap:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        ap: "{{ item.name }}"
+        description: "{{ item.description if item.description is defined else omit}}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ application_profile }}"
+      when: application_profile is defined
+
+    - name: Add a new EPG
+      cisco.aci.aci_epg:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        ap: "{{ item.app_profile }}"
+        epg: "{{ item.name }}"
+        description: "{{ item.description if item.description is defined else omit}}"
+        bd: "{{ item.bridge_domain }}"
+        preferred_group: "{{ item.preferred_group if item.preferred_group is defined and item.preferred_group != '' else omit }}"
+        intra_epg_isolation: "{{ item.intra_epg_isolation if item.intra_epg_isolation is defined and item.intra_epg_isolation != '' else omit }}"
+        name_alias: "{{ item.name_alias if item.name_alias is defined and item.name_alias != '' else omit }}"
+        priority: "{{ item.qos_class if item.qos_class is defined and item.qos_class != '' else omit }}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ end_point_group }}"
+      when: end_point_group is defined
+
+    - name: Add a new physical domain to EPG binding
+      cisco.aci.aci_epg_to_domain:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        ap: "{{ item.app_profile }}"
+        epg: "{{ item.epg_name }}"
+        domain: "{{ item.domainName }}"
+        domain_type: phys
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ epg_domain_association }}"
+      when: epg_domain_association is defined and item.domainType == 'physical'
+
+    - name: Deploy Static Path binding for given EPG
+      cisco.aci.aci_static_binding_to_epg:
+        <<: *aci_login
+        description: "{{ item.description if item.description is defined else omit}}"
+        tenant: "{{ item.tenant }}"
+        ap: "{{ item.app_profile }}"
+        epg: "{{ item.name }}"
+        encap_id: "{{ item.encap_vlan_id }}"
+        deploy_immediacy: immediate
+        interface_mode: "{{ item.mode }}"
+        interface_type: "{{ 'vpc' if item.static_binding_type == 'vPC' else 'port_channel' if item.static_binding_type == 'PC' else 'switch_port' if item.static_binding_type == 'Access' }}"
+        pod_id: "{{ item.pod_id }}"
+        leafs: "{{ '%s-%s' % (item.left_node_id, item.right_node_id) if item.static_binding_type == 'vPC' else item.left_node_id if item.static_binding_type == 'PC' or item.static_binding_type == 'Access' }}"
+        interface: "{{ item.access_port_id if item.static_binding_type == 'Access' else item.interface_policy_group if item.static_binding_type == 'PC' or item.static_binding_type == 'vPC' }}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ epg_static_binding }}"
+      when: epg_static_binding is defined

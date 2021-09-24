@@ -1,0 +1,29 @@
+---
+- import_playbook: update.yml
+
+- name : Node Firmware and Upgrade groups
+  gather_facts: false
+  hosts: all
+  vars:
+     - aci_login: &aci_login
+          host: '{{ ansible_host }}'
+          user: '{{ ansible_user }}'
+          password: '{{ ansible_password }}'
+          validate_certs: "{{ validate_certs }}"
+  tasks:
+    - name: Change Ports from Uplink to Downlink
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+          	<infraInfra>
+          		<infraPortDirecPol>
+          			<infraRsPortDirection tDn="topology/pod-{{item['pod_id']}}/paths-{{item['node_id']}}/pathep-[eth{{item['interface_slot_port']}}]" direc="{{item['direction']}}" />
+          		</infraPortDirecPol>
+          	</infraInfra>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ port_direction }}"
+      when: port_direction is defined

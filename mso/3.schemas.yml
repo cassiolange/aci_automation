@@ -1,0 +1,35 @@
+---
+- ansible.builtin.import_playbook: update.yml
+- name : Schemas and Templates
+  gather_facts: false
+  hosts: all
+  vars:
+    - aci_login: &mso_login
+        hostname: "{{ ansible_host }}"
+        username: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        validate_certs: "{{ validate_certs }}"
+  tasks:
+
+    - name: Add a new template to a schema
+      cisco.mso.mso_schema_template:
+        <<: *mso_login
+        schema: "{{ item.schema_name }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+        template: "{{ item.name }}"
+        tenant: "{{ item.tenant_name }}"
+      delegate_to: localhost
+      loop: "{{ template }}"
+      when: template is defined
+
+    - name: Add a site to a schema
+      cisco.mso.mso_schema_site:
+        <<: *mso_login
+        schema: "{{ item.schema_name }}"
+        template: "{{ item.template_name }}"
+        site: "{{ item.site_name }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ template_site_association }}"
+      when: template_site_association is defined
+

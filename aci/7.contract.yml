@@ -1,0 +1,230 @@
+---
+- import_playbook: update.yml
+
+- name : Contract Provisioning
+  gather_facts: false
+  hosts: all
+  vars_files:
+   - "{{ aci_variable_filename }}"
+  vars:
+     - aci_login: &aci_login
+          host: '{{ ansible_host }}'
+          user: '{{ ansible_user }}'
+          password: '{{ ansible_password }}'
+          validate_certs: "{{ validate_certs }}"
+
+  tasks:
+    - name: OOB External Management Instance Profile
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="mgmt">
+                  <mgmtExtMgmtEntity name="default">
+                      <mgmtInstP name="{{item['name']}}" prio="{{item['qos_class']|default('unspecified',True)}}" >
+                              <mgmtSubnet name="" ip="{{item['subnet']}}"/>
+                      </mgmtInstP>
+                  </mgmtExtMgmtEntity>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ external_management_entity }}"
+      when: external_management_entity is defined
+
+    - name: Add a new filter to a tenant
+      cisco.aci.aci_filter:
+        <<: *aci_login
+        filter: "{{ item.name }}"
+        description: "{{ item.description if item.description is defined else omit}}"
+        tenant: "{{ item.tenant }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ filter }}"
+      when: filter is defined
+
+    - name: Add a new Filter Entry to a tenant
+      cisco.aci.aci_filter_entry:
+        <<: *aci_login
+        state: "{{ item.status if item.status is defined else omit }}"
+        descr: "{{ item.description if item.description is defined else omit }}"
+        entry: "{{ item.name }}"
+        tenant: "{{ item.tenant }}"
+        filter: "{{ item.filter }}"
+        ether_type: "{{ item.ether_type if item.ether_type is defined and item.ether_type !='' else omit }}"
+        ip_protocol: "{{ item.IP_protocol if item.IP_protocol is defined and item.IP_protocol !='' else omit }}"
+        arp_flag: "{{ item.arp_flag if item.arp_flag is defined and item.arp_flag !='' else omit }}"
+        dst_port_start: "{{ item.from_destination_port if item.from_destination_port is defined and item.from_destination_port !='' else omit }}"
+        dst_port_end: "{{ item.to_destination_port if item.to_destination_port is defined and item.to_destination_port !='' else omit }}"
+        icmp_msg_type: "{{ item.icmp_message if item.icmp_message is defined and item.icmp_message !='' else omit }}"
+        icmp6_msg_type: "{{ item.icmpv6_message if item.icmpv6_message is defined and item.icmpv6_message !='' else omit }}"
+        stateful: "{{ item.stateful if item.stateful is defined and item.stateful !='' else omit }}"
+      delegate_to: localhost
+      loop: "{{ filter_entry }}"
+      when: filter_entry is defined
+
+    - name: Add a new contract
+      cisco.aci.aci_contract:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        contract: "{{ item.name }}"
+        description: "{{ item.description if item.description is defined else omit }}"
+        scope: "{{ item.scope }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+        priority: "{{ item.qos_class if item.qos_class is defined and item.qos_class !='' else omit }}"
+        name_alias: "{{ item.name_alias if item.name_alias is defined and item.name_alias !='' else omit }}"
+        dscp: "{{ item.target_dscp if item.target_dscp is defined and item.target_dscp !='' else omit }}"
+      delegate_to: localhost
+      loop: "{{ contract }}"
+      when: contract is defined and item.contract_type == 'standard'
+
+    - name: Add a new contract (OOB)
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <vzOOBBrCP descr="{{item['description']}}" name="{{item['name']}}" nameAlias="{{item['name_alias']}}" prio="{{item['qos_class']|default('unspecified',True)}}" scope="{{item['scope']}}" targetDscp="{{item['target_dscp']|default('unspecified',True)}}">
+                  </vzOOBBrCP>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ contract }}"
+      when: contract is defined and item.contract_type == 'outofband'
+
+    - name: Add a new contract subject
+      cisco.aci.aci_contract_subject:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        contract: "{{ item.contract }}"
+        subject: "{{ item.name }}"
+        description: "{{ item.description if item.description is defined else omit }}"
+        reverse_filter: "{{ item.reverse_filter_port if item.reverse_filter_port is defined and item.reverse_filter_port !='' else omit }}"
+        priority: "{{ item.qos_class if item.qos_class is defined and item.qos_class !='' else omit }}"
+        dscp: "{{ item.target_dscp if item.target_dscp is defined and item.target_dscp !='' else omit }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ subject }}"
+      when: subject is defined and item.contract_type == 'standard'
+
+    - name: Bind a filter to Contract Subject
+      cisco.aci.aci_contract_subject_to_filter:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        contract: "{{ item.contract }}"
+        subject: "{{ item.name }}"
+        filter: "{{ item.filter }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ subject }}"
+      when: subject is defined and item.contract_type == 'standard'
+
+    - name: Add a new contract subject (OOB)
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status= "modified">
+                <vzOOBBrCP name="{{item['contract']}}" status="modified">
+                    <vzSubj consMatchT="AtleastOne" descr="{{item['description']}}" name="{{item['name']}}" nameAlias="{{item['name_alias']}}" prio="{{item['qos_class']|default('unspecified',True)}}" provMatchT="AtleastOne" revFltPorts="yes" targetDscp="{{item['target_dscp']|default('unspecified',True)}}">
+                        <vzRsSubjFiltAtt dn="uni/tn-{{item['tenant']}}/oobbrc-{{item['contract']}}/subj-{{item['name']}}/rssubjFiltAtt-{{item['filter']}}" action="permit" priorityOverride="default" tnVzFilterName="{{item['filter']}}" />
+                    </vzSubj>
+              </vzOOBBrCP>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ subject }}"
+      when: subject is defined and item.contract_type == 'outofband'
+
+    - name: Assign Contract to a VRF(vzAny)
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <fvCtx name="{{item['vrf_name']}}" status="modified">
+                      <vzAny dn="uni/tn-{{item['tenant']}}/ctx-{{item['vrf_name']}}/any" status="modified">
+                      {% if item['consumed_ctr'] == "yes" %}
+                          <vzRsAnyToCons tnVzBrCPName="{{item['contract']}}" prio="{{item['contract_qos_class']|default('unspecified',True)}}"/>
+                      {% endif %}
+                      {% if item['provided_ctr'] == "yes" %}
+                          <vzRsAnyToProv tnVzBrCPName="{{item['contract']}}" prio="{{item['contract_qos_class']|default('unspecified',True)}}"/>
+                      {% endif %}
+                      </vzAny>
+                  </fvCtx>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ vrf_contract }}"
+      when: vrf_contract is defined
+
+    - name: Assign Contract to OoB Management EPG
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="mgmt" status="modified">
+                  <mgmtMgmtP name="default" status="modified">
+                      <mgmtOoB name="{{item['name']}}" status="modified">
+                          <mgmtRsOoBProv prio="{{item['contract_qos_class']|default('unspecified',True)}}" tnVzOOBBrCPName="{{item['contract']}}"/>
+                      </mgmtOoB>
+                  </mgmtMgmtP>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ oob_mgmt_epg_contract }}"
+      when: oob_mgmt_epg_contract is defined
+
+    - name: Assign OOB Contract to a External Management Profile
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="mgmt">
+                  <mgmtExtMgmtEntity name="default">
+                      <mgmtInstP name="{{item['external_management_profile_name']}}" status= "modified" >
+                              <mgmtRsOoBCons tnVzOOBBrCPName="{{item['oob_contract_name']}}" prio="{{item['contract_qos_class']|default('unspecified',True)}}"/>
+                      </mgmtInstP>
+                  </mgmtExtMgmtEntity>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ ext_mgmt_entity_contract }}"
+      when: ext_mgmt_entity_contract is defined
+
+    - name: Add a new contract to EPG binding
+      cisco.aci.aci_epg_to_contract:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        ap: "{{ item.app_profile }}"
+        epg: "{{ item.name }}"
+        contract: "{{ item.contract }}"
+        contract_type: "{{ 'provider' if item.provided_ctr == 'yes' else 'consumer' if item.consumed_ctr == 'yes' }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ epg_contract }}"
+      when: epg_contract is defined
+
+    - name: Bind a contract to an external EPG
+      cisco.aci.aci_l3out_extepg_to_contract:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        l3out: "{{ item.l3out }}"
+        extepg: "{{ item.name }}"
+        contract: "{{ item.contract }}"
+        contract_type: "{{ 'provider' if item.provided_ctr == 'yes' else 'consumer' if item.consumed_ctr == 'yes' }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ external_epg_contract }}"
+      when: external_epg_contract is defined

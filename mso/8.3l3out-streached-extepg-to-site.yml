@@ -4,6 +4,7 @@
 - name : Layer 3Outs
   gather_facts: false
   hosts: all
+  strategy: debug
   vars:
     - aci_login: &mso_login
         hostname: "{{ ansible_host }}"
@@ -13,15 +14,18 @@
   tasks:
 
 
-    - name: Add a new subnet to an External EPG
-      cisco.mso.mso_schema_template_external_epg_subnet:
+    - name: Bind Stretched External EPG to a Site L3Out
+      cisco.mso.mso_schema_site_external_epg:
         <<: *mso_login
         schema: "{{ item.schema_name }}"
         template: "{{ item.template_name }}"
         external_epg: "{{ item.name }}"
-        subnet: "{{ item.subnet }}"
+        l3out:
+              name: "{{ item.l3out_name }}"
+              template: "{{ item.l3out_template_name }}"
+              schema: "{{ item.l3out_schema_name }}"
+        site: "{{ item.site_name }}"
         state: "{{ item.status if item.status is defined else omit }}"
-        scope: "{{ 'import-security' if item.external_subnet_for_external_epg is defined and item.external_subnet_for_external_epg == 'yes' else omit}}"
       delegate_to: localhost
-      loop: "{{ external_epg_subnet }}"
-      when: external_epg_subnet is defined
+      loop: "{{ external_epg_to_l3out }}"
+      when: external_epg_to_l3out is defined

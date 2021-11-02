@@ -94,8 +94,8 @@
         node_id: "{{ item.node_id }}"
         ipv4_address: "{{ item.inband_ip }}"
         ipv4_gw: "{{ item.inband_gw }}"
-        ipv6_address: "{{ item.inband_ipv6 if item.inband_ipv6 else omit }}"
-        ipv6_gw: "{{ item.inband_ipv6_gw if item.inband_ipv6 else omit }}"
+        ipv6_address: "{{ item.inband_ipv6 if item.inband_ipv6 is defined else omit }}"
+        ipv6_gw: "{{ item.inband_ipv6_gw if item.inband_ipv6_gw is defined else omit }}"
         state: "{{ item.status if item.status is defined else omit }}"
       delegate_to: localhost
       loop: "{{ node_provisioning }}"

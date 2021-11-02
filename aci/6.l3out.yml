@@ -134,11 +134,15 @@
                                   {% endif %}
                               </bfdIfP>
                               {% endif %}
+                              {% if item['ospf_password'] is defined and item['ospf_password'] != '' %}
+                              <ospfIfP name="ospfIfPolicy" authKeyId="1" authType="md5" authKey="{{item['ospf_password']}}">
+                              {% else %}
                               <ospfIfP name="ospfIfPolicy" authKeyId="1" authType="none">
+                              {% endif %}
                                   <ospfRsIfPol dn="uni/tn-{{item['tenant']}}/out-{{item['l3out']}}/lnodep-{{item['l3out_node_profile']}}/lifp-{{item['name']}}/ospfIfP/rsIfPol" tnOspfIfPolName="{{item['ospf_interface_policy']}}"/>
                               </ospfIfP>
                               {% if item['path_type'] == 'vPC' %}
-                                      {% set path %}topology/pod-{{item['pod_id']}}/protpaths-{{item['left_node_id']}}-{{item['right_node_id']}}/pathep-{{item['int_pol_group']}}{% endset %}
+                                      {% set path %}topology/pod-{{item['pod_id']}}/protpaths-{{item['left_node_id'] | int }}-{{item['right_node_id'] | int }}/pathep-{{item['int_pol_group']}}{% endset %}
                               <l3extRsPathL3OutAtt addr="0.0.0.0" descr="" encap="vlan-{{item['vlan_encap_id']}}" encapScope="local" ifInstT="ext-svi" autostate="{{item['autostate']}}" mode="{{item['trunk_mode']}}" mtu="{{item['mtu']}}" tDn="{{path}}" targetDscp="unspecified">
                                   <l3extMember addr="{{item['ip_addr_side_a']}}" descr=""  name="side_a" side="A" >
                                   {% if item['secondary_ip'] is defined and item['secondary_ip'] != '' %}
@@ -216,5 +220,74 @@
       loop: "{{ external_epg_subnet }}"
       when: external_epg_subnet is defined
 
+    - name: Interface BGP Peers
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+               <l3extOut name="{{item['l3out']}}" status="modified">
+                  <l3extLNodeP name="{{item['l3out_node_profile']}}" status="modified">
+                      <l3extLIfP descr="" name="{{item['name']}}" tag="yellow-green" status="modified">
+                              {% if item['path_type'] == 'vPC' %}
+                                      {% set path %}topology/pod-{{item['pod_id']}}/protpaths-{{item['left_node_id']}}-{{item['right_node_id']}}/pathep-{{item['int_pol_group']}}{% endset %}
+                              {% elif item['path_type'] == 'PC' %}
+                                      {% set path %}topology/pod-{{item['pod_id']}}/paths-{{item['left_node_id']}}/pathep-[{{item['int_pol_group']}}]{% endset %}
+                              {% else %}
+                                      {% set path %}topology/pod-{{item['pod_id']}}/paths-{{item['left_node_id']}}/pathep-[eth{{item['port_id']}}]{% endset %}
+                              {% endif %}
+                              {% if item['use_bfd'] == 'yes' %}
+                                      {% set peerCtrl %}bfd{% endset %}
+                              {% else %}
+                                      {% set peerCtrl %}{% endset %}
+                              {% endif %}
+                              {% if item['Allow_Self_AS'] == 'yes' %}
+                                      {% set ctrl %}allow-self-as,send-com,send-ext-com{% endset %}
+                              {% else %}
+                                      {% set ctrl %}send-com,send-ext-com{% endset %}
+                              {% endif %}
+                              {% if item['private_as_control'] == 'remove_private_as' %}
+                                      {% set private_as %}remove-exclusive{% endset %}
+                              {% elif item['private_as_control'] == 'remove_all_private_as' %}
+                                      {% set private_as %}remove-exclusive,remove-all{% endset %}
+                              {% elif item['private_as_control'] == 'replace_private_as_with_local_as' %}
+                                      {% set private_as %}remove-exclusive,remove-all,replace-as{% endset %}
+                              {% else %}
+                                      {% set private_as %}{% endset %}
+                              {% endif %}
+                              <l3extRsPathL3OutAtt tDn="{{path}}">
+                              {% if item['password'] %}
+                                  <bgpPeerP addr="{{item['bgp_peer_ip']}}" ctrl="{{ctrl}}" descr="{{item['bgp_peer_name']}}" name="peer-{{item['bgp_peer_ip']}}" peerCtrl="{{peerCtrl}}" privateASctrl="{{private_as}}" password="{{item['password']}}">
+                              {% else %}
+                                  <bgpPeerP addr="{{item['bgp_peer_ip']}}" ctrl="{{ctrl}}" descr="{{item['bgp_peer_name']}}" name="peer-{{item['bgp_peer_ip']}}" privateASctrl="{{private_as}}" peerCtrl="{{peerCtrl}}" >
+                              {% endif %}
+                                      {% if item['Import_Route_Map'] %}
+                                          <bgpRsPeerToProfile annotation="" configIssues="" direction="import" tDn="uni/tn-{{item['tenant']}}/prof-{{item['Import_Route_Map']}}"/>
+                                      {% endif %}
+                                      {% if item['Export_Route_Map'] %}
+                                          <bgpRsPeerToProfile annotation="" configIssues="" direction="export" tDn="uni/tn-{{item['tenant']}}/prof-{{item['Export_Route_Map']}}"/>
+                                      {% endif %}
+                                      <bgpRsPeerPfxPol annotation="" tnBgpPeerPfxPolName=""/>
+                                      {% if item['Local_AS'] %}
+                                          {% if item['Local_AS_Options'] == 'no-Prepend+replace-as' %}
+                                              {% set asnP %}replace-as{% endset %}
+                                          {% else %}
+                                              {% set asnP %}{% endset %}
+                                          {% endif %}
+                                          <bgpLocalAsnP annotation="" asnPropagate="{{asnP}}" descr="" localAsn="{{item['Local_AS']}}" name="" nameAlias=""/>
+                                      {% endif %}
+                                      <bgpAsP annotation="" asn="{{item['bgp_peer_as']}}" descr="" name="" nameAlias=""/>
+                                  </bgpPeerP>
+                              </l3extRsPathL3OutAtt>
+                          </l3extLIfP>
+                      </l3extLNodeP>
+                  </l3extOut>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ interfaceBgpPeer }}"
+      when: interfaceBgpPeer is defined
 
 

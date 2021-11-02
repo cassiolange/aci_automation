@@ -1,0 +1,6 @@
+ansible
+paramiko
+pandas
+lxml
+xmljson
+openpyxl

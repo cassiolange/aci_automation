@@ -1,0 +1,37 @@
+---
+- import_playbook: update.yml
+
+- name : L3Out Provisioning
+  gather_facts: false
+  hosts: all
+  vars_files:
+   - "{{ aci_variable_filename }}"
+  vars:
+     - aci_login: &aci_login
+          host: '{{ ansible_host }}'
+          user: '{{ ansible_user }}'
+          password: '{{ ansible_password }}'
+          validate_certs: "{{ validate_certs }}"
+
+  tasks:
+
+    - name: Add a new L3Out
+      cisco.aci.aci_l3out:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        name: "{{ item.name }}"
+        description: "{{ item.description if item.description is defined and item.description else omit }}"
+        vrf: "{{ item.vrf }}"
+        route_control: import,export
+        l3protocol: bgp
+        state: present
+        domain: "{{ item.l3out_domain }}"
+      delegate_to: localhost
+      loop: "{{ l3out }}"
+      when: l3out is defined
+
+
+
+
+
+

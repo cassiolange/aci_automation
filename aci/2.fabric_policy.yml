@@ -1,5 +1,5 @@
 ---
-- ansible.builtin.import_playbook: update.yml
+- ansible.builtiimport_playbook: update.yml
 
 - name : Node Provisioning
   gather_facts: false
@@ -106,7 +106,7 @@
                           {% if item['switch_policy_group'] and item['switch_policy_group'] != "" %}
                             <fabricRsSpNodePGrp tDn="uni/fabric/funcprof/spnodepgrp-{{item['switch_policy_group']}}"/>
                           {% endif %}
-                            <fabricNodeBlk descr="" from_="{{item['from_node_id']}}" name="{{item['from_node_id']}}{{item['to_node_id']}}" to_="{{item['to_node_id']}}"/>
+                            <fabricNodeBlk descr="" from_="{{item['from_node_id'] | int }}" name="{{item['from_node_id'] | int }}{{item['to_node_id'] | int }}" to_="{{item['to_node_id'] | int }}"/>
                       </fabricSpineS>
                   </fabricSpineP>
               </fabricInst>

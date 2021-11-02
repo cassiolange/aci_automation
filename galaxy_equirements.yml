@@ -1,0 +1,7 @@
+collections:
+  - cisco.ios
+  - cisco.nxos
+  - cisco.iosxr
+  - cisco.mso
+  - cisco.aci
+  - cisco.nd

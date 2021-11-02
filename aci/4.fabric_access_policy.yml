@@ -29,9 +29,9 @@
         pool: "{{ item.vlan_pool }}"
         pool_allocation_mode: "{{ item.poolAllocMode }}"
         allocation_mode: "{{ item.alloc_mode }}"
-        block_start: "{{ item.start_vlan }}"
-        block_end: "{{ item.stop_vlan }}"
-        block_name: "{{'blk_%s_%s' %(item.start_vlan, item.stop_vlan) }}"
+        block_start: "{{ item.start_vlan | int }}"
+        block_end: "{{ item.stop_vlan | int }}"
+        block_name: "{{'blk_%s_%s' %(item.start_vlan | int , item.stop_vlan | int ) }}"
         state: "{{ item.status }}"
       delegate_to: localhost
       loop: "{{ vlan_encap_block }}"

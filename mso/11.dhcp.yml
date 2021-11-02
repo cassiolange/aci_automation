@@ -1,0 +1,39 @@
+---
+- import_playbook: update.yml
+- name : DHCP
+  gather_facts: false
+  hosts: all
+  vars:
+    - aci_login: &mso_login
+        hostname: "{{ ansible_host }}"
+        username: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        validate_certs: "{{ validate_certs }}"
+  tasks:
+
+    - name: Add a new DHCP Relay Policy
+      cisco.mso.mso_dhcp_relay_policy:
+        <<: *mso_login
+        dhcp_relay_policy: "{{ item.name }}"
+        description: "{{ item.description if item.status is defined else omit }}"
+        tenant: "{{ item.tenant }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ dhcp_relay_policy }}"
+      when: dhcp_relay_policy is defined
+
+    - name: Add a new provider to a DHCP Relay Policy
+      cisco.mso.mso_dhcp_relay_policy_provider:
+        <<: *mso_login
+        dhcp_relay_policy: "{{ item.dhcp_relay_policy }}"
+        tenant: "{{ item.tenant }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+        schema: "{{ item.epg_schema_name if item.epg_schema_name is defined and item.epg_schema_name != '' else item.external_epg_schema_name }}"
+        template: "{{ item.epg_template_name if item.epg_template_name is defined and item.epg_template_name != '' else item.external_epg_template_name  }}"
+        application_profile: "{{ item.anp if item.anp is defined and item.anp != '' else omit }}"
+        endpoint_group: "{{ item.epg if item.epg is defined and item.epg != '' else omit }}"
+        external_endpoint_group: "{{ item.external_epg if item.external_epg is defined and item.external_epg != '' else omit }}"
+        ip: "{{ item.ip }}"
+      delegate_to: localhost
+      loop: "{{ dhcp_relay_policy_provider }}"
+      when: dhcp_relay_policy_provider is defined

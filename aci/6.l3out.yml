@@ -290,4 +290,87 @@
       loop: "{{ interfaceBgpPeer }}"
       when: interfaceBgpPeer is defined
 
+    - name: Set Rules
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+          	<fvTenant name="{{item['tenant']}}" status="modified">
+                  <rtctrlAttrP annotation="" descr="" dn="uni/tn-{{item['tenant']}}/attr-{{item['name']}}" name="{{item['name']}}" nameAlias="">
+                  {% if item['set_community'] == 'yes' %}
+                      <rtctrlSetComm annotation="" community="regular:as2-nn2:{{item['community']}}" descr="" name="" nameAlias="" setCriteria="{{item['community_criteria']}}" type="community"/>
+                  {% endif %}
+                  {% if item['prepend'] == 'yes' %}
+                      <rtctrlSetASPath annotation="" criteria="prepend" descr="" lastnum="0" name="" nameAlias="" type="as-path">
+                      {% for i in range((item['number_prepend']) | int) %}
+                          <rtctrlSetASPathASN annotation="" asn="{{item['as_prepend']}}" descr="" name="" nameAlias="" order="{{i}}"/>
+                      {% endfor %}
+                      </rtctrlSetASPath>
+                  {% endif %}
+                  </rtctrlAttrP>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ set_rules }}"
+      when: set_rules is defined
+
+    - name: Match Rules
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+            <fvTenant name="{{item['tenant']}}" status="modified">
+              <rtctrlSubjP annotation="" descr="" dn="uni/tn-{{item['tenant']}}/subj-{{item['name']}}" name="{{item['name']}}" nameAlias="">
+              {% if item['prefix'] | length %}
+                <rtctrlMatchRtDest aggregate="{{item['aggregate']}}" annotation="" descr="" fromPfxLen="0" ip="{{item['prefix']}}" name="" nameAlias="" toPfxLen="0"/>
+              {% endif %}
+              {% if item['match_community_name'] | length %}
+                <rtctrlMatchCommTerm annotation="" descr="" name="{{item['match_community_name']}}" nameAlias="">
+                  <rtctrlMatchCommFactor annotation="" community="regular:as2-nn2:{{item['community']}}" descr="" name="" nameAlias="" scope="transitive"/>
+                </rtctrlMatchCommTerm>
+              {% endif %}
+              </rtctrlSubjP>
+            </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ match_rules }}"
+      when: match_rules is defined
+
+    - name: L3out Route Maps
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+            <fvTenant name="{{item['tenant']}}" status="modified">
+              <l3extOut name="{{item['l3out']}}">
+              {% if item['type'] == 'match_routing_policy_only' %}
+                {% set route_map_type %}global{% endset %}
+              {% elif item['type'] == 'match_prefix_and_routing_policy' %}
+                {% set route_map_type %}combinable{% endset %}
+              {% endif %}
+                <rtctrlProfile annotation="" autoContinue="{{item['auto_continue']}}" descr="" dn="uni/tn-{{item['tenant']}}/out-{{item['l3out']}}/prof-{{item['name']}}" name="{{item['name']}}" nameAlias="" ownerKey="" ownerTag="" type="{{route_map_type}}">
+                  <rtctrlCtxP action="{{item['action']}}" annotation="" descr="" name="{{item['context_name']}}" nameAlias="" order="{{item['order']}}">
+                  {% if item['set_rule'] | length %}
+                    <rtctrlScope annotation="" descr="" name="" nameAlias="">
+                      <rtctrlRsScopeToAttrP annotation="" tnRtctrlAttrPName="{{item['set_rule']}}"/>
+                    </rtctrlScope>
+                  {% endif %}
+                  {% if item['match_rule'] | length %}
+                    <rtctrlRsCtxPToSubjP annotation="" tnRtctrlSubjPName="{{item['match_rule']}}"/>
+                  {% endif %}
+                  </rtctrlCtxP>
+                </rtctrlProfile>
+              </l3extOut>
+            </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ l3out_route_maps }}"
+      when: l3out_route_maps is defined
+
 

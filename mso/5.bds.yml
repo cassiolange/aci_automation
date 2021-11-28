@@ -27,6 +27,7 @@
         state: "{{ item.status if item.status is defined else omit }}"
         bd : "{{ item.name }}"
         arp_flooding: "{{ item.arp_flooding if item.arp_flooding is defined and item.arp_flooding != '' else omit }}"
+        unicast_routing: "{{ item.unicast_routing if item.unicast_routing is defined and item.unicast_routing != '' else omit }}"
       delegate_to: localhost
       loop: "{{ bridge_domain  }}"
       when: bridge_domain is defined

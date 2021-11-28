@@ -41,23 +41,25 @@
       cisco.aci.aci_domain:
         <<: *aci_login
         domain: "{{ item.name }}"
-        domain_type: "{{ 'l3dom' if item.type == 'external_l3' else 'phys'}}"
+        domain_type: "{{ item.type }}"
         state: "{{ item.status }}"
+        vm_provider: "{{ item.vm_provider if item.vm_provider is defined and item.vm_provider != '' and item.type == 'vmm' else omit}}"
       delegate_to: localhost
       loop: "{{ domain }}"
-      when: domain is defined and (item.type == 'external_l3' or item.type == 'physical')
+      when: domain is defined
 
-    - name: Bind a VMM domain to VLAN pool (physical and external routed)
+    - name: Bind a domain to VLAN pool (physical and external routed)
       cisco.aci.aci_domain_to_vlan_pool:
         <<: *aci_login
         domain: "{{ item.name }}"
-        domain_type: "{{ 'l3dom' if item.type == 'external_l3' else 'phys'}}"
+        domain_type: "{{ item.type }}"
         state: "{{ item.status }}"
         pool: "{{ item.vlan_pool}}"
-        pool_allocation_mode: static
+        pool_allocation_mode: "{{ 'dynamic' if item.type == 'vmm' else 'static'}}"
+        vm_provider: "{{ item.vm_provider if item.vm_provider is defined and item.vm_provider != '' and item.type == 'vmm' else omit}}"
       delegate_to: localhost
       loop: "{{ domain }}"
-      when: domain is defined and (item.type == 'external_l3' or item.type == 'physical')
+      when: domain is defined
 
     - name: Add a new AEP
       cisco.aci.aci_aep:
@@ -75,11 +77,12 @@
         <<: *aci_login
         aep: "{{ item.aaep_name }}"
         domain: "{{ item.domain_name }}"
-        domain_type: "{{ 'l3dom' if item.domain_type == 'external_l3' else 'phys'}}"
+        domain_type: "{{ item.domain_type }}"
         state: "{{ item.status }}"
+        vm_provider: "{{ item.vm_provider if item.vm_provider is defined and item.vm_provider != '' and item.domain_type == 'vmm' else omit}}"
       delegate_to: localhost
       loop: "{{ aaep_domain_association }}"
-      when: aaep_domain_association is defined and (item.domain_type == 'external_l3' or item.domain_type == 'physical')
+      when: aaep_domain_association is defined
 
     - name: Create CDP Interface Policy to enable CDP
       cisco.aci.aci_interface_policy_cdp:

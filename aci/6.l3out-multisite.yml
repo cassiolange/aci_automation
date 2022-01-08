@@ -22,8 +22,11 @@
         name: "{{ item.name }}"
         description: "{{ item.description if item.description is defined and item.description else omit }}"
         vrf: "{{ item.vrf }}"
-        route_control: import,export
-        l3protocol: bgp
+        route_control: "{{ item.route_control_enforcement }}"
+        l3protocol:
+          - "{{ 'bgp' if item.enable_bgp is defined and item.enable_bgp == 'yes' }}"
+#          - "{{ 'ospf' if item.enable_ospf is defined and item.enable_ospf == 'yes' else omit}}"
+#          - "{{ 'pim' if item.enable_pim is defined and item.enable_pim == 'yes' }}"
         state: present
         domain: "{{ item.l3out_domain }}"
       delegate_to: localhost

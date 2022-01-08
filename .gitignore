@@ -279,5 +279,22 @@ cython_debug/
 # End of https://www.toptal.com/developers/gitignore/api/pycharm,python,macos
 
 
-/inventory/hosts.yaml
-
+*.xls
+*.xlsx
+/aci/hosts.yml
+/aci/*.xlsx
+/aci/*.xls
+/aci/log
+/aci/vmware.yml
+/aci/query*
+/aci/test.yml
+/mso/hosts.yml
+/mso/*.xlsx
+/mso/*.xls
+/mso/log
+/mso/query*
+/mso/v3.5_temp_fixes/*
+/excel_to_yaml/excel_to_yaml_config.py
+/mso/test.yml
+/mso/fix mso auth
+/mso/hosts-old.yml

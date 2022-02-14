@@ -1,0 +1,31 @@
+---
+- ansible.builtin.import_playbook: update.yml
+
+- name : Tenant Provisioning
+  gather_facts: false
+  hosts: all
+  vars_files:
+   - "{{ aci_variable_filename }}"
+  vars:
+     - aci_login: &aci_login
+          host: '{{ ansible_host }}'
+          user: '{{ ansible_user }}'
+          password: '{{ ansible_password }}'
+          validate_certs: "{{ validate_certs }}"
+
+  tasks:
+
+    - name: Add a new physical domain to EPG binding
+      cisco.aci.aci_epg_to_domain:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        ap: "{{ item.app_profile }}"
+        epg: "{{ item.epg_name }}"
+        domain: "{{ item.domainName }}"
+        domain_type: vmm
+        vm_provider: vmware
+        state: "{{ item.status }}"
+        custom_epg_name : "{{ item.vmm_name }}"
+      delegate_to: localhost
+      loop: "{{ epg_domain_association }}"
+      when: epg_domain_association is defined

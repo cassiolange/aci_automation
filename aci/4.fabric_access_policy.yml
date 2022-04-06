@@ -314,7 +314,7 @@
         to_port: "{{ item.to_port }}"
         from_card: "{{ item.from_slot }}"
         to_card: "{{ item.to_slot }}"
-        port_blk_description: "{{ item.description if item.description is defined else omit}}"
+        port_blk_description: "{{ item.port_block_description if item.port_block_description is defined else omit}}"
         state: "{{ item.status }}"
       delegate_to: localhost
       loop: "{{ interface_selector }}"
@@ -376,3 +376,26 @@
       delegate_to: localhost
       with_items: "{{ mcp_instance_policy }}"
       when: mcp_instance_policy is defined
+
+    - name: Interface Description
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+              {% if item['role'] == "leaf" %}
+                  <infraHPathS name="{{item['node_id'] | int }}_{{item['interface'] | replace ("/","_") }}" descr="{{item['description']}}">
+                      <infraRsHPathAtt tDn="topology/pod-{{item['pod_id'] | int }}/paths-{{item['node_id'] | int }}/pathep-[{{item['interface']}}]" status=""/>
+                  </infraHPathS>
+              {% else %}
+                  <infraSHPathS name="{{item['node_id'] | int }}_{{item['interface'] | replace ("/","_") }}" descr="{{item['description']}}">
+                      <infraRsSHPathAtt tDn="topology/pod-{{item['pod_id'] | int }}/paths-{{item['node_id'] | int }}/pathep-[{{item['interface']}}]" status=""/>
+                  </infraSHPathS>
+              {% endif %}
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ interface_description }}"
+      when: interface_description is defined

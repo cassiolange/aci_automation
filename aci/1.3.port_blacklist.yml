@@ -1,0 +1,24 @@
+---
+- import_playbook: update.yml
+
+- name : Port Blackout
+  gather_facts: false
+  hosts: all
+  vars:
+     - aci_login: &aci_login
+          host: '{{ ansible_host }}'
+          user: '{{ ansible_user }}'
+          password: '{{ ansible_password }}'
+          validate_certs: "{{ validate_certs }}"
+  tasks:
+
+    - name: Enable or Disable Interface
+      cisco.aci.aci_interface_blacklist:
+        <<: *aci_login
+        pod_id: "{{ item.pod }}"
+        node_id: "{{ item.node_id }}"
+        interface: "{{ item.interface }}"
+        state: "{{ item.status if item.status is define else omit}}"
+      delegate_to: localhost
+      loop: "{{ interface_disable }}"
+      when: interface_disable is defined

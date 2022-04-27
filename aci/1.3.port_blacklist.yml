@@ -15,10 +15,10 @@
     - name: Enable or Disable Interface
       cisco.aci.aci_interface_blacklist:
         <<: *aci_login
-        pod_id: "{{ item.pod_id }}"
-        node_id: "{{ item.node_id }}"
+        pod_id: "{{ item.pod_id | int }}"
+        node_id: "{{ item.node_id | int  }}"
         interface: "{{ item.interface }}"
-        state: "{{ item.status if item.status is define else omit}}"
+        state: "{{ item.status if item.status is defined else 'present' }}"
       delegate_to: localhost
       loop: "{{ interface_disable }}"
       when: interface_disable is defined

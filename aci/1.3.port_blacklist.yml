@@ -15,7 +15,7 @@
     - name: Enable or Disable Interface
       cisco.aci.aci_interface_blacklist:
         <<: *aci_login
-        pod_id: "{{ item.pod }}"
+        pod_id: "{{ item.pod_id }}"
         node_id: "{{ item.node_id }}"
         interface: "{{ item.interface }}"
         state: "{{ item.status if item.status is define else omit}}"

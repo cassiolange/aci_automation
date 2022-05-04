@@ -62,7 +62,7 @@
         pod: "{{ 'pod-%s' % item.pod_id | int }}"
         vlan: "{{ item.port_encap_vlan | int  }}"
         mode: "{{ item.mode }}"
-        path: "{{ item.interface_policy_group if item.type == 'vpc' else 'eth%s' %item.leaf_port}}"
+        path: "{{ item.interface_policy_group if item.type == 'vpc' else item.interface_policy_group if item.type == 'dpc' else 'eth%s' %item.leaf_port}}"
         leaf: "{{ '%s-%s' % (item.left_node_id | int, item.right_node_id | int)  if item.type == 'vpc' else item.left_node_id | int}}"
       delegate_to: localhost
       loop: "{{ epg_static_binding }}"

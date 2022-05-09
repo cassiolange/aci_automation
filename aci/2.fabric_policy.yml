@@ -128,7 +128,7 @@
                         {% if item['switch_policy_group'] and item['switch_policy_group'] != "" %}
                           <fabricRsLeNodePGrp  tDn="uni/fabric/funcprof/lenodepgrp-{{item['switch_policy_group']}}"/>
                         {% endif %}
-                          <fabricNodeBlk  descr="" from_="{{item['from_node_id']}}" name="{{item['from_node_id']}}{{item['to_node_id']}}" to_="{{item['to_node_id']}}"/>
+                          <fabricNodeBlk  descr="" from_="{{item['from_node_id'] | int }}" name="{{item['from_node_id']  | int }}{{item['to_node_id']  | int }}" to_="{{item['to_node_id']  | int }}"/>
                       </fabricLeafS>
                   </fabricLeafP>
               </fabricInst>

@@ -1,5 +1,5 @@
 ---
-- ansible.builtiimport_playbook: update.yml
+- import_playbook: update.yml
 
 - name : Node Provisioning
   gather_facts: false

@@ -3,6 +3,8 @@ import time
 import yaml
 import numpy
 import excel_to_yaml_config
+import os
+import glob
 
 
 def excel_to_yaml():
@@ -26,16 +28,35 @@ def excel_to_yaml():
             }
         }
     }
-    for device in excel_to_yaml_config.config:
+    ###loop all the input file and folder to determine if the input file or folder exist
+    excel_files =[]
+    for input in excel_to_yaml_config.config:
+        if os.path.exists(input):
+            if os.path.isfile(input):
+                excel_files.append(input)
+            else:
+                #get all xlsx files from the folde
+                if input.endswith('/') == False:
+                    input = input+'/'
+                files = glob.glob(input+'[!~]*.xlsx')
+                for file in files:
+                    excel_files.append(file)
+        else:
+            print('Input %s does not exist' % input)
+
+
+    for excel_file in excel_files:
+        output_dir = ''
         yaml_data = {}
         sheets = []
-        print('Opening %s' % device['excel'])
-        excel = pandas.read_excel(device['excel'], None, engine='openpyxl')
+        print('Opening %s' % excel_file)
+        excel = pandas.read_excel(excel_file, None, engine='openpyxl')
         sheets_hosts = list(excel.keys())
         if 'apic_controller' in sheets_hosts:
-            excel = pandas.read_excel(device['excel'], 'apic_controller', engine='openpyxl')
-            apic_dir.append(device['output_dir'])
+            excel = pandas.read_excel(excel_file, 'apic_controller', engine='openpyxl')
+            apic_dir.append(excel_to_yaml_config.aci_output_dir)
             host = excel['apic_hostname'][0]
+            output_dir = excel_to_yaml_config.aci_output_dir
             if excel['apic_hostname'].isnull()[0] == False:
                 apic_hosts['all']['children']['apic']['hosts'][excel['apic_hostname'][0]] = {
                     'ansible_host': str(excel['oob_ipv4'][0]).split('/')[0]
@@ -52,10 +73,12 @@ def excel_to_yaml():
                             'ansible_password': excel['password'][0]
                         }
                     )
+
         elif 'mso_controller' in sheets_hosts:
-            excel = pandas.read_excel(device['excel'], 'mso_controller', engine='openpyxl')
-            mso_dir.append(device['output_dir'])
+            excel = pandas.read_excel(excel_file, 'mso_controller', engine='openpyxl')
+            mso_dir.append(excel_to_yaml_config.ndo_output_dir)
             host = excel['mso_hostname'][0]
+            output_dir = excel_to_yaml_config.ndo_output_dir
             if excel['mso_hostname'].isnull()[0] == False:
                 mso_hosts['all']['children']['mso']['hosts'][excel['mso_hostname'][0]] = {
                     'ansible_host': str(excel['oob_ipv4'][0]).split('/')[0]
@@ -73,8 +96,8 @@ def excel_to_yaml():
                         }
                     )
 
-        print('Opening %s' % device['excel'])
-        excel = pandas.read_excel(device['excel'], sheet_name='build_tasks', engine='openpyxl')
+        print('Opening %s' % excel_file)
+        excel = pandas.read_excel(excel_file, sheet_name='build_tasks', engine='openpyxl')
         for line in excel.index:
             if excel['include'][line] == 'yes':
                 sheets.append(str(excel['input_worksheet'][line]))
@@ -82,7 +105,7 @@ def excel_to_yaml():
 
         for sheet in sheets:
             print('Sheet: %s' %sheet)
-            excel = pandas.read_excel(device['excel'], sheet_name=sheet, engine='openpyxl')
+            excel = pandas.read_excel(excel_file, sheet_name=sheet, engine='openpyxl')
             yaml_data.update({str(sheet):[]})
             columns = list(excel.keys())
             for line in excel.index:
@@ -109,7 +132,7 @@ def excel_to_yaml():
                             )
                     yaml_data[sheet].append(current_line)
 
-        file = open(device['output_dir']+'/host_vars/'+host+'.yaml', 'w')
+        file = open(output_dir+'/host_vars/'+host+'.yaml', 'w')
         yaml.dump(yaml_data, file)
         file.close()
     for apic in apic_dir:

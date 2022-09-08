@@ -294,7 +294,6 @@ cython_debug/
 /mso/log
 /mso/query*
 /mso/v3.5_temp_fixes/*
-/excel_to_yaml/excel_to_yaml_config.py
 /mso/test.yml
 /mso/fix mso auth
 /mso/hosts-old.yml

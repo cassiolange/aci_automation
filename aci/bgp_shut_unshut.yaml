@@ -1,0 +1,34 @@
+---
+- import_playbook: update.yml
+
+- name : BGP
+  gather_facts: false
+  hosts: all
+  vars_files:
+   - "{{ aci_variable_filename }}"
+  vars:
+     - aci_login: &aci_login
+          host: '{{ ansible_host }}'
+          user: '{{ ansible_user }}'
+          password: '{{ ansible_password }}'
+          validate_certs: "{{ validate_certs }}"
+
+  tasks:
+
+    - name: Shutdown and UnShut BGP peer
+      cisco.aci.aci_l3out_bgp_peer:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        l3out: "{{ item.l3out }}"
+        node_profile: "{{ item.l3out_node_profile }}"
+        interface_profile: "{{ item.name }}"
+        pod_id: "{{ item.pod_id }}"
+        node_id: "{{ '%s-%s' % (item.left_node_id | string, item.right_node_id | string) }}"
+        path_ep: "{{ item.int_pol_group }}"
+        peer_ip: "{{ item.bgp_peer_ip }}"
+        admin_state: "{{ item.admin_status }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ interfaceBgpPeer }}"
+      when: interfaceBgpPeer is defined
+

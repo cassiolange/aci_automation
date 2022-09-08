@@ -305,7 +305,7 @@
                   {% if item['prepend'] == 'yes' %}
                       <rtctrlSetASPath annotation="" criteria="prepend" descr="" lastnum="0" name="" nameAlias="" type="as-path">
                       {% for i in range((item['number_prepend']) | int) %}
-                          <rtctrlSetASPathASN annotation="" asn="{{item['as_prepend']}}" descr="" name="" nameAlias="" order="{{i}}"/>
+                          <rtctrlSetASPathASN annotation="" asn="{{item['as_prepend'] | int }}" descr="" name="" nameAlias="" order="{{i}}"/>
                       {% endfor %}
                       </rtctrlSetASPath>
                   {% endif %}

@@ -4,31 +4,21 @@
 - name : Tenants
   gather_facts: false
   hosts: all
-  vars:
-    - aci_login: &mso_login
-        hostname: "{{ ansible_host }}"
-        username: "{{ ansible_user }}"
-        password: "{{ ansible_password }}"
-        validate_certs: "{{ validate_certs }}"
 
   tasks:
     - name: Add Tenant
       cisco.mso.mso_tenant:
-        <<: *mso_login
         tenant: "{{ item.name }}"
         description: "{{ item.description if item.status is defined else omit }}"
         state: "{{ item.status if item.status is defined else omit }}"
-      delegate_to: localhost
       loop: "{{ tenant }}"
       when: tenant is defined
 
     - name: Associate Tenant to Site
-      cisco.mso.mso_tenant_site:
-        <<: *mso_login
-        tenant: "{{ item.tenant_name }}"
+      cisco.mso.mso_tenant:
+        tenant: "{{ item.tenant }}"
         state: "{{ item.status if item.status is defined else omit }}"
-        site: "{{ item.site_name }}"
-      delegate_to: localhost
+        sites: "{{ item.site }}"
       loop: "{{ tenant_site_association }}"
       when: tenant_site_association is defined
 

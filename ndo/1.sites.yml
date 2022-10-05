@@ -40,5 +40,12 @@
         state:  "{{ item.status if item.status is defined else omit }}"
       loop: "{{ site }}"
       when: site is defined
-      loop_control:
-        pause: 2
+      retries: 30
+      delay: 3
+      register: add_site_mso
+#      ignore_errors: yes
+      until: add_site_mso['failed'] == false
+
+#    - name: debug
+#      debug:
+#        var: add_site_mso

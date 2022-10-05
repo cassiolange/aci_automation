@@ -4,7 +4,6 @@
 - name : Get Sites
   gather_facts: false
   hosts: all
-  connection: httpapi
 
   tasks:
 

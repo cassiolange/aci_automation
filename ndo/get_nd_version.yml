@@ -4,7 +4,6 @@
 - name : Get Version
   gather_facts: false
   hosts: all
-  connection: httpapi
 
   tasks:
     - name: Get ND Version

@@ -1,0 +1,6 @@
+ansible_connection: ansible.netcommon.httpapi
+ansible_network_os: cisco.nd.nd
+ansible_httpapi_validate_certs: False
+ansible_httpapi_use_ssl: True
+ansible_httpapi_use_proxy: True
+validate_certs: False

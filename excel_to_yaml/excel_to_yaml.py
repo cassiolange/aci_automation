@@ -9,7 +9,7 @@ import glob
 
 def excel_to_yaml():
     apic_dir = []
-    mso_dir = []
+    ndo_dir = []
     apic_hosts = {
         'all': {
             'children': {
@@ -19,10 +19,10 @@ def excel_to_yaml():
             }
         }
     }
-    mso_hosts = {
+    nd_hosts = {
         'all': {
             'children': {
-                'mso': {
+                'nd': {
                     'hosts': {},
                 },
             }
@@ -76,21 +76,21 @@ def excel_to_yaml():
 
         elif 'mso_controller' in sheets_hosts:
             excel = pandas.read_excel(excel_file, 'mso_controller', engine='openpyxl')
-            mso_dir.append(excel_to_yaml_config.ndo_output_dir)
+            ndo_dir.append(excel_to_yaml_config.ndo_output_dir)
             host = excel['mso_hostname'][0]
             output_dir = excel_to_yaml_config.ndo_output_dir
             if excel['mso_hostname'].isnull()[0] == False:
-                mso_hosts['all']['children']['mso']['hosts'][excel['mso_hostname'][0]] = {
+                nd_hosts['all']['children']['nd']['hosts'][excel['mso_hostname'][0]] = {
                     'ansible_host': str(excel['oob_ipv4'][0]).split('/')[0]
                 }
                 if excel['username'].isnull()[0] == False:
-                    mso_hosts['all']['children']['mso']['hosts'][excel['mso_hostname'][0]].update(
+                    nd_hosts['all']['children']['nd']['hosts'][excel['mso_hostname'][0]].update(
                         {
                             'ansible_user': excel['username'][0]
                         }
                     )
                 if excel['password'].isnull()[0] == False:
-                    mso_hosts['all']['children']['mso']['hosts'][excel['mso_hostname'][0]].update(
+                    nd_hosts['all']['children']['nd']['hosts'][excel['mso_hostname'][0]].update(
                         {
                             'ansible_password': excel['password'][0]
                         }
@@ -139,9 +139,9 @@ def excel_to_yaml():
         file = open(apic + '/' + 'hosts.yml', 'w')
         yaml.dump(apic_hosts, file)
         file.close()
-    for mso in mso_dir:
+    for mso in ndo_dir:
         file = open(mso + '/' + 'hosts.yml', 'w')
-        yaml.dump(mso_hosts, file)
+        yaml.dump(nd_hosts, file)
         file.close()
 
 def main():

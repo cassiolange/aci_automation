@@ -1,0 +1,18 @@
+---
+- ansible.builtin.import_playbook: update.yml
+
+- name : Get Version
+  gather_facts: false
+  hosts: all
+  connection: httpapi
+
+  tasks:
+    - name: Get ND Version
+      cisco.nd.nd_version:
+        state: query
+      register: nd_version
+
+    - name: Show ND Version
+      debug:
+        var: nd_version
+

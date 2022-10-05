@@ -1,0 +1,44 @@
+---
+- ansible.builtin.import_playbook: update.yml
+
+- name : Add Site
+  gather_facts: false
+  hosts: all
+
+  tasks:
+    - name: Add a new sites
+      cisco.mso.mso_rest:
+        path: "/api/config/v2/addsite/"
+        method: post
+        content:
+          {
+            "url": "{{ item.apic_url }}",
+            "siteType": "ACI",
+            "name": "{{ item.name }}",
+            "aci": {
+              "userName": "{{ item.apic_username }}",
+              "password": "{{ item.apic_password }}",
+              "inbandEpgDN": "",
+              "loginDomain": ""
+            },
+            "latitude": "",
+            "longitude": ""
+          }
+      loop: "{{ site }}"
+      when: site is defined
+      loop_control:
+        pause: 2
+
+    - name: Configure site as Managed by MSO
+      cisco.mso.mso_site:
+        site: "{{ item.name }}"
+        apic_username: "{{ item.apic_username }}"
+        apic_password: "{{ item.apic_password }}"
+        apic_site_id: "{{ item.site_id | int }}"
+        urls:
+          - "{{ item.apic_url }}"
+        state:  "{{ item.status if item.status is defined else omit }}"
+      loop: "{{ site }}"
+      when: site is defined
+      loop_control:
+        pause: 2

@@ -1,0 +1,18 @@
+---
+- ansible.builtin.import_playbook: update.yml
+
+- name : Get Version
+  gather_facts: false
+  hosts: all
+  connection: httpapi
+
+  tasks:
+
+    - name: Get NDO Version
+      cisco.mso.mso_version:
+        state: query
+      register: ndo_version
+
+    - name: Show NDO Version
+      debug:
+        var: ndo_version

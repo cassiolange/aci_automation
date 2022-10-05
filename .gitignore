@@ -289,12 +289,12 @@ cython_debug/
 /aci/vmware.yml
 /aci/query*
 /aci/test.yml
-/mso/hosts.yml
+/ndo/hosts.yml
 /mso/*.xlsx
 /mso/*.xls
-/mso/log
-/mso/query*
-/mso/v3.5_temp_fixes/*
-/mso/test.yml
-/mso/fix mso auth
-/mso/hosts-old.yml
+/ndo/log
+/ndo/query*
+/ndo/v3.5_temp_fixes/*
+/ndo/test.yml
+/ndo/fix mso auth
+/ndo/hosts-old.yml

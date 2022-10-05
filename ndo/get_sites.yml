@@ -1,0 +1,18 @@
+---
+- ansible.builtin.import_playbook: update.yml
+
+- name : Get Sites
+  gather_facts: false
+  hosts: all
+  connection: httpapi
+
+  tasks:
+
+    - name: Get ND Sites
+      cisco.mso.mso_site:
+        state: query
+      register: nd_sites
+
+    - name: Show Sites
+      debug:
+        var: nd_sites

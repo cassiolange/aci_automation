@@ -24,4 +24,3 @@
         state: "{{ item.status if item.status is defined else omit }}"
       loop: "{{ template_site_association }}"
       when: template_site_association is defined
-

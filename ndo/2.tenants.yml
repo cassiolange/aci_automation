@@ -21,5 +21,3 @@
         sites: "{{ item.site }}"
       loop: "{{ tenant_site_association }}"
       when: tenant_site_association is defined
-
-

@@ -4,17 +4,10 @@
 - name : Endpoint Groups
   gather_facts: false
   hosts: all
-  vars:
-    - aci_login: &mso_login
-        hostname: "{{ ansible_host }}"
-        username: "{{ ansible_user }}"
-        password: "{{ ansible_password }}"
-        validate_certs: "{{ validate_certs }}"
   tasks:
 
     - name: Add a new EPG
       cisco.mso.mso_schema_template_anp_epg:
-        <<: *mso_login
         schema: "{{ item.schema_name }}"
         template: "{{ item.template_name }}"
         anp : "{{ item.app_profile_name }}"
@@ -26,13 +19,11 @@
           template: "{{ item.bd_template_name }}"
         preferred_group: "{{ item.preferred_group_member if item.preferred_group_member is defined and item.preferred_group_member != '' else omit }}"
         intra_epg_isolation: "{{ item.intra_epg_isolation if item.intra_epg_isolation is defined and item.intra_epg_isolation != '' else omit  }}"
-      delegate_to: localhost
       loop: "{{ epg }}"
       when: epg is defined
 
     - name: Add a new domain to a site EPG
       cisco.mso.mso_schema_site_anp_epg_domain:
-        <<: *mso_login
         schema: "{{ item.epg_schema_name }}"
         template: "{{ item.epg_template_name }}"
         anp: "{{ item.app_profile_name }}"
@@ -44,13 +35,16 @@
         deployment_immediacy: "{{ item.deploy_immediacy if item.deploy_immediacy is defined and item.deploy_immediacy != '' else 'immediate' }}"
         resolution_immediacy: "{{ item.resolution_immediacy if item.resolution_immediacy is defined and item.resolution_immediacy != '' else 'immediate' }}"
         vlan_encap_mode: "{{ item.vmm_vlan_encap_mode if item.vmm_vlan_encap_mode is defined and item.vmm_vlan_encap_mode != '' else omit }}"
-      delegate_to: localhost
+        allow_micro_segmentation: "{{ item.allow_micro_segmentation if item.allow_micro_segmentation is defined and item.allow_micro_segmentation != '' else omit }}"
+        port_encap_vlan: "{{ item.vmm_static_vlan | int if item.vmm_vlan_encap_mode == 'static' and item.vmm_static_vlan is defined and item.vmm_static_vlan != '' else omit }}"
+        port_encap_vlan_type: "{{ 'vlan' if item.vmm_static_vlan is defined and item.vmm_static_vlan != '' else omit }}"
+        micro_seg_vlan: "{{ item.micro_seg_vlan | int if item.vmm_vlan_encap_mode == 'static' and item.micro_seg_vlan is defined and item.micro_seg_vlan != '' else omit }}"
+        micro_seg_vlan_type: "{{ 'vlan' if item.vmm_static_vlan is defined and item.vmm_static_vlan != '' else omit }}"
       loop: "{{ domain_epg_association }}"
       when: domain_epg_association is defined
 
     - name: Static Binding
       cisco.mso.mso_schema_site_anp_epg_staticport:
-        <<: *mso_login
         schema: "{{ item.epg_schema_name }}"
         template: "{{ item.epg_template_name }}"
         anp: "{{ item.app_profile_name }}"
@@ -64,6 +58,5 @@
         mode: "{{ item.mode }}"
         path: "{{ item.interface_policy_group if item.type == 'vpc' else item.interface_policy_group if item.type == 'dpc' else 'eth%s' %item.leaf_port}}"
         leaf: "{{ '%s-%s' % (item.left_node_id | int, item.right_node_id | int)  if item.type == 'vpc' else item.left_node_id | int}}"
-      delegate_to: localhost
       loop: "{{ epg_static_binding }}"
       when: epg_static_binding is defined

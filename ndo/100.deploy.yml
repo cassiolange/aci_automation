@@ -1,0 +1,19 @@
+---
+- ansible.builtin.import_playbook: update.yml
+- name : Deploy
+  gather_facts: false
+  hosts: all
+  tasks:
+
+    - name: Deploy a schema template
+      cisco.mso.mso_schema_template_deploy:
+        schema: "{{ item.schema }}"
+        template: "{{ item.template }}"
+        state: deploy
+      loop: "{{ schema_template }}"
+      when: schema_template is defined
+
+
+
+
+

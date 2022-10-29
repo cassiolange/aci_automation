@@ -4,17 +4,10 @@
 - name : Bridge Domains
   gather_facts: false
   hosts: all
-  vars:
-    - aci_login: &mso_login
-        hostname: "{{ ansible_host }}"
-        username: "{{ ansible_user }}"
-        password: "{{ ansible_password }}"
-        validate_certs: "{{ validate_certs }}"
   tasks:
 
     - name: Add a new BD
       cisco.mso.mso_schema_template_bd:
-        <<: *mso_login
         schema: "{{ item.schema_name }}"
         template: "{{ item.template_name }}"
         layer2_stretch: "{{ item.l2stretch }}"
@@ -28,14 +21,12 @@
         bd : "{{ item.name }}"
         arp_flooding: "{{ item.arp_flooding if item.arp_flooding is defined and item.arp_flooding != '' else omit }}"
         unicast_routing: "{{ item.unicast_routing if item.unicast_routing is defined and item.unicast_routing != '' else omit }}"
-      delegate_to: localhost
       loop: "{{ bridge_domain  }}"
       when: bridge_domain is defined
 
 
     - name: Add a new subnet to a Stretched BD
       cisco.mso.mso_schema_template_bd_subnet:
-        <<: *mso_login
         schema: "{{ item.schema_name }}"
         template: "{{ item.template_name }}"
         bd: "{{ item.bd_name }}"
@@ -44,25 +35,21 @@
         scope: "{{ item.subnet_scope }}"
         shared: "{{ item.shared if item.shared is defined and item.shared != '' else omit }}"
         state: "{{ item.status if item.status is defined else omit }}"
-      delegate_to: localhost
       loop: "{{ bridge_domain_subnet }}"
       when: bridge_domain_subnet is defined and item.site_name == ''
 
     - name: Add Non Streched BD to the Site
       cisco.mso.mso_schema_site_bd:
-        <<: *mso_login
         site: "{{ item.site_name }}"
         schema: "{{ item.schema_name }}"
         template: "{{ item.template_name }}"
         bd: "{{ item.bd_name }}"
         state: "{{ item.status if item.status is defined else omit }}"
-      delegate_to: localhost
       loop: "{{ bridge_domain_subnet  }}"
       when: bridge_domain_subnet is defined and item.site_name != ''
 
     - name: Add a new subnet to a Non Stretched BD
       cisco.mso.mso_schema_site_bd_subnet:
-        <<: *mso_login
         schema: "{{ item.schema_name }}"
         template: "{{ item.template_name }}"
         description: "{{ item.description if item.status is defined else omit }}"
@@ -72,6 +59,5 @@
         shared: "{{ item.shared if item.shared is defined and item.shared != '' else omit }}"
         state: "{{ item.status if item.status is defined else omit }}"
         site: "{{ item.site_name }}"
-      delegate_to: localhost
       loop: "{{ bridge_domain_subnet }}"
       when: bridge_domain_subnet is defined and item.site_name != ''

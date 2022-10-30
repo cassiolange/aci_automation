@@ -7,48 +7,64 @@
 
   tasks:
 
-#    - name: Add a new L3out
-#      cisco.mso.mso_schema_template_l3out:
-#        schema: "{{ item.schema_name }}"
-#        template: "{{ item.template_name }}"
-#        l3out: "{{ item.name }}"
-#        state: "{{ item.status if item.status is defined else omit }}"
-#        vrf:
-#          name: "{{ item.vrf_name }}"
-#          template: "{{ item.vrf_template }}"
-#          schema: "{{ item.vrf_schema }}"
-#      loop: "{{ l3out }}"
-#      when: l3out is defined
+    - name: Add a new L3out
+      cisco.mso.mso_schema_template_l3out:
+        schema: "{{ item.schema_name }}"
+        template: "{{ item.template_name }}"
+        l3out: "{{ item.name }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+        vrf:
+          name: "{{ item.vrf_name }}"
+          template: "{{ item.vrf_template }}"
+          schema: "{{ item.vrf_schema }}"
+      loop: "{{ l3out }}"
+      when: l3out is defined
 
-#    - name: Add a new external EPG (Non Stretched)
-#      cisco.mso.mso_schema_template_external_epg:
-#        external_epg: "{{ item.name }}"
-#        schema: "{{ item.schema_name }}"
-#        template: "{{ item.template_name }}"
-#        l3out:
-#          name: "{{ item.l3out_name }}"
-#          schema: "{{ item.l3out_schema_name }}"
-#          template: "{{ item.l3out_template_name }}"
-#        vrf:
-#          name: "{{ item.vrf_name }}"
-#          schema: "{{ item.vrf_schema_name}}"
-#          template: "{{ item.vrf_template_name }}"
-#        state: "{{ item.status if item.status is defined else omit }}"
-#      loop: "{{ external_epg }}"
-#      when: external_epg is defined and item.site_name is defined and item.site_name !=""
-#
-#    - name: Add a new external EPG (Stretched)
-#      cisco.mso.mso_schema_template_external_epg:
-#        external_epg: "{{ item.name }}"
-#        schema: "{{ item.schema_name }}"
-#        template: "{{ item.template_name }}"
-#        vrf:
-#          name: "{{ item.vrf_name }}"
-#          schema: "{{ item.vrf_schema_name}}"
-#          template: "{{ item.vrf_template_name }}"
-#        state: "{{ item.status if item.status is defined else omit }}"
-#      loop: "{{ external_epg }}"
-#      when: external_epg is defined and item.site_name is defined and item.site_name ==""
+    - name: Add a new external EPG (Non Stretched)
+      cisco.mso.mso_schema_template_external_epg:
+        external_epg: "{{ item.name }}"
+        schema: "{{ item.schema_name }}"
+        template: "{{ item.template_name }}"
+        l3out:
+          name: "{{ item.l3out_name }}"
+          schema: "{{ item.l3out_schema_name }}"
+          template: "{{ item.l3out_template_name }}"
+        vrf:
+          name: "{{ item.vrf_name }}"
+          schema: "{{ item.vrf_schema_name}}"
+          template: "{{ item.vrf_template_name }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      loop: "{{ external_epg }}"
+      when: external_epg is defined and item.site_name is defined and item.site_name !=""
+
+    - name: Add a new external EPG (Stretched)
+      cisco.mso.mso_schema_template_external_epg:
+        external_epg: "{{ item.name }}"
+        schema: "{{ item.schema_name }}"
+        template: "{{ item.template_name }}"
+        vrf:
+          name: "{{ item.vrf_name }}"
+          schema: "{{ item.vrf_schema_name}}"
+          template: "{{ item.vrf_template_name }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      loop: "{{ external_epg }}"
+      when: external_epg is defined and item.site_name is defined and item.site_name ==""
+
+####
+#need to fix mso_schema_site_external_epg
+#L3outRef need be blank for Stretched External
+#            l3outRef=""
+#            # l3outRef=dict(
+#            #     schemaId=schema_id,
+#            #     templateName=template,
+#            #     l3outName=l3out,
+#            # ),
+####
+
+    - name: "*********Warning*********"
+      debug:
+        msg: "mso_schema_site_external_epg needs to be fixed. Please, check the comments on the playbook."
+
 
     - name: Bind Stretched External EPG to a Site L3Out
       cisco.mso.mso_schema_site_external_epg:
@@ -64,26 +80,28 @@
       loop: "{{ external_epg_to_l3out }}"
       when: external_epg_to_l3out is defined
 
-#    - name: Add a new subnet to an External EPG
-#      cisco.mso.mso_schema_template_external_epg_subnet:
-#        schema: "{{ item.schema_name }}"
-#        template: "{{ item.template_name }}"
-#        external_epg: "{{ item.name }}"
-#        subnet: "{{ item.subnet }}"
-#        state: "{{ item.status if item.status is defined else omit }}"
-#        scope: "{{ 'import-security' if item.external_subnet_for_external_epg is defined and item.external_subnet_for_external_epg == 'yes' else omit}}"
-#      loop: "{{ external_epg_subnet }}"
-#      when: external_epg_subnet is defined
 
-#    - name: Add a new site BD to  l3out
-#      cisco.mso.mso_schema_site_bd_l3out:
-#        schema: "{{ item.schema_name }}"
-#        template: "{{ item.template_name }}"
-#        site: "{{ item.site_name }}"
-#        bd: "{{ item.name }}"
-#        l3out: "{{ item.l3out_name }}"
-#        state: "{{ item.status if item.status is defined else omit }}"
-#      loop: "{{ bridge_domain_to_l3out }}"
-#      when: bridge_domain_to_l3out is defined
+
+    - name: Add a new subnet to an External EPG
+      cisco.mso.mso_schema_template_external_epg_subnet:
+        schema: "{{ item.schema_name }}"
+        template: "{{ item.template_name }}"
+        external_epg: "{{ item.name }}"
+        subnet: "{{ item.subnet }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+        scope: "{{ 'import-security' if item.external_subnet_for_external_epg is defined and item.external_subnet_for_external_epg == 'yes' else omit}}"
+      loop: "{{ external_epg_subnet }}"
+      when: external_epg_subnet is defined
+
+    - name: Bind BD to l3out
+      cisco.mso.mso_schema_site_bd_l3out:
+        schema: "{{ item.schema_name }}"
+        template: "{{ item.template_name }}"
+        site: "{{ item.site_name }}"
+        bd: "{{ item.name }}"
+        l3out: "{{ item.l3out_name }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      loop: "{{ bridge_domain_to_l3out }}"
+      when: bridge_domain_to_l3out is defined
 
 

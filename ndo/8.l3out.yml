@@ -1,7 +1,7 @@
 ---
 - ansible.builtin.import_playbook: update.yml
 
-- name : Layer 3Outs
+- name : L3Outs
   gather_facts: false
   hosts: all
 

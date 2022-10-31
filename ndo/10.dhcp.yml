@@ -27,3 +27,35 @@
         ip: "{{ item.ip }}"
       loop: "{{ dhcp_relay_policy_provider }}"
       when: dhcp_relay_policy_provider is defined
+
+    - name: Add a new DHCP Option Policy
+      cisco.mso.mso_dhcp_option_policy:
+        dhcp_option_policy: "{{ item.name }}"
+        description: "{{ item.description if item.status is defined else omit }}"
+        tenant: "{{ item.tenant }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      loop: "{{ dhcp_option_policy }}"
+      when: dhcp_option_policy is defined
+
+    - name: Add a new option to a DHCP Option Policy
+      cisco.mso.mso_dhcp_option_policy_option:
+        dhcp_option_policy: "{{ item.dhcp_option_name }}"
+        option: "{{ item.name }}"
+        id: "{{ item.id | int }}"
+        data: "{{ item.data }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      loop: "{{ dhcp_option_policy_options }}"
+      when: dhcp_option_policy_options is defined
+
+    - name: Add a new DHCP policy to a BD
+      cisco.mso.mso_schema_template_bd_dhcp_policy:
+        schema: "{{ item.schema_name }}"
+        template: "{{ item.template_name }}"
+        bd: "{{ item.bd }}"
+        dhcp_policy: "{{ item.dhcp_relay_policy }}"
+        version: 1
+        dhcp_option_policy:
+          name: "{{ item.dhcp_relay_option if tem.dhcp_relay_option is defined and tem.dhcp_relay_option != '' else omit }}"
+          version: "{{ '1' if tem.dhcp_relay_option is defined and tem.dhcp_relay_option != '' else omit }}"
+        state: present
+      delegate_to: localhost

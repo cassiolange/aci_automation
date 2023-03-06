@@ -399,3 +399,42 @@
       delegate_to: localhost
       loop: "{{ interface_description }}"
       when: interface_description is defined
+
+    - name: Add a new Fex interface profile
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+          	      <infraFexP annotation="" descr="" dn="uni/infra/fexprof-{{item['name']}}" name="{{item['name']}}" nameAlias="" ownerKey="" ownerTag="" userdom=":all:common:">
+                      <infraFexBndlGrp annotation="" descr="" name="{{item['name']}}" nameAlias="" ownerKey="" ownerTag="" userdom=":all:common:">
+                          <infraRsMonFexInfraPol annotation="" tnMonInfraPolName="" userdom="all"/>
+                      </infraFexBndlGrp>
+                  </infraFexP>
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ fex_interface_profile }}"
+      when: fex_interface_profile is defined
+
+    - name: Associate an access port block (single port) to an FEX interface profile
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+                  <infraAccPortP dn="uni/infra/accportprof-{{item['interface_profile']}}">
+                      <infraHPortS annotation="" descr="" dn="uni/infra/accportprof-{{item['interface_profile']}}/hports-{{item['name']}}-typ-range" name="{{item['name']}}" nameAlias="" ownerKey="" ownerTag="" type="range" userdom=":all:common:">
+                          <infraRsAccBaseGrp annotation="" fexId="{{item['fex_id'] | int }}" tDn="uni/infra/fexprof-{{item['fex_interface_profile']}}/fexbundle-{{item['fex_interface_profile']}}" userdom=":all:common:"/>
+                          <infraPortBlk annotation="" descr="" fromCard="{{item['from_slot'] | int }}" fromPort="{{item['from_port'] | int }}" name="Block{{item['from_slot']}}{{item['to_slot']}}{{item['from_port']}}{{item['to_port']}}" nameAlias="" toCard="{{item['to_slot'] | int }}" toPort="{{item['to_port'] | int }}" userdom=":all:common:"/>
+                      </infraHPortS>
+                 </infraAccPortP>
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ fex_interface_selector }}"
+      when: fex_interface_selector is defined

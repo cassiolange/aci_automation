@@ -226,5 +226,21 @@
       loop: "{{ vpc_domain }}"
       when: vpc_domain is defined
 
+    - name: Change Ports from Uplink to Downlink
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+          	<infraInfra>
+          		<infraPortDirecPol>
+          			<infraRsPortDirection tDn="topology/pod-{{item['pod_id']}}/paths-{{item['node_id']}}/pathep-[eth{{item['interface_slot_port']}}]" direc="{{item['direction']}}" />
+          		</infraPortDirecPol>
+          	</infraInfra>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ port_direction }}"
+      when: port_direction is defined
 
 

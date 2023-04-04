@@ -55,6 +55,6 @@
         dhcp_policy: "{{ item.dhcp_relay_policy }}"
         version: 1
         dhcp_option_policy:
-          name: "{{ item.dhcp_relay_option if tem.dhcp_relay_option is defined and tem.dhcp_relay_option != '' else omit }}"
-          version: "{{ '1' if tem.dhcp_relay_option is defined and tem.dhcp_relay_option != '' else omit }}"
+          name: "{{ item.dhcp_relay_option if item.dhcp_relay_option is defined and item.dhcp_relay_option != '' else omit }}"
+          version: "{{ '1' if item.dhcp_relay_option is defined and item.dhcp_relay_option != '' else omit }}"
         state: present

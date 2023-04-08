@@ -1,7 +1,7 @@
 ---
 - import_playbook: update.yml
 
-- name : Node Provisioning
+- name : Fabric Policy
   gather_facts: false
   hosts: all
   vars_files:

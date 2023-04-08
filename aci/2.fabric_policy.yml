@@ -277,3 +277,80 @@
       delegate_to: localhost
       with_items: "{{ datetime_ntp_prov }}"
       when: datetime_ntp_prov is defined
+
+    - name: Configure an SNMP policy
+      cisco.aci.aci_snmp_policy:
+        <<: *aci_login
+        admin_state: "{{ item.admin_state }}"
+        name: "{{ item.name }}"
+        contact: "{{ item.contact }}"
+        location: "{{ item.location }}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ snmp_policy }}"
+      when: snmp_policy is defined
+
+    - name: Configure an SNMP community policy
+      cisco.aci.aci_snmp_community_policy:
+        <<: *aci_login
+        policy: "{{ item.snmp_policy_name }}"
+        community: "{{ item.community_name }}"
+        description: "{{  item.community_description if item.community_description is defined and item.community_description !='' else omit}}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ snmp_community }}"
+      when: snmp_community is defined
+
+    - name: Configure an SNMP user
+      cisco.aci.aci_snmp_user:
+        <<: *aci_login
+        policy: "{{ item.snmp_policy_name }}"
+        name: "{{ item.v3_user }}"
+        privacy_type: "{{ item.privacy_type }}"
+        privacy_key: "{{ item.privacy_key }}"
+        auth_type: "{{ item.auth_type }}"
+        auth_key: "{{ item.auth_key }}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ snmp_v3_users }}"
+      when: snmp_v3_users is defined
+
+    - name: Configure an SNMP client group
+      cisco.aci.aci_snmp_client_group:
+        <<: *aci_login
+        policy: "{{ item.snmp_policy }}"
+        client_group: "{{ item.name }}"
+        mgmt_epg: "{{ item.management_epg }}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ snmp_client_group }}"
+      when: snmp_client_group is defined
+
+    - name: Configure an SNMP client
+      cisco.aci.aci_snmp_client:
+        <<: *aci_login
+        policy: "{{ item.snmp_policy }}"
+        client_group: "{{ item.name }}"
+        address: "{{ item.client_entry_address }}"
+        client_name: "{{ item.client_entry_name }}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ snmp_client_group }}"
+      when: snmp_client_group is defined
+
+    - name: Configure SNMP Trap Forwarder
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fabricInst>
+                  <snmpPol name="{{item['snmp_policy']}}" status="modified">
+                      <snmpTrapFwdServerP addr="{{item['snmp_trap_fwd_address']}}" port="{{item['snmp_trap_fwd_port']|default('162',True)|int}}"/>
+                  </snmpPol>
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ snmp_trap_forwarder }}"
+      when: snmp_trap_forwarder is defined

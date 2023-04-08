@@ -1,0 +1,64 @@
+---
+- import_playbook: update.yml
+
+- name : Monitoring
+  gather_facts: false
+  hosts: all
+  vars:
+     - aci_login: &aci_login
+          host: '{{ ansible_host }}'
+          user: '{{ ansible_user }}'
+          password: '{{ ansible_password }}'
+          validate_certs: "{{ validate_certs }}"
+
+  tasks:
+    - name: Configure a syslog group
+      cisco.aci.aci_syslog_group:
+        <<: *aci_login
+        name: "{{ item.name }}"
+        admin_state: "{{ item.syslog_prof_admin_state if item.syslog_prof_admin_state is defined and item.syslog_prof_admin_state !='' else 'enabled'}}"
+        local_file_logging: "{{ item.syslog_local_file_admin_state if item.syslog_local_file_admin_state is defined and item.syslog_local_file_admin_state !='' else omit }}"
+        local_file_log_severity: "{{ item.local_file_severity_level if item.local_file_severity_level is defined and item.local_file_severity_level !='' else omit }}"
+        console_logging: "{{ item.syslog_console_admin_state if item.syslog_console_admin_state is defined and item.syslog_console_admin_state !='' else omit }}"
+        console_log_severity: "{{ item.console_severity_level if item.console_severity_level is defined and item.console_severity_level !='' else omit }}"
+        format: "{{ item.format if item.format is defined and item.format !='' else omit }}"
+        include_ms: "{{ item.include_ms if item.include_ms is defined and item.include_ms !='' else omit }}"
+        include_time_zone: "{{ item.include_time_zone if item.include_time_zone is defined and item.include_time_zone !='' else omit }}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ syslog_group }}"
+      when: syslog_group is defined
+
+    - name: Configure a syslog remote destination
+      cisco.aci.aci_syslog_remote_dest:
+        <<: *aci_login
+        group: "{{ item.syslog_group }}"
+        facility: "{{ item.forwarding_facility if item.forwarding_facility is defined and item.forwarding_facility !='' else omit }}"
+        destination: "{{ item.host_or_ip }}"
+        syslog_port: "{{ item.port | int if item.port is defined and item.port !='' else omit }}"
+        mgmt_epg: "{{ 'inb-default' if item.management_epg == 'inb' else 'oob-default' }}"
+        admin_state: "{{ item.destination_admin_state if item.destination_admin_state is defined and item.destination_admin_state !='' else omit }}"
+        severity: "{{ item.severity if item.severity is defined and item.severity !='' else omit }}"
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ syslog_destination }}"
+      when: syslog_destination is defined
+
+    - name: Configure SNMP Group and an SNMP TRAP destination
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fabricInst>
+                  <snmpGroup  descr="{{item['description']}}" name="{{item['name']}}" >
+                      <snmpTrapDest descr="" host="{{item['snmp_trap_dest_host_or_ip']}}" name="" notifT="traps" port="{{item['port']|default('162',True)|int}}" secName="{{item['community_or_user']}}" v3SecLvl="{{item['v3_sec_level']|default('noauth',True)}}" ver="{{item['version']}}">
+                          <fileRsARemoteHostToEpg tDn="uni/tn-mgmt/mgmtp-default/{{item['management_epg']}}-default"/>
+                      </snmpTrapDest>
+                  </snmpGroup>
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ snmp_trap_dest }}"
+      when: snmp_trap_dest is defined

@@ -149,3 +149,51 @@
       delegate_to: localhost
       loop: "{{ epg_static_binding }}"
       when: epg_static_binding is defined
+
+    - name: Add a new DHCP Relay Policy
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <dhcpRelayP annotation="" descr="{{item['description']}}" dn="uni/tn-{{item['tenant']}}/relayp-{{item['name']}}" mode="visible" name="{{item['name']}}" nameAlias="" owner="tenant" ownerKey="" ownerTag=""/>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ dhcp_relay_policy }}"
+      when: dhcp_relay_policy is defined
+
+    - name: Add a new provider to a DHCP Relay Policy
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <dhcpRelayP name="{{item['dhcp_relay_policy']}}" status="modified">
+                  {% if item['epg'] != ""  %}
+                      <dhcpRsProv addr="{{item['ip']}}" annotation="" tDn="uni/tn-{{item['tenant']}}/ap-{{item['anp']}}/epg-{{item['epg']}}"/>
+                  {% else %}
+                      <dhcpRsProv addr="{{item['ip']}}" annotation="" tDn="uni/tn-{{item['tenant']}}/out-{{item['l3out']}}/instP-{{item['external_epg']}}"/>
+                  {% endif %}
+                  </dhcpRelayP>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ dhcp_relay_policy_provider }}"
+      when: dhcp_relay_policy_provider is defined
+
+    - name: Create a new DHCP Relay Label to a Bridge Domain
+      cisco.aci.aci_bd_dhcp_label:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        bd: "{{ item.name }}"
+        dhcp_label: "{{ item.dhcp_relay_policy }}"
+        scope: tenant
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ bd_dhcp }}"
+      when: bd_dhcp is defined

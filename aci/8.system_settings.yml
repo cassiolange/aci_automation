@@ -1,0 +1,143 @@
+---
+- import_playbook: update.yml
+
+- name : Node Provisioning
+  gather_facts: false
+  hosts: all
+  vars:
+     - aci_login: &aci_login
+          host: '{{ ansible_host }}'
+          user: '{{ ansible_user }}'
+          password: '{{ ansible_password }}'
+          validate_certs: "{{ validate_certs }}"
+
+  tasks:
+    - name: Configure APIC Connectivity Preference
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fabricInst>
+                  <mgmtConnectivityPrefs dn="uni/fabric/connectivityPrefs" interfacePref="{{item['apic_connectivity_preference']|default('ooband',True)}}"/>
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ apic_con_pref }}"
+      when: apic_con_pref is defined
+
+    - name: Configure the datetime format
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fabricInst>
+                  {% if item['display'] == "utc" %}
+          		<datetimeFormat dn="uni/fabric/format-default" displayFormat="{{item['display']}}"/>
+                  {% else %}
+          		<datetimeFormat dn="uni/fabric/format-default" displayFormat="{{item['display']}}" showOffset="{{item['offset']|default('enabled',True)}}" tz="{{item['timezone_code']|default('p0_UTC',True)}}"/>
+                  {% endif %}
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ datetime_format }}"
+      when: datetime_format is defined
+
+    - name: Configure Endpoint Loop Protection Protocol
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+                  {% if item['ep_loop_action'] == "" %}
+                  <epLoopProtectP name="default" adminSt="{{item['ep_loop_state']}}" loopDetectIntvl="{{item['ep_loop_detect_interval']|default('60',True)|int}}" loopDetectMult="{{item['ep_loop_detect_mult']|default('4',True)|int}}"/>
+                  {% else %}
+                  <epLoopProtectP name="default" adminSt="{{item['ep_loop_state']}}" loopDetectIntvl="{{item['ep_loop_detect_interval']|default('60',True)|int}}" loopDetectMult="{{item['ep_loop_detect_mult']|default('4',True)|int}}" action="{{item['ep_loop_action']|default('port-disable',True)}}"/>
+                  {% endif %}
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ ep_loop_protection_ip_aging }}"
+      when: ep_loop_protection_ip_aging is defined
+
+    - name: Configure Endpoint IP Aging
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+                  <epIpAgingP name="default" adminSt="{{item['ip_aging_state']}}"/>
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ ep_loop_protection_ip_aging }}"
+      when: ep_loop_protection_ip_aging is defined
+
+    - name: Configure Rogue Endpoint Control
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+                  <epControlP name="default" adminSt="{{item['admin_state']}}" rogueEpDetectIntvl="{{item['rogue_ep_detection_intvl']|default('60',True)|int}}" rogueEpDetectMult="{{item['rogue_ep_detection_multiplier']|default('4',True)|int}}" holdIntvl="{{item['hold_interval']|default('1800',True)|int}}" />
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ rogue_endpoint_control }}"
+      when: rogue_endpoint_control is defined
+
+    - name: Configure Fabric-Wide Settings
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+                  <infraSetPol unicastXrEpLearnDisable="{{item['disable_remote_endpoint_learning']}}" enforceSubnetCheck="{{item['enforce_subnet_check']}}" reallocateGipo="{{item['reallocate_gipo']}}" domainValidation="{{item['enforce_domain_validation']}}" opflexpAuthenticateClients="{{item['opflex_client_authentication']}}" />
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ fabric_wide_setting_policy }}"
+      when: fabric_wide_setting_policy is defined
+
+    - name: Configure Port Tracking Settings
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+                  <infraPortTrackPol name="default"  adminSt="{{item['admin_state']}}" delay="{{item['delay_restore_timer']|default('120',True)|int}}" minlinks="{{item['min_links_trigger_port_tracking']|default('0',True) | int }}" includeApicPorts="{{item['include_apic']|default('no',True)}}" />
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ port_tracking }}"
+      when: port_tracking is defined
+
+    - name: Configure Global AES Encryption settings
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              {% if item['enable_encryption'] == "yes" %}
+              <pkiExportEncryptionKey passphrase="ins3965!ins3965!" strongEncryptionEnabled="true"/>
+              {% else %}
+              <pkiExportEncryptionKey strongEncryptionEnabled="false"/>
+              {% endif %}
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ global_aes_passphrase }}"
+      when: global_aes_passphrase is defined

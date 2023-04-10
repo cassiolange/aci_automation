@@ -20,6 +20,7 @@
         node_id: "{{ item.node_id }}"
         switch: "{{ item.name }}"
         pod_id: "{{ item.pod_id}}"
+        role: "{{ item.role }}"
         state: "{{ item.status if item.status is defined else omit }}"
       delegate_to: localhost
       loop: "{{ node_provisioning }}"

@@ -436,5 +436,5 @@
               </infraInfra>
           </polUni>
       delegate_to: localhost
-      with_items: "{{ fex_interface_selector }}"
-      when: fex_interface_selector is defined
+      with_items: "{{ fex_uplinks }}"
+      when: fex_uplinks is defined

@@ -438,3 +438,52 @@
       delegate_to: localhost
       with_items: "{{ fex_uplinks }}"
       when: fex_uplinks is defined
+
+    - name: Preserve 802.1P Class of Service
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+                  {% if item['dot1p_preserve'] == "yes" %}
+                  <qosInstPol dn="uni/infra/qosinst-default" name="default" nameAlias="" ctrl="dot1p-preserve"/>
+                  {% else %}
+                  <qosInstPol dn="uni/infra/qosinst-default" name="default" nameAlias="" ctrl=""/>
+                  {% endif %}
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ dot1p_preserve }}"
+      when: dot1p_preserve is defined
+
+    - name: Configure QoS Classes
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <infraInfra>
+                  <qosInstPol name="default">
+                      <qosClass admin="{{item['admin_state'] | default(disabled,true) }}" mtu="{{item['mtu'] | int | default(9216, true) }}" prio="{{item['qos_class']}}" userdom="all">
+                          <qosBuffer min="{{item['minimum_buffers'] | int | default(0, true) }}"  userdom="all"/>
+                          <qosCong afdQueueLength="0" algo="{{item['congestion_algorithm'] | default('tail-drop', true) }}"  annotation="" descr="" ecn="{{item['congestion_notification'] | default('disabled', true) }}" forwardNonEcn="{{item['forward_non_ecn_traffic'] | default('disabled', true) }}" wredMaxThreshold="{{item['wred_max_threshold'] | int | default(100, true) }}" wredMinThreshold="{{item['wred_min_threshold'] | int | default(0, true) }}" wredProbability="{{item['wred_probability'] | int | default(0, true) }}" wredWeight="{{item['wred_weight'] | int | default(0, true) }}"/>
+                          {% if item['pfc_admin_state'] == "yes" %}
+                    	  <qosPfcPol adminSt="yes" name="default" enableScope="{{item['pfc_scope'] | default('tor', true)}}" noDropCos="{{item['no_drop_cos'] | default('cos0', true)}}" />
+                          {% else %}
+                          <qosPfcPol adminSt="no" noDropCos="" name="default" enableScope="{{item['pfc_scope'] | default('tor', true)}}" />
+                          {% endif %}
+                          {% if item['scheduling_algorithm'] == "strict_priority" %}
+          			      <qosSched bw="0" descr="" meth="sp" />
+                          {% else %}
+                          <qosSched bw="{{item['bandwidth_allocated'] | int | default(0, true)}}" meth="wrr" />
+                          {% endif %}
+                      </qosClass>
+                  </qosInstPol>
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ qos_classes }}"
+      when: qos_classes is defined

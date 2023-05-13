@@ -113,6 +113,7 @@
         intra_epg_isolation: "{{ item.intra_epg_isolation if item.intra_epg_isolation is defined and item.intra_epg_isolation != '' else omit }}"
         name_alias: "{{ item.name_alias if item.name_alias is defined and item.name_alias != '' else omit }}"
         priority: "{{ item.qos_class if item.qos_class is defined and item.qos_class != '' else omit }}"
+        custom_qos_policy: "{{ item.custom_qos_pol if item.custom_qos_pol is defined and item.custom_qos_pol != '' else omit }}"
         state: "{{ item.status }}"
       delegate_to: localhost
       loop: "{{ end_point_group }}"
@@ -197,3 +198,74 @@
       delegate_to: localhost
       loop: "{{ bd_dhcp }}"
       when: bd_dhcp is defined
+
+    - name: Add a new Custom QoS Policy
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <qosCustomPol descr="{{item['description']}}" dn="uni/tn-{{item['tenant']}}/qoscustom-{{item['name']}}" name="{{item['name']}}"  />
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ custom_qos_policy }}"
+      when: custom_qos_policy is defined
+
+      # | int always return 0, not possible used default
+      # item['target_cos'] | int | default("unspecified", true)
+    - name: Add a new Custom QoS Policy - DSCP to Priority
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% if item['target_dscp'] and item['target_dscp'] != '' %}
+            {% set target_dscp =  item['target_dscp'] | int %}
+          {% else %} 
+            {% set target_dscp = "unspecified" %}
+          {% endif %}
+          {% if item['target_cos'] and item['target_cos'] != '' %}
+            {% set target_cos =  item['target_cos'] | int %}
+          {% else %} 
+            {% set target_cos = "unspecified" %}
+          {% endif %}
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <qosCustomPol name="{{item['name']}}" status="modified">
+                      <qosDscpClass from="{{item['from'] | int }}" to="{{item['to'] | int }}" prio="{{item['level']}}" target="{{ target_dscp }}" targetCos="{{ target_cos}}" />
+                  </qosCustomPol>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ custom_qos_dscp_to_priority }}"
+      when: custom_qos_dscp_to_priority is defined
+
+    - name: Add a new Custom QoS Policy - DOT1P to Priority
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% if item['target_dscp'] and item['target_dscp'] != '' %}
+            {% set target_dscp =  item['target_dscp'] | int %}
+          {% else %} 
+            {% set target_dscp = "unspecified" %}
+          {% endif %}
+          {% if item['target_cos'] and item['target_cos'] != '' %}
+            {% set target_cos =  item['target_cos'] | int %}
+          {% else %} 
+            {% set target_cos = "unspecified" %}
+          {% endif %}
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <qosCustomPol name="{{item['name']}}" status="modified">
+          		      <qosDot1PClass from="{{item['from'] | int }}" to="{{item['to'] | int }}" prio="{{item['level']}}" target="{{ target_dscp }}" targetCos="{{ target_cos}}" />
+                  </qosCustomPol>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ custom_qos_dot1p_to_priority }}"
+      when: custom_qos_dot1p_to_priority is defined

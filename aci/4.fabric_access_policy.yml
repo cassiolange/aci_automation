@@ -476,7 +476,7 @@
                           <qosPfcPol adminSt="no" noDropCos="" name="default" enableScope="{{item['pfc_scope'] | default('tor', true)}}" />
                           {% endif %}
                           {% if item['scheduling_algorithm'] == "strict_priority" %}
-          			      <qosSched bw="0" descr="" meth="sp" />
+                          <qosSched bw="0" descr="" meth="sp" />
                           {% else %}
                           <qosSched bw="{{item['bandwidth_allocated'] | int | default(0, true)}}" meth="wrr" />
                           {% endif %}

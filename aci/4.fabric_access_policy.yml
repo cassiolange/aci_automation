@@ -378,27 +378,36 @@
       when: mcp_instance_policy is defined
 
     - name: Interface Description
+      cisco.aci.aci_interface_description:
+        <<: *aci_login
+        pod_id: "{{ item.pod_id }}"
+        node_id: "{{ item.node_id }}"
+        node_type: "{{ item.role }}"
+        interface: "{{ item.interface }}"
+        fex_id: "{{ item.fex_id if item.fex_id is defined and item.fex_id != '' else omit }}"
+        description: "{{ item.description }}"
+      delegate_to: localhost
+      loop: "{{ interface_description }}"
+      when: interface_description is defined and item.interface.lower() != "mgmt0"
+
+    - name: Interface Description - MGMT
       cisco.aci.aci_rest:
         <<: *aci_login
         path: /api/mo/uni.xml
         method: post
         content: |
           <polUni>
-              <infraInfra>
-              {% if item['role'] == "leaf" %}
-                  <infraHPathS name="{{item['node_id'] | int }}_{{item['interface'] | replace ("/","_") }}" descr="{{item['description']}}">
-                      <infraRsHPathAtt tDn="topology/pod-{{item['pod_id'] | int }}/paths-{{item['node_id'] | int }}/pathep-[{{item['interface']}}]" status=""/>
-                  </infraHPathS>
-              {% else %}
-                  <infraSHPathS name="{{item['node_id'] | int }}_{{item['interface'] | replace ("/","_") }}" descr="{{item['description']}}">
-                      <infraRsSHPathAtt tDn="topology/pod-{{item['pod_id'] | int }}/paths-{{item['node_id'] | int }}/pathep-[{{item['interface']}}]" status=""/>
-                  </infraSHPathS>
-              {% endif %}
-              </infraInfra>
+              <fvTenant name="mgmt" status="modified">
+                  <mgmtMgmtP name="default" status="modified">
+                      <mgmtOoB name="default" status="modified">
+                          <mgmtRsOoBStNode  tDn="topology/pod-{{item.pod_id}}/node-{{item.node_id}}" descr="{{ item.description }}"/>
+                      </mgmtOoB>
+                  </mgmtMgmtP>
+              </fvTenant>
           </polUni>
       delegate_to: localhost
       loop: "{{ interface_description }}"
-      when: interface_description is defined
+      when: interface_description is defined and item.interface.lower() == "mgmt0"
 
     - name: Add a new Fex interface profile
       cisco.aci.aci_rest:

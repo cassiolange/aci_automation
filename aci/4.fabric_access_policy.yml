@@ -211,6 +211,8 @@
         storm_control_interface_policy: "{{ item.storm_pol if item.storm_pol is defined else omit }}"
         l2_interface_policy: "{{ item.l2_int_pol if item.l2_int_pol is defined else omit }}"
         aep: "{{ item.aaep if item.aaep is defined else omit }}"
+        ingress_data_plane_policing_policy: "{{ item.ingress_data_plane_policing_policy if item.ingress_data_plane_policing_policy is defined and item.ingress_data_plane_policing_policy != '' else omit }}"
+        egress_data_plane_policing_policy: "{{ item.egress_data_plane_policing_policy if item.egress_data_plane_policing_policy is defined and item.egress_data_plane_policing_policy != '' else omit }}"
         state: "{{ item.status }}"
       delegate_to: localhost
       with_items: "{{ interface_policy_group }}"
@@ -496,3 +498,28 @@
       delegate_to: localhost
       with_items: "{{ qos_classes }}"
       when: qos_classes is defined
+
+    - name: Add Access Data Plane Policing policy
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% if item['excessive_burst'] and item['excessive_burst'] != '' %}
+            {% set excessive_burst =  item['excessive_burst'] | int %}
+          {% else %} 
+            {% set excessive_burst = "unspecified" %}
+          {% endif %}
+          {% if item['burst'] and item['burst'] != '' %}
+            {% set burst =  item['burst'] | int %}
+          {% else %} 
+            {% set burst = "unspecified" %}
+          {% endif %}
+          <polUni>
+              <infraInfra>
+                  <qosDppPol adminSt="{{item['admin_status'] | default('disabled', true)}}" be="{{ excessive_burst }}" beUnit="{{item['excessive_burst_unit'] | default('unspecified', true)}}" burst="{{ burst }}" burstUnit="{{item['burst_unit'] | default('unspecified', true)}}" conformAction="{{item['conform_action'] | default('transmit', true)}}" conformMarkCos="{{item['conform_mark_cos'] | default('unspecified', true)}}" conformMarkDscp="{{item['conform_mark_dscp'] | default('unspecified', true)}}" dn="uni/infra/qosdpppol-{{item['name']}}" exceedAction="{{item['exceed_action'] | default('drop', true)}}" exceedMarkCos="{{item['exceed_mark_cos'] | default('unspecified', true)}}" exceedMarkDscp="{{item['exceed_mark_dscp'] | default('unspecified', true)}}" mode="bit" name="{{item['name']}}" pir="{{item['peak_rate'] | int }}" pirUnit="{{item['peak_rate_unit'] | default('unspecified', true)}}" rate="{{item['rate'] | int }}" rateUnit="{{item['rate_unit'] | default('unspecified', true)}}" sharingMode="dedicated" type="{{item['type'] | default('1R2C', true)}}" violateAction="{{item['violate_action'] | default('drop', true)}}" violateMarkCos="{{item['violate_mark_cos'] | default('unspecified', true)}}" violateMarkDscp="{{item['violate_mark_dscp'] | default('unspecified', true)}}"/>
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ access_dpp_policy }}"
+      when: access_dpp_policy is defined

@@ -579,9 +579,9 @@
                           {% endif %}
                           {% if item['source_path_type'] %}
                           {% if item['source_path_type'] == 'port' %}
-                          <spanRsSrcToPathEp tDn="topology/pod-{{ item['pod_id'] }}/paths-{{ item['left_node_id'] }}/pathep-[{{ item['interface'] }}]"/>
-                          {% elif item['source_path_type'] == 'port-channel' %}
-                          <spanRsSrcToPathEp tDn="topology/pod-{{ item['pod_id'] }}/paths-{{ item['left_node_id'] }}/pathep-[{{ item['interface_policy'] }}]"/>
+                          <spanRsSrcToPathEp tDn="topology/pod-{{ item['pod_id'] }}/paths-{{ item['node_id'] }}/pathep-[{{ item['interface'] }}]"/>
+                          {% else %}
+                          <spanRsSrcToPathEp tDn="topology/pod-{{ item['pod_id'] }}/paths-{{ item['node_id'] }}/pathep-[{{ item['interface_policy'] }}]"/>
                           {% endif %}
                           {% endif %}
                       </spanSrc>

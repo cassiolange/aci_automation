@@ -1,0 +1,165 @@
+---
+- import_playbook: update.yml
+
+- name : System Settings
+  gather_facts: false
+  hosts: all
+  vars:
+     - aci_login: &aci_login
+          host: '{{ ansible_host }}'
+          user: '{{ ansible_user }}'
+          password: '{{ ansible_password }}'
+          validate_certs: "{{ validate_certs }}"
+
+  tasks:
+    - name: Creates a L4-L7 device
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <vnsLDevVip annotation="" contextAware="{{item['contextAware']}}" devtype="{{item['devtype']}}" funcType="{{item['funcType']}}" isCopy="{{item['isCopy']}}" managed="no" name="{{item['name']}}" promMode="{{item['promMode'] | default('no', true)}}" svcType="{{item['svcType']}}" trunking="{{item['trunking'] | default('no', true)}}">
+                  {% if (item['phyDomain'] != "" and item['VMMDomain'] == "" and item['devtype'] == "PHYSICAL") %}
+                  <vnsRsALDevToPhysDomP annotation="" tDn="uni/phys-{{item['phyDomain']}}"/>
+                  {% elif (item['phyDomain'] == "" and item['VMMDomain'] != "" and item['devtype'] == "VIRTUAL") %}
+                  <vnsRsALDevToDomP annotation="" switchingMode="{{item['virtualswitchingMode']}}" tDn="uni/vmmp-VMware/dom-{{item['VMMDomain']}}"/>
+                  {% endif %}
+                  </vnsLDevVip>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ sg_device }}"
+      when: sg_device is defined
+
+    - name: Creates L4-L7 concrete device
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <vnsLDevVip name="{{item['device']}}" status="modified">
+                      {% if item['devtype'] == "VIRTUAL" %}
+                      <vnsCDev name="{{item['name']}}" vcenterName="{{item['vCenterName']}}" vmName="{{item['VMname']}}">
+                          <vnsCIf  name="{{item['intf_name']}}" vnicName="{{item['vnicName']}}">
+                      {% elif item['devtype'] == "PHYSICAL" %}
+                      <vnsCDev name="{{item['name']}}" vcenterName="" vmName="">
+                          <vnsCIf  name="{{item['intf_name']}}" vnicName="">
+                      {% endif %}
+                              {% if item['connection_type'] == "vPC" %}
+                              <vnsRsCIfPathAtt tDn="topology/pod-{{item['pod_id'] | int }}/protpaths-{{item['left_node_id'] | int }}-{{item['right_node_id'] | int }}/pathep-[{{item['interface_policy_group']}}]"/>
+                              {% elif item['connection_type'] == "PC" %}
+                              <vnsRsCIfPathAtt tDn="topology/pod-{{item['pod_id'] | int }}/paths-{{item['left_node_id'] | int }}/pathep-[{{item['interface_policy_group']}}]"/>
+                              {% elif item['connection_type'] == "Access" %}
+                              <vnsRsCIfPathAtt tDn="topology/pod-{{item['pod_id'] | int }}/paths-{{item['left_node_id'] | int }}/pathep-[eth{{item['access_port_id']}}]"/>
+                              {% endif %}
+                          </vnsCIf>
+                      </vnsCDev>
+          
+                  </vnsLDevVip>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ sg_concrete_device }}"
+      when: sg_concrete_device is defined
+
+    - name: Creates L4-L7 Cluster Interface
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <vnsLDevVip name="{{item['device']}}" status="modified">
+                      {% if item['devtype'] == "PHYSICAL" %}
+                        <vnsLIf annotation="" encap="vlan-{{item['encap_vlan_id']}}" name="{{item['vip_name']}}">
+                            <vnsRsCIfAttN annotation="" tDn="uni/tn-{{item['tenant']}}/lDevVip-{{item['device']}}/cDev-{{item['concrete_device']}}/cIf-[{{item['concrete_interface']}}]"/>
+                        </vnsLIf>
+                      {% elif item['devtype'] == "VIRTUAL" %}
+                        <vnsLIf annotation="" name="{{item['vip_name']}}">
+                            <vnsRsCIfAttN annotation="" tDn="uni/tn-{{item['tenant']}}/lDevVip-{{item['device']}}/cDev-{{item['concrete_device']}}/cIf-[{{item['concrete_interface']}}]"/>
+                        </vnsLIf>
+                      {% endif %}
+                  </vnsLDevVip>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ sg_cluster_interfaces }}"
+      when: sg_cluster_interfaces is defined
+
+    - name: Create PBR
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+            <fvTenant name="{{item['tenant']}}" status="modified">
+                  <vnsSvcCont >
+                      <vnsSvcRedirectPol descr="{{item['description']}}" name="{{item['name']}}">
+                          <vnsRedirectDest ip="{{item['ip']}}" mac="{{item['mac']}}"/>
+                      </vnsSvcRedirectPol>
+                  </vnsSvcCont>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ sg_pbr_policy }}"
+      when: sg_pbr_policy is defined
+
+    - name: Create L4-L7 Service Graph Template
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <vnsAbsGraph annotation="" descr="{{item['description']}}" name="{{item['name']}}" >
+          
+                      <vnsAbsTermNodeProv annotation="" descr="" name="T2" nameAlias="" ownerKey="" ownerTag="">
+                          <vnsOutTerm annotation="" descr="" name="" nameAlias=""/>
+                          <vnsInTerm annotation="" descr="" name="" nameAlias=""/>
+                          <vnsAbsTermConn annotation="" attNotify="no" descr="" name="1" nameAlias="" ownerKey="" ownerTag=""/>
+                      </vnsAbsTermNodeProv>
+                      <vnsAbsTermNodeCon annotation="" descr="" name="T1" nameAlias="" ownerKey="" ownerTag="">
+                          <vnsOutTerm annotation="" descr="" name="" nameAlias=""/>
+                          <vnsInTerm annotation="" descr="" name="" nameAlias=""/>
+                          <vnsAbsTermConn annotation="" attNotify="no" descr="" name="1" nameAlias="" ownerKey="" ownerTag=""/>
+                      </vnsAbsTermNodeCon>
+          
+                      <vnsAbsNode funcTemplateType="{{item['funcTemplateType']}}" funcType="{{item['funcType']}}" isCopy="{{item['isCopy'] | default ('no', true)}}" managed="no" name="N1" routingMode="{{item['routingMode']}}">
+                          <vnsRsNodeToLDev annotation="" tDn="uni/tn-{{item['tenant']}}/lDevVip-{{item['device']}}"/>
+          
+                          <vnsAbsFuncConn annotation="" attNotify="no" descr="" name="consumer" nameAlias="" ownerKey="" ownerTag=""/>
+                          <vnsAbsFuncConn annotation="" attNotify="no" descr="" name="provider" nameAlias="" ownerKey="" ownerTag=""/>
+                      </vnsAbsNode>
+                      <vnsAbsConnection name="C2" adjType="{{item['C2_adjType'] | default ('L3', true)}}" unicastRoute="{{item['C2_unicastRoute'] | default ('yes', true)}}" connDir="provider" connType="external" descr="" directConnect="no">
+                          <vnsRsAbsConnectionConns annotation="" tDn="uni/tn-{{item['tenant']}}/AbsGraph-{{item['name']}}/AbsTermNodeProv-T2/AbsTConn"/>
+                          <vnsRsAbsConnectionConns annotation="" tDn="uni/tn-{{item['tenant']}}/AbsGraph-{{item['name']}}/AbsNode-N1/AbsFConn-provider"/>
+                      </vnsAbsConnection>
+                      <vnsAbsConnection name="C1" adjType="{{item['C1_adjType'] | default ('L3', true)}}" unicastRoute="{{item['C1_unicastRoute']| default ('yes', true)}}" connDir="provider" connType="external" descr="" directConnect="no">
+                          <vnsRsAbsConnectionConns annotation="" tDn="uni/tn-{{item['tenant']}}/AbsGraph-{{item['name']}}/AbsNode-N1/AbsFConn-consumer"/>
+                          <vnsRsAbsConnectionConns annotation="" tDn="uni/tn-{{item['tenant']}}/AbsGraph-{{item['name']}}/AbsTermNodeCon-T1/AbsTConn"/>
+                      </vnsAbsConnection>
+                  </vnsAbsGraph>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ sg_template }}"
+      when: sg_template is defined
+
+    - name: Bind contract subject to service graph
+      cisco.aci.aci_contract_subject_to_service_graph:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        contract: "{{ item.contract }}"
+        subject: "{{ item.subject_name }}"
+        service_graph: "{{ item.service_graph }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ bind_subject_to_sg }}"
+      when: bind_subject_to_sg is defined

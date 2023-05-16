@@ -523,3 +523,71 @@
       delegate_to: localhost
       with_items: "{{ access_dpp_policy }}"
       when: access_dpp_policy is defined
+
+    - name: Add Access SPAN Destination Group
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% if item['dscp'] and item['dscp'] != '' %}
+            {% set dscp =  item['dscp'] | int %}
+          {% else %}
+            {% set dscp = "unspecified" %}
+          {% endif %}
+          <polUni>
+              <infraInfra>
+                  <spanDestGrp descr="{{item['description']}}" dn="uni/infra/destgrp-{{item['name']}}" name="{{item['name']}}">
+                      <spanDest dn="uni/infra/destgrp-{{item['name']}}/dest-{{item['name']}}" name="{{item['name']}}">
+                          {% if item['destination_type'] == 'epg' %}
+                          <spanRsDestEpg dn="uni/infra/destgrp-{{item['name']}}/dest-{{item['name']}}/rsdestEpg" dscp="{{ dscp }}" flowId="{{item['flow_id'] | int | default('1',true) }}" ip="{{item['destination_ip']}}" mtu="{{item['mtu'] | int | default('1518',true)}}" srcIpPrefix="{{item['source_ip']}}" tDn="uni/tn-{{item['destination_tenant']}}/ap-{{item['destination_anp']}}/epg-{{item['destination_epg']}}" ttl="{{item['ttl'] | int | default('64',true)}}" ver="{{item['span_version'] | default ('ver2', true)}}" verEnforced="{{item['enforce_span_version'] | default ('no', true)}}"/>
+                          {% else %}
+                          {% if item['path_type'] == 'port' %}
+                          <spanRsDestPathEp dn="uni/infra/destgrp-{{item['name']}}/dest-{{item['name']}}/rsdestPathEp-[topology/pod-{{item['pod_id']}}/paths-{{item['node_id']}}/pathep-[eth{{item['interface']}}]]" mtu="{{item['mtu'] | int | default('1518',true)}}" tDn="topology/pod-{{item['pod_id']}}/paths-{{item['node_id']}}/pathep-[eth{{item['interface']}}]"/>
+                          {% else %}
+          	              <spanRsDestPathEp dn="uni/infra/destgrp-{{item['name']}}/dest-{{item['name']}}/rsdestPathEp-[topology/pod-{{item['pod_id']}}/paths-{{item['node_id']}}/pathep-[{{item['interface_policy']}}]]" mtu="{{item['mtu'] | int | default('1518',true)}}" tDn="topology/pod-{{item['pod_id']}}/paths-{{item['node_id']}}/pathep-[{{item['interface_policy']}}]"/>
+                          {% endif %}
+                          {% endif %}
+                      </spanDest>
+                  </spanDestGrp>
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ access_span_destination }}"
+      when: access_span_destination is defined
+
+    - name: Add Access SPAN Source Group
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% if item['l3out_encap_vlan'] and item['l3out_encap_vlan'] != '' %}
+            {% set l3out_encap_vlan = 'vlan-'+item['l3out_encap_vlan'] | int | string %}
+          {% else %}
+            {% set l3out_encap_vlan = "" %}
+          {% endif %}
+          <polUni>
+              <infraInfra>
+                  <spanSrcGrp adminSt="{{item['admin_status']}}" annotation="" descr="{{item['description']}}" dn="uni/infra/srcgrp-{{item['name']}}" name="{{item['name']}}">
+                      <spanSpanLbl name="{{item['destination_group']}}"/>
+                      <spanSrc descr="{{item['source_description']}}" dir="{{item['direction'] | default ('both',true)}}" name="{{item['source_name']}}" spanOnDrop="{{item['span_on_drop'] | default ('no',true)}}">
+                          {% if item['type'] == 'epg' %}
+                          <spanRsSrcToEpg tDn="uni/tn-{{item['source_tenant']}}/ap-{{item['source_anp']}}/epg-{{item['source_epg']}}"/>
+          			      {% elif item['type'] == 'routed_outside' %}
+          			      <spanRsSrcToL3extOut addr="0.0.0.0" encap="{{ l3out_encap_vlan }}" tDn="uni/tn-{{item['l3out_tenant']}}/out-{{item['l3out_name']}}"/>
+                          {% endif %}
+                          {% if item['source_path_type'] %}
+                          {% if item['source_path_type'] == 'port' %}
+                          <spanRsSrcToPathEp tDn="topology/pod-{{ item['pod_id'] }}/paths-{{ item['left_node_id'] }}/pathep-[{{ item['interface'] }}]"/>
+                          {% elif item['source_path_type'] == 'port-channel' %}
+                          <spanRsSrcToPathEp tDn="topology/pod-{{ item['pod_id'] }}/paths-{{ item['left_node_id'] }}/pathep-[{{ item['interface_policy'] }}]"/>
+                          {% endif %}
+                          {% endif %}
+                      </spanSrc>
+                  </spanSrcGrp>
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ access_span_source_group }}"
+      when: access_span_source_group is defined

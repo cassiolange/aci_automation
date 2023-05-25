@@ -100,7 +100,7 @@
           	<fvTenant name="{{item['tenant']}}" status="modified">
           	 <l3extOut name="{{item['l3out']}}" status="modified">
           	  <l3extLNodeP descr="" name="{{item['name']}}" tag="yellow-green" targetDscp="unspecified"  >
-                  <l3extRsNodeL3OutAtt rtrId="{{item['router_id']}}" rtrIdLoopBack="{{item['router_id_as_loopback']}}" tDn="topology/pod-{{item['pod_id']}}/node-{{item['node_id']}}" >
+                  <l3extRsNodeL3OutAtt rtrId="{{item['router_id']}}" rtrIdLoopBack="{{item['router_id_as_loopback']}}" tDn="topology/pod-{{item['pod_id'] | int }}/node-{{item['node_id'] | int }}" >
           			{% if item['router_id_as_loopback'] == "no" and item['loopback_ip'] != "" %}
           			<l3extLoopBackIfP addr="{{item['loopback_ip']}}" />
           			{% endif %}

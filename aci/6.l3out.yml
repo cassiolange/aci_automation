@@ -142,8 +142,8 @@
                                   <ospfRsIfPol dn="uni/tn-{{item['tenant']}}/out-{{item['l3out']}}/lnodep-{{item['l3out_node_profile']}}/lifp-{{item['name']}}/ospfIfP/rsIfPol" tnOspfIfPolName="{{item['ospf_interface_policy']}}"/>
                               </ospfIfP>
                               {% if item['path_type'] == 'vPC' %}
-                                      {% set path %}topology/pod-{{item['pod_id']}}/protpaths-{{item['left_node_id'] | int }}-{{item['right_node_id'] | int }}/pathep-{{item['int_pol_group']}}{% endset %}
-                              <l3extRsPathL3OutAtt addr="0.0.0.0" descr="" encap="vlan-{{item['vlan_encap_id']}}" encapScope="local" ifInstT="ext-svi" autostate="{{item['autostate']}}" mode="{{item['trunk_mode']}}" mtu="{{item['mtu']}}" tDn="{{path}}" targetDscp="unspecified">
+                                      {% set path %}topology/pod-{{item['pod_id'] | int }}/protpaths-{{item['left_node_id'] | int }}-{{item['right_node_id'] | int }}/pathep-{{item['int_pol_group']}}{% endset %}
+                              <l3extRsPathL3OutAtt addr="0.0.0.0" descr="" encap="vlan-{{item['vlan_encap_id'] | int }}" encapScope="local" ifInstT="ext-svi" autostate="{{item['autostate']}}" mode="{{item['trunk_mode']}}" mtu="{{item['mtu'] | int }}" tDn="{{path}}" targetDscp="unspecified">
                                   <l3extMember addr="{{item['ip_addr_side_a']}}" descr=""  name="side_a" side="A" >
                                   {% if item['secondary_ip'] is defined and item['secondary_ip'] != '' %}
                                       <l3extIp addr="{{item['secondary_ip']}}" annotation="" descr="" name="" nameAlias=""/>
@@ -157,9 +157,9 @@
                               </l3extRsPathL3OutAtt>
                               {% else %}
                                       {% if item['path_type'] == 'PC' %}
-                                              {% set path %}topology/pod-{{item['pod_id']}}/paths-{{item['left_node_id']}}/pathep-[{{item['int_pol_group']}}]{% endset %}
+                                              {% set path %}topology/pod-{{item['pod_id'] | int }}/paths-{{item['left_node_id'] | int }}/pathep-[{{item['int_pol_group']}}]{% endset %}
                                       {% else %}
-                                              {% set path %}topology/pod-{{item['pod_id']}}/paths-{{item['left_node_id']}}/pathep-[eth{{item['port_id']}}]{% endset %}
+                                              {% set path %}topology/pod-{{item['pod_id'] | int }}/paths-{{item['left_node_id'] | int }}/pathep-[eth{{item['port_id']}}]{% endset %}
                                       {% endif %}
                                       {% if item['interface_type'] == 'svi' %}
                                               {% set iftype = "ext-svi" %}

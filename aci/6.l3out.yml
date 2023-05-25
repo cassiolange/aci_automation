@@ -171,7 +171,7 @@
                                               {% set iftype ="l3-port" %}
                                               {% set encap = "unknown" %}
                                       {% endif %}
-                              <l3extRsPathL3OutAtt addr="{{item['ip_addr_side_a']}}" descr="" encap="{{encap}}" encapScope="local" ifInstT="{{iftype}}" autostate="{{item['autostate']}}" mode="{{item['trunk_mode']}}" mtu="{{item['mtu']}}" tDn="{{path}}" targetDscp="unspecified">
+                              <l3extRsPathL3OutAtt addr="{{item['ip_addr_side_a']}}" descr="" encap="{{encap}}" encapScope="local" ifInstT="{{iftype}}" autostate="{{item['autostate']}}" mode="{{item['trunk_mode']}}" mtu="{{item['mtu'] | int }}" tDn="{{path}}" targetDscp="unspecified">
                               {% if item['secondary_ip'] is defined and item['secondary_ip'] != '' %}
                                   <l3extIp addr="{{item['secondary_ip']}}" annotation="" descr="" name="" nameAlias=""/>
                               {% endif %}

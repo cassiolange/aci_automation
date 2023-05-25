@@ -332,7 +332,7 @@
               <infraInfra>
                   <infraSpAccPortP name="{{item['interface_profile']}}" status="modified" >
                       <infraSHPortS descr="{{item['description']}}" name="{{item['name']}}" type="range" >
-                        <infraPortBlk descr="{{item['port_block_description']}}" fromCard="{{item['from_slot']}}" fromPort="{{item['from_port']}}" name="Block{{item['from_slot']}}{{item['to_slot']}}{{item['from_port']}}{{item['to_port']}}" toCard="{{item['from_slot']}}" toPort="{{item['from_port']}}" />
+                        <infraPortBlk descr="{{item['port_block_description']}}" fromCard="{{item['from_slot'] | int }}" fromPort="{{item['from_port'] | int }}" name="Block{{item['from_slot'] |int }}{{item['to_slot'] | int }}{{item['from_port'] | int }}{{item['to_port'] |int }}" toCard="{{item['from_slot'] | int }}" toPort="{{item['from_port'] | int }}" />
                           {# Can Preconfigure InterfaceSelector without assigning Policy-Group #}
                           {% if item['interface_policy_group'] != "" %}
                               <infraRsSpAccGrp tDn="uni/infra/funcprof/spaccportgrp-{{item['interface_policy_group']}}" />

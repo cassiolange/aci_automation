@@ -73,7 +73,7 @@
               <l3extProvLbl descr="" name="{{item['provider_label']}}" tag="yellow-green" />
               {% endif %}
               {% if item['enable_ospf'] == "yes" %}
-              <ospfExtP areaCost="{{item['ospf_area_cost']|default('1',True)}}" areaCtrl="redistribute,summary" areaId="{{item['ospf_area_id']}}" areaType="{{item['ospf_area_type']}}"  />
+              <ospfExtP areaCost="{{item['ospf_area_cost']| int |default('1',True)}}" areaCtrl="redistribute,summary" areaId="{{item['ospf_area_id']}}" areaType="{{item['ospf_area_type']}}"  />
               {% endif %}
               {% if item['enable_bgp'] == "yes" %}
               <bgpExtP />

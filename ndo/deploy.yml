@@ -12,8 +12,3 @@
         state: deploy
       loop: "{{ schema_template }}"
       when: schema_template is defined
-
-
-
-
-

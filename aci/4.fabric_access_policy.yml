@@ -311,11 +311,11 @@
         <<: *aci_login
         interface_profile: "{{ item.interface_profile }}"
         access_port_selector: "{{ item.name }}"
-        port_blk: "{{ 'blk_%s_%s_%s_%s' %(item.from_port, item.from_port, item.to_port, item.to_port) }}"
-        from_port: "{{ item.from_port }}"
-        to_port: "{{ item.to_port }}"
-        from_card: "{{ item.from_slot }}"
-        to_card: "{{ item.to_slot }}"
+        port_blk: "{{ 'blk_%s_%s_%s_%s' %(item.from_port | int, item.from_port | int, item.to_port | int, item.to_port | int) }}"
+        from_port: "{{ item.from_port | int}}"
+        to_port: "{{ item.to_port | int }}"
+        from_card: "{{ item.from_slot | int }}"
+        to_card: "{{ item.to_slot | int }}"
         port_blk_description: "{{ item.port_block_description if item.port_block_description is defined else omit}}"
         state: "{{ item.status }}"
       delegate_to: localhost

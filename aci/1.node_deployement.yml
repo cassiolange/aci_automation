@@ -56,7 +56,7 @@
         state: "{{ item.status if item.status is defined else omit }}"
       delegate_to: localhost
       loop: "{{ apic_controller }}"
-      when: apic_controller is defined and item.inband_ipv4 != ""
+      when: apic_controller is defined and item.oob_ipv4 != ""
 
     - name: Add in band mgmt epg
       cisco.aci.aci_node_mgmt_epg:

@@ -632,3 +632,52 @@
       delegate_to: localhost
       loop: "{{ interface_configuration }}"
       when: interface_configuration is defined
+
+    - name: Switch Configuration
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {# case leaf #}
+          {% if item['node_type'] == "leaf" %}
+
+          {% if item['access_policy_group'] == '' %}
+          {% set access_policy_group = '' %}
+          {% else %}
+          {% set access_policy_group = "uni/infra/funcprof/accnodepgrp-"+item['access_policy_group'] %}
+          {% endif %}
+
+          {% if item['fabric_policy_group'] == '' %}
+          {% set fabric_policy_group = '' %}
+          {% else %}
+          {% set fabric_policy_group = "uni/fabric/funcprof/lenodepgrp-"+item['fabric_policy_group'] %}
+          {% endif %}
+
+          {# case spine #}
+          {% else %}
+          {% if item['access_policy_group'] == '' %}
+          {% set access_policy_group = '' %}
+          {% else %}
+          {% set access_policy_group = "uni/infra/funcprof/spaccnodepgrp-"+item['access_policy_group'] %}
+          {% endif %}
+
+          {% if item['fabric_policy_group'] == '' %}
+          {% set fabric_policy_group = '' %}
+          {% else %}
+          {% set fabric_policy_group = "uni/fabric/funcprof/spnodepgrp-"+item['fabric_policy_group'] %}
+          {% endif %}
+
+          {% endif %}
+
+          <polUni>
+              <infraInfra>
+                  <infraNodeConfig node="{{ item['node_id'] | int  }}" assocGrp="{{access_policy_group}}" />
+              </infraInfra>
+              <fabricInst>
+                  <fabricNodeConfig node="{{ item['node_id'] | int  }}" assocGrp="{{fabric_policy_group}}" />
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ switch_configuration }}"
+      when: switch_configuration is defined

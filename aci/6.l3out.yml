@@ -60,7 +60,7 @@
         content: |
           <polUni>
           	<fvTenant name="{{item['tenant']}}" status="modified">
-          	  <l3extOut descr="" enforceRtctrl="{{item['route_control_enforcement']|default('export',True)}}" name="{{item['name']}}" targetDscp="unspecified">
+          	  <l3extOut descr="" enforceRtctrl="{{item['route_control_enforcement']|default('export',True)}}" name="{{item['name']}}" targetDscp="unspecified" annotation="orchestrator:ansible">
           		<l3extRsEctx tnFvCtxName="{{item['vrf']}}" />
           		<l3extRsL3DomAtt tDn="uni/l3dom-{{item['l3out_domain']}}" />
               {% if item['enable_pim'] == "yes" %}
@@ -99,7 +99,7 @@
           <polUni>
           	<fvTenant name="{{item['tenant']}}" status="modified">
           	 <l3extOut name="{{item['l3out']}}" status="modified">
-          	  <l3extLNodeP descr="" name="{{item['name']}}" tag="yellow-green" targetDscp="unspecified"  >
+          	  <l3extLNodeP descr="" name="{{item['name']}}" tag="yellow-green" targetDscp="unspecified" annotation="orchestrator:ansible" >
                   <l3extRsNodeL3OutAtt rtrId="{{item['router_id']}}" rtrIdLoopBack="{{item['router_id_as_loopback']}}" tDn="topology/pod-{{item['pod_id'] | int }}/node-{{item['node_id'] | int }}" >
           			{% if item['router_id_as_loopback'] == "no" and item['loopback_ip'] != "" %}
           			<l3extLoopBackIfP addr="{{item['loopback_ip']}}" />
@@ -114,7 +114,30 @@
       loop: "{{ l3out_node_profile }}"
       when: l3out_node_profile is defined
 
-    - name: L3Out Interface Profile
+    - name: Add an L3Out Interface Profile
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" >
+                  <l3extOut name="{{item['l3out']}}">
+                      <l3extLNodeP name="{{item['l3out_node_profile']}}">
+                          <l3extLIfP annotation="orchestrator:ansible" descr="{{item['description']}}" name="{{item['name']}}" prio="{{item['qos_priority'] | default('unspecified',True)}}">
+                          <l3extRsLIfPCustQosPol tnQosCustomPolName="{{item['custom_qos']}}"/>
+                          <l3extRsIngressQosDppPol tnQosDppPolName="{{item['ingress_dpp_policy']}}"/>
+                          <l3extRsEgressQosDppPol tnQosDppPolName="{{item['egress_dpp_policy']}}"/>
+                          </l3extLIfP>
+                      </l3extLNodeP>
+                  </l3extOut>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ l3out_int_profile }}"
+      when: l3out_int_profile is defined
+
+    - name: L3Out Interface
       cisco.aci.aci_rest:
         <<: *aci_login
         path: /api/mo/uni.xml
@@ -188,8 +211,33 @@
               </fvTenant>
           </polUni>
       delegate_to: localhost
-      loop: "{{ l3out_int_profile }}"
-      when: l3out_int_profile is defined
+      loop: "{{ l3out_interfaces }}"
+      when: l3out_interfaces is defined
+
+    - name: Add an L3Out Floating SVI
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="{{item['tenant']}}">
+                <l3extOut name="{{item['l3out']}}">
+                    <l3extLNodeP name="{{item['l3out_node_profile']}}">
+                        <l3extLIfP name="{{item['name']}}">
+                            <l3extVirtualLIfP annotation="orchestrator:ansible" addr="{{item['primary_ip']}}" autostate="{{item['autostate']}}" descr="{{item['description']}}" encap="vlan-{{item['vlan_encap_id'] | int }}" mode="{{item['mode']}}" mtu="{{item['mtu'] | int }}" nodeDn="topology/pod-{{item['pod_id'] | int}}/node-{{item['anchor_node_id'] | int}}" ifInstT="ext-svi">
+                                <l3extRsDynPathAtt encap="vlan-{{item['vlan_encap_id'] | int }}" floatingAddr="{{item['floating_primary_ip']}}"  tDn="uni/phys-{{item['domain']}}">
+                                    <l3extVirtualLIfPLagPolAtt annotation=""/>
+                                </l3extRsDynPathAtt>
+                            </l3extVirtualLIfP>
+                        </l3extLIfP>
+                    </l3extLNodeP>
+                </l3extOut>
+            </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ floating_svi }}"
+      when: floating_svi is defined
 
     - name: Add a new ExtEpg
       cisco.aci.aci_l3out_extepg:

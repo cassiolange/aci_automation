@@ -122,6 +122,30 @@
       loop: "{{ subject }}"
       when: subject is defined and item.contract_type == 'standard'
 
+    - name: Inband Mgmt Epg Contract
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="mgmt">
+                  <mgmtMgmtP name="default">
+                      <mgmtInB name="{{item['name']}}" prio="{{item['contract_qos_class'] | default('unspecified',True)}}">
+                          {% if item['provided_ctr'] == 'yes' %}
+                          <fvRsProv tnVzBrCPName="{{item['contract']}}"/>
+                          {% endif %}
+                          {% if item['consumed_ctr'] == 'yes' %}
+                          <fvRsCons tnVzBrCPName="{{item['contract']}}"/>
+                          {% endif %}
+                      </mgmtInB>
+                  </mgmtMgmtP>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ inband_mgmt_epg_contract }}"
+      when: inband_mgmt_epg_contract is defined
+
     - name: Add a new contract subject (OOB)
       cisco.aci.aci_rest:
         <<: *aci_login

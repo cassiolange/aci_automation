@@ -294,3 +294,26 @@
       delegate_to: localhost
       with_items: "{{ tenant_dpp_policy }}"
       when: tenant_dpp_policy is defined
+
+    - name: Add a new Static Route on a Bridge Domain
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <fvAp name="{{item['app_profile']}}">
+                      <fvAEPg name="{{item['epg']}}">
+                          <fvSubnet annotation="orchestrator:ansible" ctrl="no-default-gateway" descr="{{item['description']}}" ip="{{item['ip']}}/32" scope="{{item['scope']|default('private',True)}}">
+                              <fvEpReachability>
+                                  <ipNexthopEpP nhAddr="{{item['next_hop']}}"/>
+                              </fvEpReachability>   
+                          </fvSubnet>
+                      </fvAEPg>
+                  </fvAp>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ static_route_on_bd }}"
+      when: static_route_on_bd is defined

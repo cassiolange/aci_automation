@@ -681,3 +681,33 @@
       delegate_to: localhost
       with_items: "{{ switch_configuration }}"
       when: switch_configuration is defined
+
+    - name: Create an Fex Interface Access Port Selector to an Interface Policy Leaf Profile with a Policy Group
+      cisco.aci.aci_access_port_to_interface_policy_leaf_profile:
+        <<: *aci_login
+        interface_profile: "{{ item.fex_interface_profile }}"
+        access_port_selector: "{{ item.name }}"
+        description: "{{ item.description if item.description is defined else omit}}"
+        policy_group: "{{ item.interface_policy_group }}"
+        fex_id: "{{ item.fex_id | int }}"
+        interface_type: "{{ 'fex_vpc' if item.interface_polgroup_type == 'vPC' else 'fex_port_channel' if item.interface_polgroup_type == 'PC' else 'fex' if item.interface_polgroup_type == 'Access' }}"
+        type: fex
+        state: "{{ item.status }}"
+      delegate_to: localhost
+      loop: "{{ interface_selector_fex }}"
+      when: interface_selector_fex is defined
+
+    - name: Associate an Fex access port block (single port) to an interface selector
+      cisco.aci.aci_access_port_block_to_access_port:
+        <<: *aci_login
+        interface_profile: "{{ item.fex_interface_profile }}"
+        access_port_selector: "{{ item.name }}"
+        port_blk: "{{ 'blk_%s_%s_%s_%s' %(item.from_port | int, item.from_port | int, item.to_port | int, item.to_port | int) }}"
+        from_port: "{{ item.from_port | int}}"
+        to_port: "{{ item.to_port | int }}"
+        port_blk_description: "{{ item.port_block_description if item.port_block_description is defined else omit}}"
+        state: "{{ item.status }}"
+        type: fex
+      delegate_to: localhost
+      loop: "{{ interface_selector_fex }}"
+      when: interface_selector_fex is defined

@@ -58,5 +58,6 @@
         mode: "{{ item.mode }}"
         path: "{{ item.interface_policy_group if item.type == 'vpc' else item.interface_policy_group if item.type == 'dpc' else 'eth%s' %item.leaf_port}}"
         leaf: "{{ '%s-%s' % (item.left_node_id | int, item.right_node_id | int)  if item.type == 'vpc' else item.left_node_id | int}}"
+        fex: "{{ item.fex_id | int if item.fex_id is defined and item.fex_id != '' else omit }}"
       loop: "{{ epg_static_binding }}"
       when: epg_static_binding is defined

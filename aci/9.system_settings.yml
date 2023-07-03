@@ -103,7 +103,7 @@
         content: |
           <polUni>
               <infraInfra>
-                  <infraSetPol unicastXrEpLearnDisable="{{item['disable_remote_endpoint_learning']}}" enforceSubnetCheck="{{item['enforce_subnet_check']}}" reallocateGipo="{{item['reallocate_gipo']}}" domainValidation="{{item['enforce_domain_validation']}}" opflexpAuthenticateClients="{{item['opflex_client_authentication']}}" alidateOverlappingVlans="{{item['enforce_epg_vlan_validation']}}"/>
+                  <infraSetPol unicastXrEpLearnDisable="{{item['disable_remote_endpoint_learning']}}" enforceSubnetCheck="{{item['enforce_subnet_check']}}" reallocateGipo="{{item['reallocate_gipo']}}" domainValidation="{{item['enforce_domain_validation']}}" opflexpAuthenticateClients="{{item['opflex_client_authentication']}}" validateOverlappingVlans="{{item['enforce_epg_vlan_validation']}}"/>
               </infraInfra>
           </polUni>
       delegate_to: localhost

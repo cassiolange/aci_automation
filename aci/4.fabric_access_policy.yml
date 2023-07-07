@@ -108,15 +108,16 @@
       when: intpol_l2 is defined
 
     - name: Add a Link Level Policy
-      cisco.aci.aci_interface_policy_link_level:
+      cisco.aci.aci_rest:
         <<: *aci_login
-        link_level_policy: "{{ item.name }}"
-        description: "{{ item.description if item.description is defined else omit}}"
-        auto_negotiation: "{{ item.autoneg }}"
-        speed: "{{ item.speed }}"
-        link_debounce_interval: "{{ item.debounce if item.debounce is defined and item.debounce else omit }}"
-        forwarding_error_correction: "{{ item.fec_mode if item.fec_mode is defined and item.fec_mode else omit}}"
-        state: "{{ item.status }}"
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+            <polUni>
+                <infraInfra>
+                    <fabricHIfPol annotation="orchestrator:ansible" autoNeg="{{ item.autoneg | default('on',True) }}" descr="{{ item.description | default ('',True) }}" dfeDelayMs="{{ item.dfe_delay | int | default(0,True) }}" emiRetrain="disable" fecMode="{{ item.fec_mode | default ('inherit',True) }}" linkDebounce="{{ item.debounce | int | default (100,True) }}" name="{{ item.name }}" portPhyMediaType="auto" speed="{{ item.speed | default ('auto',True)}}"/>
+                </infraInfra>
+            </polUni>
       delegate_to: localhost
       loop: "{{ intpol_link }}"
       when: intpol_link is defined

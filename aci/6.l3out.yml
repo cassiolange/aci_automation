@@ -345,7 +345,7 @@
         content: |
           <polUni>
           	<fvTenant name="{{item['tenant']}}" status="modified">
-                  <rtctrlAttrP annotation="" descr="" dn="uni/tn-{{item['tenant']}}/attr-{{item['name']}}" name="{{item['name']}}" nameAlias="">
+                  <rtctrlAttrP annotation="orchestrator:ansible" descr="{{item['description']}}" name="{{item['name']}}" nameAlias="">
                   {% if item['set_community'] == 'yes' %}
                       <rtctrlSetComm annotation="" community="regular:as2-nn2:{{item['community']}}" descr="" name="" nameAlias="" setCriteria="{{item['community_criteria']}}" type="community"/>
                   {% endif %}
@@ -355,6 +355,11 @@
                           <rtctrlSetASPathASN annotation="" asn="{{item['as_prepend'] | int }}" descr="" name="" nameAlias="" order="{{i}}"/>
                       {% endfor %}
                       </rtctrlSetASPath>
+                  {% endif %}
+                  {% if item['set_ext_epg'] and item['set_ext_epg'] != ''  %}
+                      <rtctrlSetPolicyTag annotation="" descr="" name="" nameAlias="" type="policy-tag">
+                          <rtctrlRsSetPolicyTagToInstP annotation="" tDn="uni/tn-{{item['tenant']}}/out-{{item['l3out']}}/instP-{{item['set_ext_epg']}}"/>
+                      </rtctrlSetPolicyTag>
                   {% endif %}
                   </rtctrlAttrP>
               </fvTenant>

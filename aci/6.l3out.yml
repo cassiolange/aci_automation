@@ -261,8 +261,7 @@
         extepg: "{{ item.external_epg }}"
         description: "{{ item.description if item.description is defined else omit}}"
         network: "{{ item.external_subnet }}"
-        scope:
-          - "{{ 'export-rtctrl' if item.external_subnet_for_external_epg == 'yes' }}"
+        scope: "{{ ['import-security' if item.external_subnet_for_external_epg is defined and item.external_subnet_for_external_epg == 'yes', 'export-rtctrl' if item.export_route_control is defined and item.export_route_control == 'yes', 'shared-rtctrl' if item.shared_route_control is defined and item.shared_route_control == 'yes', 'import-rtctrl' if item.import_route_control is defined and item.import_route_control == 'yes', 'shared-security' if item.shared_security is defined and item.shared_security == 'yes'] | reject('undefined') | join(',') | default('import-security',true)}}"
         state: "{{ item.status if item.status is defined else omit }}"
       delegate_to: localhost
       loop: "{{ external_epg_subnet }}"

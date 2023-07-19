@@ -425,4 +425,42 @@
       loop: "{{ l3out_route_maps }}"
       when: l3out_route_maps is defined
 
+    - name: Route Maps
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% if item['auto_continue'] == "yes" %}
+              {% set auto_continue = "yes" %}
+          {% else %}
+              {% set auto_continue = "no" %}
+          {% endif %}
+          {% if item['action'] == "permit" %}
+              {% set action = "permit" %}
+          {% else %}
+              {% set action = "deny" %}
+          {% endif %}
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <rtctrlProfile annotation="orchestrator:ansible" autoContinue="{{auto_continue}}" descr="{{item['description'] | default('') }}" name="{{item['name']}}">
+                      {% if item['context_name'] and item['context_name'] != '' %}
+                      <rtctrlCtxP action="{{action}}" descr="{{item['description'] | default('') }}" name="{{item['context_name']}}" order="{{item['order'] | int | default('') }}">
+                          {% if item['match_rule'] and item['match_rule'] != '' %}
+                          <rtctrlRsCtxPToSubjP tnRtctrlSubjPName="{{item['match_rule']}}"/>
+                          {% endif %}
+                          {% if item['set_rule'] and item['set_rule'] != '' %}
+                          <rtctrlScope name="" >
+                              <rtctrlRsScopeToAttrP tnRtctrlAttrPName="{{item['set_rule']}}"/>
+                          </rtctrlScope>
+                          {% endif %} 
+                      </rtctrlCtxP>
+                      {% endif %} 
+                  </rtctrlProfile>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ route_maps }}"
+      when: route_maps is defined
+
 

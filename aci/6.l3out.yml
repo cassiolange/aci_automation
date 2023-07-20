@@ -463,4 +463,35 @@
       loop: "{{ route_maps }}"
       when: route_maps is defined
 
+    - name: Create static routes
+      cisco.aci.aci_l3out_static_routes:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        l3out: "{{ item.l3out }}"
+        logical_node: "{{ item.l3out_node_profile }}"
+        node_id: "{{ item.node_id | int }}"
+        pod_id: "{{ item.pod_id | int }}"
+        prefix: "{{ item.prefix }}"
+        preference: "{{ item.admin_distance | int if item.admin_distance is defined and item.admin_distance != '' else omit }}"
+        bfd: "{{ 'bfd' if item.route_control is defined and item.route_control == 'bfd' else omit }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ node_static_route }}"
+      when: node_static_route is defined
+
+    - name: Add a new nexthop to a prefix
+      cisco.aci.aci_l3out_static_routes_nexthop:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        l3out: "{{ item.l3out }}"
+        logical_node: "{{ item.l3out_node_profile }}"
+        node_id: "{{ item.node_id | int }}"
+        pod_id: "{{ item.pod_id | int }}"
+        prefix: "{{ item.prefix }}"
+        nexthop: "{{ item.next_hop_address }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ node_static_route }}"
+      when: node_static_route is defined
+
 

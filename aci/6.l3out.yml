@@ -1,5 +1,5 @@
 ---
-#- import_playbook: update.yml
+- import_playbook: update.yml
 
 - name : L3Out Provisioning
   gather_facts: false
@@ -452,7 +452,10 @@
                       {% endfor %}
                       </rtctrlSetASPath>
                   {% endif %}
-                  {% if item['set_ext_epg'] and item['set_ext_epg'] != ''  %}
+                  {% if item['prepend_last_as'] is defined and item['prepend_last_as'] != '' %}
+                      <rtctrlSetASPath criteria="prepend-last-as" lastnum="{{ item['prepend_last_as'] | int }}" type="as-path"/>
+                  {% endif %}
+                  {% if item['set_ext_epg'] is defined and item['set_ext_epg'] != ''  %}
                       <rtctrlSetPolicyTag annotation="" descr="" name="" nameAlias="" type="policy-tag">
                           <rtctrlRsSetPolicyTagToInstP annotation="" tDn="uni/tn-{{item['tenant']}}/out-{{item['l3out']}}/instP-{{item['set_ext_epg']}}"/>
                       </rtctrlSetPolicyTag>

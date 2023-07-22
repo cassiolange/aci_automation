@@ -1,5 +1,5 @@
 ---
-- import_playbook: update.yml
+#- import_playbook: update.yml
 
 - name : L3Out Provisioning
   gather_facts: false
@@ -267,56 +267,152 @@
       loop: "{{ external_epg_subnet }}"
       when: external_epg_subnet is defined
 
+    - name: Create BGP Peer Prefix Policy
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% if item['maximum_number_of_prefixes'] is defined and item['maximum_number_of_prefixes'] != '' %}
+              {% set maximum_prefixes = item['maximum_number_of_prefixes'] | int  %}
+          {% else %}
+              {% set maximum_prefixes = 20000 %}
+          {% endif %}
+          {% if item['threshold_percentage'] is defined and item['threshold_percentage'] != '' %}
+              {% set threshold_percentage = item['threshold_percentage'] | int  %}
+          {% else %}
+              {% set threshold_percentage = 75 %}
+          {% endif %}
+          {% if item['action'] == 'restart' %}
+          {% if item['restart_time_minutes'] is defined and item['restart_time_minutes'] != '' %}
+              {% set restart_time_minutes = item['restart_time_minutes'] | int  %}
+          {% else %}
+              {% set restart_time_minutes = 1 %}
+          {% endif %}
+          {% else %}
+              {% set restart_time_minutes = 'infinite' %}
+          {% endif %}
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <bgpPeerPfxPol action="{{ item['action'] }}" annotation="orchestrator:ansible" descr="{{ item['description'] }}" maxPfx="{{ maximum_prefixes }}" name="{{ item['name'] }}" restartTime="{{ restart_time_minutes }}" thresh="{{ threshold_percentage }}"/>
+              </fvTenant>
+          </polUni>
+
+      delegate_to: localhost
+      loop: "{{ bgp_peer_prefix_policy }}"
+      when: bgp_peer_prefix_policy is defined
+
     - name: Interface BGP Peers
       cisco.aci.aci_rest:
         <<: *aci_login
         path: /api/mo/uni.xml
         method: post
         content: |
+          {# bfd and disable_connected_check #}
+          {% set peerCtrl_list = [] %}
+          {% if item['use_bfd'] is defined and item['use_bfd'] == 'yes' %}
+                {{ peerCtrl_list.append('bfd') or ""}}
+          {% endif %}
+          {% if item['disable_connected_check'] is defined and item['disable_connected_check'] == 'yes' %}
+                {{ peerCtrl_list.append('dis-conn-check') or ""}}
+          {% endif %}
+          {% set peerCtrl = '' %}
+          {% if peerCtrl_list %}
+              {% set peerCtrl = peerCtrl_list | join(',') %}
+          {% endif %}
+          {# bgp control #}
+          {% set ctrl_list = [] %}
+          {% if item['Allow_Self_AS'] and item['Allow_Self_AS'] == 'yes' %}
+                {{ ctrl_list.append('allow-self-as') or ""}}
+          {% endif %}
+          {% if item['as_override'] is defined and item['as_override'] == 'yes' %}
+                {{ ctrl_list.append('as-override') or ""}}
+          {% endif %}
+          {% if item['disable_peer_as_check'] is defined and item['disable_peer_as_check'] == 'yes' %}
+                {{ ctrl_list.append('dis-peer-as-check') or ""}}
+          {% endif %}
+          {% if item['next_hop_self'] is defined and item['next_hop_self'] == 'yes' %}
+                {{ ctrl_list.append('nh-self') or ""}}
+          {% endif %}
+          {% if item['send_community'] is defined and item['send_community'] == 'yes' %}
+                {{ ctrl_list.append('send-com') or ""}}
+          {% endif %}
+          {% if item['send_extended_community'] is defined and item['send_extended_community']  == 'yes' %}
+                {{ ctrl_list.append('send-ext-com') or ""}}
+          {% endif %}
+          {% set ctrl = '' %}
+          {% if ctrl_list %}
+              {% set ctrl = ctrl_list | join(',') %}
+          {% endif %}
+          {% if item['path_type'] == 'vPC' %}
+                  {% set path %}topology/pod-{{item['pod_id']}}/protpaths-{{item['left_node_id']}}-{{item['right_node_id']}}/pathep-{{item['int_pol_group']}}{% endset %}
+          {% elif item['path_type'] == 'PC' %}
+                  {% set path %}topology/pod-{{item['pod_id']}}/paths-{{item['left_node_id']}}/pathep-[{{item['int_pol_group']}}]{% endset %}
+          {% else %}
+                  {% set path %}topology/pod-{{item['pod_id']}}/paths-{{item['left_node_id']}}/pathep-[eth{{item['port_id']}}]{% endset %}
+          {% endif %}
+          {% if item['private_as_control'] == 'remove_private_as' %}
+                  {% set private_as %}remove-exclusive{% endset %}
+          {% elif item['private_as_control'] == 'remove_all_private_as' %}
+                  {% set private_as %}remove-exclusive,remove-all{% endset %}
+          {% elif item['private_as_control'] == 'replace_private_as_with_local_as' %}
+                  {% set private_as %}remove-exclusive,remove-all,replace-as{% endset %}
+          {% else %}
+                  {% set private_as %}{% endset %}
+          {% endif %}
+          {% if item['address_type_controls'] is defined and item['address_type_controls'] != '' %}
+              {% set address_family = item['address_type_controls'] %}
+          {% else %}
+              {% set address_family = 'af-ucast' %}
+          {% endif %}
+          {% if item['send_domain_path'] is defined and item['send_domain_path'] != '' %}
+              {% set ctrlext = 'send-domain-path' %}
+          {% else %}
+              {% set ctrlext = '' %}
+          {% endif %}
+          {% if item['ebgp_multihop_ttl'] is defined and item['ebgp_multihop_ttl'] != '' %}
+              {% set ttl = item['ebgp_multihop_ttl'] | int  %}
+          {% else %}
+              {% set ttl = 1 %}
+          {% endif %}
+          {% if item['weight'] is defined and item['weight'] != '' %}
+              {% set weight = item['weight'] | int  %}
+          {% else %}
+              {% set weight = 0 %}
+          {% endif %}
+          {% if item['admin_status'] is defined and item['admin_status'] != '' %}
+              {% set admin_status = item['admin_status'] %}
+          {% else %}
+              {% set admin_status = 'enabled' %}
+          {% endif %}
+          {% if item['allow_self_as_count'] is defined and item['allow_self_as_count'] != '' %}
+              {% set allow_self_as_count = item['allow_self_as_count'] | int  %}
+          {% else %}
+              {% set allow_self_as_count = 3 %}
+          {% endif %}
           <polUni>
               <fvTenant name="{{item['tenant']}}" status="modified">
                <l3extOut name="{{item['l3out']}}" status="modified">
                   <l3extLNodeP name="{{item['l3out_node_profile']}}" status="modified">
-                      <l3extLIfP descr="" name="{{item['name']}}" tag="yellow-green" status="modified">
-                              {% if item['path_type'] == 'vPC' %}
-                                      {% set path %}topology/pod-{{item['pod_id']}}/protpaths-{{item['left_node_id']}}-{{item['right_node_id']}}/pathep-{{item['int_pol_group']}}{% endset %}
-                              {% elif item['path_type'] == 'PC' %}
-                                      {% set path %}topology/pod-{{item['pod_id']}}/paths-{{item['left_node_id']}}/pathep-[{{item['int_pol_group']}}]{% endset %}
-                              {% else %}
-                                      {% set path %}topology/pod-{{item['pod_id']}}/paths-{{item['left_node_id']}}/pathep-[eth{{item['port_id']}}]{% endset %}
-                              {% endif %}
-                              {% if item['use_bfd'] == 'yes' %}
-                                      {% set peerCtrl %}bfd{% endset %}
-                              {% else %}
-                                      {% set peerCtrl %}{% endset %}
-                              {% endif %}
-                              {% if item['Allow_Self_AS'] == 'yes' %}
-                                      {% set ctrl %}allow-self-as,send-com,send-ext-com{% endset %}
-                              {% else %}
-                                      {% set ctrl %}send-com,send-ext-com{% endset %}
-                              {% endif %}
-                              {% if item['private_as_control'] == 'remove_private_as' %}
-                                      {% set private_as %}remove-exclusive{% endset %}
-                              {% elif item['private_as_control'] == 'remove_all_private_as' %}
-                                      {% set private_as %}remove-exclusive,remove-all{% endset %}
-                              {% elif item['private_as_control'] == 'replace_private_as_with_local_as' %}
-                                      {% set private_as %}remove-exclusive,remove-all,replace-as{% endset %}
-                              {% else %}
-                                      {% set private_as %}{% endset %}
-                              {% endif %}
+                      <l3extLIfP descr="" name="{{item['name']}}" status="modified">
                               <l3extRsPathL3OutAtt tDn="{{path}}">
                               {% if item['password'] %}
-                                  <bgpPeerP addr="{{item['bgp_peer_ip']}}" ctrl="{{ctrl}}" descr="{{item['bgp_peer_name']}}" name="peer-{{item['bgp_peer_ip']}}" peerCtrl="{{peerCtrl}}" privateASctrl="{{private_as}}" password="{{item['password']}}">
+                                  <bgpPeerP annotation="orchestrator:ansible" addr="{{item['bgp_peer_ip']}}" ctrl="{{ctrl}}" ctrlExt="{{ctrlext}}" descr="{{item['bgp_peer_name']}}" name="peer-{{item['bgp_peer_ip']}}" peerCtrl="{{peerCtrl}}" privateASctrl="{{private_as}}" password="{{item['password']}}" addrTCtrl="{{address_family}}" ttl="{{ ttl }}" weight="{{ weight }}" adminSt="{{ admin_status }}" allowedSelfAsCnt="{{ allow_self_as_count }}">
                               {% else %}
-                                  <bgpPeerP addr="{{item['bgp_peer_ip']}}" ctrl="{{ctrl}}" descr="{{item['bgp_peer_name']}}" name="peer-{{item['bgp_peer_ip']}}" privateASctrl="{{private_as}}" peerCtrl="{{peerCtrl}}" >
+                                  <bgpPeerP annotation="orchestrator:ansible" addr="{{item['bgp_peer_ip']}}" ctrl="{{ctrl}}" ctrlExt="{{ctrlext}}" descr="{{item['bgp_peer_name']}}" name="peer-{{item['bgp_peer_ip']}}" privateASctrl="{{private_as}}" peerCtrl="{{peerCtrl}}" addrTCtrl="{{address_family}}" ttl="{{ ttl }}" weight="{{ weight }}" adminSt="{{ admin_status }}" allowedSelfAsCnt="{{ allow_self_as_count }}">
                               {% endif %}
+                                      {% if item['site_of_origin'] is defined and item['site_of_origin'] != '' %}
+                                          <bgpSiteOfOriginP  soo="{{ item['site_of_origin'] }}" />
+                                      {% endif %}
+                                      {% if item['bgp_peer_prefix_policy'] is defined and item['bgp_peer_prefix_policy'] != '' %}
+                                          <bgpRsPeerPfxPol tnBgpPeerPfxPolName="{{ item['bgp_peer_prefix_policy'] }}"/>
+                                      {% endif %}
                                       {% if item['Import_Route_Map'] %}
                                           <bgpRsPeerToProfile annotation="" configIssues="" direction="import" tDn="uni/tn-{{item['tenant']}}/prof-{{item['Import_Route_Map']}}"/>
                                       {% endif %}
                                       {% if item['Export_Route_Map'] %}
                                           <bgpRsPeerToProfile annotation="" configIssues="" direction="export" tDn="uni/tn-{{item['tenant']}}/prof-{{item['Export_Route_Map']}}"/>
                                       {% endif %}
-                                      <bgpRsPeerPfxPol annotation="" tnBgpPeerPfxPolName=""/>
                                       {% if item['Local_AS'] %}
                                           {% if item['Local_AS_Options'] == 'no-Prepend+replace-as' %}
                                               {% set asnP %}replace-as{% endset %}
@@ -325,7 +421,7 @@
                                           {% endif %}
                                           <bgpLocalAsnP annotation="" asnPropagate="{{asnP}}" descr="" localAsn="{{item['Local_AS']}}" name="" nameAlias=""/>
                                       {% endif %}
-                                      <bgpAsP annotation="" asn="{{item['bgp_peer_as']}}" descr="" name="" nameAlias=""/>
+                                      <bgpAsP asn="{{item['bgp_peer_as']}}" descr="" name="" nameAlias=""/>
                                   </bgpPeerP>
                               </l3extRsPathL3OutAtt>
                           </l3extLIfP>

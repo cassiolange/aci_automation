@@ -14,6 +14,27 @@
           validate_certs: "{{ validate_certs }}"
 
   tasks:
+    - name: BGP Address Family Context
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
+          {%- set ctrl="" %}
+          {%- if item['host_route_leak'] == "yes" %}
+          {% set ctrl="host-rt-leak" %}
+          {% endif %}
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <bgpCtxAfPol name="{{item['name']}}" descr="{{item['description']}}" eDist="{{item['ebgp_distance']| int |default('20',True)}}" iDist="{{item['ibgp_distance']| int |default('200',True)}}" localDist="{{item['local_distance']| int |default('220',True)}}" maxEcmp="{{item['ebgp_max_ecmp']| int |default('16',True)}}" maxEcmpIbgp="{{item['ibgp_max_ecmp']| int |default('16',True)}}"  ctrl="{{ctrl}}" status="{{ status }}"/>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ bgp_address_family_context }}"
+      when: bgp_address_family_context is defined
+
     - name: Add ospf interface policy
       cisco.aci.aci_interface_policy_ospf:
         <<: *aci_login
@@ -21,18 +42,14 @@
         ospf: "{{ item.name }}"
         state: "{{ item.status }}"
         description: "{{ item.description if item.description is defined and item.description else omit }}"
-        dead_interval: "{{ item.dead_interval if item.dead_interval is defined and item.dead_interval else omit }}"
-        hello_interval: "{{ item.hello_interval if item.hello_interval is defined and item.hello_interval else omit }}"
-        retransmit_interval: "{{ item.retransmit_interval if item.retransmit_interval is defined and item.retransmit_interval else omit }}"
-        transmit_delay: "{{ item.transmit_delay if item.transmit_delay is defined and item.transmit_delay else omit }}"
-        cost: "{{ item.interface_cost if item.interface_cost is defined and item.interface_cost else omit }}"
-        priority: "{{ item.priority if item.priority is defined and item.priority else omit }}"
+        dead_interval: "{{ item.dead_interval | int if item.dead_interval is defined and item.dead_interval else omit }}"
+        hello_interval: "{{ item.hello_interval | int if item.hello_interval is defined and item.hello_interval else omit }}"
+        retransmit_interval: "{{ item.retransmit_interval | int if item.retransmit_interval is defined and item.retransmit_interval else omit }}"
+        transmit_delay: "{{ item.transmit_delay | int if item.transmit_delay is defined and item.transmit_delay else omit }}"
+        cost: "{{ item.interface_cost | int if item.interface_cost is defined and item.interface_cost else omit }}"
+        priority: "{{ item.priority | int if item.priority is defined and item.priority else omit }}"
         network_type: "{{ item.network_type }}"
-        controls:
-#          - "{{ 'passive' if item.passive_participation is defined and item.passive_participation == 'yes' }}"
-          - "{{ 'bfd' if item.use_bfd is defined and item.use_bfd == 'yes' }}"
-          - "{{ 'mtu-ignore' if item.mtu_ignore is defined and item.mtu_ignore == 'yes' }}"
-          - "{{ 'advert-subnet' if item.advertise_subnet is defined and item.advertise_subnet == 'yes' }}"
+        controls: "{{ ['passive' if item.passive_participation is defined and item.passive_participation == 'yes',  'bfd' if item.use_bfd is defined and item.use_bfd == 'yes', 'mtu-ignore' if item.mtu_ignore is defined and item.mtu_ignore == 'yes', 'advert-subnet' if item.advertise_subnet is defined and item.advertise_subnet == 'yes' ]  | reject('undefined') | join(',') | default(omit,true)}}"
       delegate_to: localhost
       loop: "{{ ospf_int_pol }}"
       when: ospf_int_pol is defined

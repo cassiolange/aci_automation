@@ -1,0 +1,8 @@
+{% macro status(status) -%}
+{% if status is defined and status == 'absent' %}
+{% set status_new = 'deleted' %}
+{% else %}
+{% set status_new = '' %}
+{% endif %}
+{{ status_new }}
+{%- endmacro -%}

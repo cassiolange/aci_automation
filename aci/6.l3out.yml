@@ -35,6 +35,35 @@
       loop: "{{ bgp_address_family_context }}"
       when: bgp_address_family_context is defined
 
+    - name: BGP Route Summarization Policy
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
+          {# bgp control #}
+          {% set ctrl_list = [] %}
+          {% if item['as_set'] and item['as_set'] == 'yes' %}
+                {{ ctrl_list.append('as-set') or ""}}
+          {% endif %}
+          {% if item['summary_only'] is defined and item['summary_only'] == 'yes' %}
+                {{ ctrl_list.append('summary-only') or ""}}
+          {% endif %}
+          {% set ctrl = '' %}
+          {% if ctrl_list %}
+              {% set ctrl = ctrl_list | join(',') %}
+          {% endif %}
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <bgpRtSummPol addrTCtrl="af-ucast" annotation="orchestrator:ansible"  ctrl="{{ ctrl }}" descr="{{item['description']}}"  name="{{item['name']}}" status="{{status}}"/>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ bgp_route_summarization }}"
+      when: bgp_route_summarization is defined
+
     - name: Add ospf interface policy
       cisco.aci.aci_interface_policy_ospf:
         <<: *aci_login

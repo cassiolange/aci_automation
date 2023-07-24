@@ -38,6 +38,27 @@
       loop: "{{ vrf }}"
       when: vrf is defined
 
+    - name: VRF BGP Route Target Profiles
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <fvCtx name="{{item['vrfName']}}" status="modified">
+                      <bgpRtTargetP dn="uni/tn-{{item['tenant']}}/ctx-{{item['vrfName']}}/rtp-{{item['addressFamily']}}" af="{{item['addressFamily']}}">
+                          <bgpRtTarget rt="{{item['routeTarget']}}" type="{{item['routeTargetType']}}" status="{{status}}"/>
+                      </bgpRtTargetP>
+                  </fvCtx>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ vrf_bgp_route_target }}"
+      when: vrf_bgp_route_target is defined
+
     - name: Add Bridge Domain
       cisco.aci.aci_bd:
         <<: *aci_login

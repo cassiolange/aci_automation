@@ -1,5 +1,5 @@
 ---
-- ansible.builtin.import_playbook: update.yml
+#- ansible.builtin.import_playbook: update.yml
 
 - name : Tenant Provisioning
   gather_facts: false
@@ -58,6 +58,69 @@
       delegate_to: localhost
       loop: "{{ vrf_bgp_route_target }}"
       when: vrf_bgp_route_target is defined
+
+    - name: VRF BGP Route Summarization Policy
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
+          <polUni>
+          	<fvTenant name="{{item['tenant']}}" status="modified">
+          	    <fvCtx name="{{item['vrf']}}" status="modified">
+                    <fvCtxRtSummPol annotation="orchestrator:ansible" name="{{item['name']}}" status="{{ status }}"/>
+                </fvCtx>
+            </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ vrf_bgp_route_sum }}"
+      when: vrf_bgp_route_sum is defined
+
+    - name: VRF BGP Route Summarization Policy - Nodes
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
+          <polUni>
+          	<fvTenant name="{{item['tenant']}}" status="modified">
+          	    <fvCtx name="{{item['vrf']}}" status="modified">
+                    <fvCtxRtSummPol name="{{item['name']}}" status="modified">
+                        <fvRsNodeRtSummAtt tDn="topology/pod-{{item['pod_id'] | int }}/node-{{ item['node_id'] | int }}" status="{{ status }}"/>
+                    </fvCtxRtSummPol>
+                </fvCtx>
+            </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ vrf_bgp_route_sum_nodes }}"
+      when: vrf_bgp_route_sum_nodes is defined
+
+    - name: VRF BGP Route Summarization Policy - Subnet
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
+          <polUni>
+          	<fvTenant name="{{item['tenant']}}" status="modified">
+          	    <fvCtx name="{{item['vrf']}}" status="modified">
+                    <fvCtxRtSummPol name="{{item['name']}}" status="modified">
+                        <fvRtSummSubnet prefix="{{item['subnet']}}" status="{{ status }}">
+                            <fvRsSubnetToRtSummPol tDn="uni/tn-{{item['tenant']}}/bgprtsum-{{item['summarization_policy']}}"/>
+                        </fvRtSummSubnet>
+                    </fvCtxRtSummPol>
+                </fvCtx>
+            </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ vrf_bgp_route_sum_subnet }}"
+      when: vrf_bgp_route_sum_subnet is defined
 
     - name: Add Bridge Domain
       cisco.aci.aci_bd:

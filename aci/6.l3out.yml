@@ -504,9 +504,11 @@
         path: /api/mo/uni.xml
         method: post
         content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
           <polUni>
-          	<fvTenant name="{{item['tenant']}}" status="modified">
-                  <rtctrlAttrP annotation="orchestrator:ansible" descr="{{item['description']}}" name="{{item['name']}}" nameAlias="">
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <rtctrlAttrP annotation="orchestrator:ansible" descr="{{item['description']}}" name="{{item['name']}}" nameAlias="" status="{{ status }}">
                   {% if item['set_community'] == 'yes' %}
                       <rtctrlSetComm annotation="" community="regular:as2-nn2:{{item['community']}}" descr="" name="" nameAlias="" setCriteria="{{item['community_criteria']}}" type="community"/>
                   {% endif %}
@@ -524,6 +526,9 @@
                       <rtctrlSetPolicyTag annotation="" descr="" name="" nameAlias="" type="policy-tag">
                           <rtctrlRsSetPolicyTagToInstP annotation="" tDn="uni/tn-{{item['tenant']}}/out-{{item['l3out']}}/instP-{{item['set_ext_epg']}}"/>
                       </rtctrlSetPolicyTag>
+                  {% endif %}
+                  {% if item['next_hop_propagation'] is defined and item['next_hop_propagation'] == 'yes'  %}
+                      <rtctrlSetNhUnchanged annotation="" descr="" name="" nameAlias="" type="nh-unchanged"/>
                   {% endif %}
                   </rtctrlAttrP>
               </fvTenant>

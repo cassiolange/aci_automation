@@ -1,5 +1,5 @@
 ---
-- import_playbook: update.yml
+#- import_playbook: update.yml
 
 - name : L3Out Provisioning
   gather_facts: false
@@ -130,6 +130,25 @@
       delegate_to: localhost
       loop: "{{ l3out }}"
       when: l3out is defined
+
+    - name: L3Out Route Profile for Redistribution
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <l3extOut name="{{item['l3out']}}" status="modified">
+                      <l3extRsRedistributePol  src="{{item['source']}}" tnRtctrlProfileName="{{item['route_map']}}" status="{{ status }}"/>
+                  </l3extOut>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ l3out_route_prof_redistribution }}"
+      when: l3out_route_prof_redistribution is defined
 
     - name: Add a new L3Out Node profile
       cisco.aci.aci_rest:

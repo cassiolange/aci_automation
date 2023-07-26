@@ -208,11 +208,13 @@
         path: /api/mo/uni.xml
         method: post
         content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
           <polUni>
               <fvTenant name="{{item['tenant']}}" status="modified">
                <l3extOut name="{{item['l3out']}}" status="modified">
                   <l3extLNodeP name="{{item['l3out_node_profile']}}" status="modified">
-                      <l3extLIfP descr="" name="{{item['name']}}" tag="yellow-green" >
+                      <l3extLIfP descr="" name="{{item['name']}}" status="modified">
                               {% if item['use_bfd'] == 'yes' %}
                               <bfdIfP descr="" keyId="1" name="bfdIfPolicy" nameAlias="" type="none">
                                   {% if item['bfd_policy'] %}
@@ -222,6 +224,7 @@
                                   {% endif %}
                               </bfdIfP>
                               {% endif %}
+                              {% if item['ospf_interface_policy'] is defined and item['ospf_interface_policy'] != '' %}
                               {% if item['ospf_password'] is defined and item['ospf_password'] != '' %}
                               <ospfIfP name="ospfIfPolicy" authKeyId="1" authType="md5" authKey="{{item['ospf_password']}}">
                               {% else %}
@@ -229,9 +232,17 @@
                               {% endif %}
                                   <ospfRsIfPol dn="uni/tn-{{item['tenant']}}/out-{{item['l3out']}}/lnodep-{{item['l3out_node_profile']}}/lifp-{{item['name']}}/ospfIfP/rsIfPol" tnOspfIfPolName="{{item['ospf_interface_policy']}}"/>
                               </ospfIfP>
+                              {% endif %}
+                              {% if item['interface_type'] == 'floating_svi' %}
+                              <l3extVirtualLIfP annotation="orchestrator:ansible" addr="{{item['ip_addr_side_a']}}" autostate="{{item['autostate']}}" descr="{{item['description'] | default("")}}" encap="vlan-{{item['vlan_encap_id'] | int }}" mode="{{item['trunk_mode']}}" mtu="{{item['mtu'] | int }}" nodeDn="topology/pod-{{item['pod_id'] | int}}/node-{{item['left_node_id'] | int}}" ifInstT="ext-svi" status="{{ status }}">
+                                  <l3extRsDynPathAtt encap="vlan-{{item['vlan_encap_id'] | int }}" floatingAddr="{{item['floating_primary_ip']}}"  tDn="uni/phys-{{item['floating_svi_domain']}}">
+                                      <l3extVirtualLIfPLagPolAtt annotation=""/>
+                                  </l3extRsDynPathAtt>
+                              </l3extVirtualLIfP>
+                              {% else %}
                               {% if item['path_type'] == 'vPC' %}
                                       {% set path %}topology/pod-{{item['pod_id'] | int }}/protpaths-{{item['left_node_id'] | int }}-{{item['right_node_id'] | int }}/pathep-{{item['int_pol_group']}}{% endset %}
-                              <l3extRsPathL3OutAtt addr="0.0.0.0" descr="" encap="vlan-{{item['vlan_encap_id'] | int }}" encapScope="local" ifInstT="ext-svi" autostate="{{item['autostate']}}" mode="{{item['trunk_mode']}}" mtu="{{item['mtu'] | int }}" tDn="{{path}}" targetDscp="unspecified">
+                              <l3extRsPathL3OutAtt addr="0.0.0.0" descr="" encap="vlan-{{item['vlan_encap_id'] | int }}" encapScope="local" ifInstT="ext-svi" autostate="{{item['autostate']}}" mode="{{item['trunk_mode']}}" mtu="{{item['mtu'] | int }}" tDn="{{path}}" targetDscp="unspecified" status="{{ status }}">
                                   <l3extMember addr="{{item['ip_addr_side_a']}}" descr=""  name="side_a" side="A" >
                                   {% if item['secondary_ip'] is defined and item['secondary_ip'] != '' %}
                                       <l3extIp addr="{{item['secondary_ip']}}" annotation="" descr="" name="" nameAlias=""/>
@@ -259,17 +270,13 @@
                                               {% set iftype ="l3-port" %}
                                               {% set encap = "unknown" %}
                                       {% endif %}
-                              <l3extRsPathL3OutAtt addr="{{item['ip_addr_side_a']}}" descr="" encap="{{encap}}" encapScope="local" ifInstT="{{iftype}}" autostate="{{item['autostate']}}" mode="{{item['trunk_mode']}}" mtu="{{item['mtu'] | int }}" tDn="{{path}}" targetDscp="unspecified">
+                              <l3extRsPathL3OutAtt addr="{{item['ip_addr_side_a']}}" descr="" encap="{{encap}}" encapScope="local" ifInstT="{{iftype}}" autostate="{{item['autostate']}}" mode="{{item['trunk_mode']}}" mtu="{{item['mtu'] | int }}" tDn="{{path}}" targetDscp="unspecified" status="{{ status }}">
                               {% if item['secondary_ip'] is defined and item['secondary_ip'] != '' %}
                                   <l3extIp addr="{{item['secondary_ip']}}" annotation="" descr="" name="" nameAlias=""/>
                               {% endif %}
                               </l3extRsPathL3OutAtt>
                               {% endif %}
-                              {#
-                              <l3extRsNdIfPol tnNdIfPolName=""/>
-                              <l3extRsIngressQosDppPol tnQosDppPolName=""/>
-                              <l3extRsEgressQosDppPol tnQosDppPolName=""/>
-                               #}
+                              {% endif %}
                           </l3extLIfP>
                       </l3extLNodeP>
                   </l3extOut>
@@ -278,31 +285,6 @@
       delegate_to: localhost
       loop: "{{ l3out_interfaces }}"
       when: l3out_interfaces is defined
-
-    - name: Add an L3Out Floating SVI
-      cisco.aci.aci_rest:
-        <<: *aci_login
-        path: /api/mo/uni.xml
-        method: post
-        content: |
-          <polUni>
-              <fvTenant name="{{item['tenant']}}">
-                <l3extOut name="{{item['l3out']}}">
-                    <l3extLNodeP name="{{item['l3out_node_profile']}}">
-                        <l3extLIfP name="{{item['name']}}">
-                            <l3extVirtualLIfP annotation="orchestrator:ansible" addr="{{item['primary_ip']}}" autostate="{{item['autostate']}}" descr="{{item['description']}}" encap="vlan-{{item['vlan_encap_id'] | int }}" mode="{{item['mode']}}" mtu="{{item['mtu'] | int }}" nodeDn="topology/pod-{{item['pod_id'] | int}}/node-{{item['anchor_node_id'] | int}}" ifInstT="ext-svi">
-                                <l3extRsDynPathAtt encap="vlan-{{item['vlan_encap_id'] | int }}" floatingAddr="{{item['floating_primary_ip']}}"  tDn="uni/phys-{{item['domain']}}">
-                                    <l3extVirtualLIfPLagPolAtt annotation=""/>
-                                </l3extRsDynPathAtt>
-                            </l3extVirtualLIfP>
-                        </l3extLIfP>
-                    </l3extLNodeP>
-                </l3extOut>
-            </fvTenant>
-          </polUni>
-      delegate_to: localhost
-      loop: "{{ floating_svi }}"
-      when: floating_svi is defined
 
     - name: Add a new ExtEpg
       cisco.aci.aci_l3out_extepg:
@@ -373,6 +355,8 @@
         path: /api/mo/uni.xml
         method: post
         content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
           {# bfd and disable_connected_check #}
           {% set peerCtrl_list = [] %}
           {% if item['use_bfd'] is defined and item['use_bfd'] == 'yes' %}
@@ -460,11 +444,15 @@
                <l3extOut name="{{item['l3out']}}" status="modified">
                   <l3extLNodeP name="{{item['l3out_node_profile']}}" status="modified">
                       <l3extLIfP descr="" name="{{item['name']}}" status="modified">
-                              <l3extRsPathL3OutAtt tDn="{{path}}">
-                              {% if item['password'] %}
-                                  <bgpPeerP annotation="orchestrator:ansible" addr="{{item['bgp_peer_ip']}}" ctrl="{{ctrl}}" ctrlExt="{{ctrlext}}" descr="{{item['bgp_peer_name']}}" name="peer-{{item['bgp_peer_ip']}}" peerCtrl="{{peerCtrl}}" privateASctrl="{{private_as}}" password="{{item['password']}}" addrTCtrl="{{address_family}}" ttl="{{ ttl }}" weight="{{ weight }}" adminSt="{{ admin_status }}" allowedSelfAsCnt="{{ allow_self_as_count }}">
+                              {% if item['interface_type'] is defined and item['interface_type'] == 'floating_svi' %}
+                              <l3extVirtualLIfP nodeDn="topology/pod-{{item['pod_id'] | int }}/node-{{item['left_node_id'] | int }}" encap="vlan-{{ item['vlan_encap_id'] | int  }}" status="modified">
                               {% else %}
-                                  <bgpPeerP annotation="orchestrator:ansible" addr="{{item['bgp_peer_ip']}}" ctrl="{{ctrl}}" ctrlExt="{{ctrlext}}" descr="{{item['bgp_peer_name']}}" name="peer-{{item['bgp_peer_ip']}}" privateASctrl="{{private_as}}" peerCtrl="{{peerCtrl}}" addrTCtrl="{{address_family}}" ttl="{{ ttl }}" weight="{{ weight }}" adminSt="{{ admin_status }}" allowedSelfAsCnt="{{ allow_self_as_count }}">
+                              <l3extRsPathL3OutAtt tDn="{{path}}">
+                              {% endif %}
+                              {% if item['password'] %}
+                                  <bgpPeerP annotation="orchestrator:ansible" addr="{{item['bgp_peer_ip']}}" ctrl="{{ctrl}}" ctrlExt="{{ctrlext}}" descr="{{item['bgp_peer_name']}}" name="peer-{{item['bgp_peer_ip']}}" peerCtrl="{{peerCtrl}}" privateASctrl="{{private_as}}" password="{{item['password']}}" addrTCtrl="{{address_family}}" ttl="{{ ttl }}" weight="{{ weight }}" adminSt="{{ admin_status }}" allowedSelfAsCnt="{{ allow_self_as_count }}" status="{{ status }}">
+                              {% else %}
+                                  <bgpPeerP annotation="orchestrator:ansible" addr="{{item['bgp_peer_ip']}}" ctrl="{{ctrl}}" ctrlExt="{{ctrlext}}" descr="{{item['bgp_peer_name']}}" name="peer-{{item['bgp_peer_ip']}}" privateASctrl="{{private_as}}" peerCtrl="{{peerCtrl}}" addrTCtrl="{{address_family}}" ttl="{{ ttl }}" weight="{{ weight }}" adminSt="{{ admin_status }}" allowedSelfAsCnt="{{ allow_self_as_count }}" status="{{ status }}">
                               {% endif %}
                                       {% if item['site_of_origin'] is defined and item['site_of_origin'] != '' %}
                                           <bgpSiteOfOriginP  soo="{{ item['site_of_origin'] }}" />
@@ -488,7 +476,11 @@
                                       {% endif %}
                                       <bgpAsP asn="{{item['bgp_peer_as']}}" descr="" name="" nameAlias=""/>
                                   </bgpPeerP>
+                              {% if item['interface_type'] is defined and item['interface_type'] == 'floating_svi' %}
+                              </l3extVirtualLIfP>
+                              {% else %}
                               </l3extRsPathL3OutAtt>
+                              {% endif %}
                           </l3extLIfP>
                       </l3extLNodeP>
                   </l3extOut>

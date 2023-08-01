@@ -605,30 +605,42 @@
           {% else %}
           {% set shutdown = item['shutdown'] %}
           {% endif %}
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
           <polUni>
+              {% if item['port_type'] is defined and item['port_type'] == "fabric" %}
+              <fabricInst>
+              {% if item['node_type'] == "leaf" %}
+                  <fabricPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int  }}" assocGrp="uni/fabric/funcprof/leportgrp-{{ item['interface_policy_group']}}" status="{{ status }}"/>
+              {% else %}
+                  <fabricPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int }}" assocGrp="uni/fabric/funcprof/spportgrp-{{ item['interface_policy_group']}}" role="spine" status="{{ status }}" />
+              {% endif %}
+              </fabricInst>
+              {% else %}
               <infraInfra>
                   {% if item['node_type'] == "leaf" %}
                   {% if item['brekout_interface'] %}
-                  <infraPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] }}" port="{{ interface[1] }}" brkoutMap="{{ item['brekout_interface'] }}"/>
+                  <infraPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int }}" brkoutMap="{{ item['brekout_interface'] }}"/>
                   {% elif item['connected_fex'] %}
-                  <infraPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] }}" port="{{ interface[1] }}" connectedFex="{{ item['connected_fex'] | int }}"/>
+                  <infraPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int  }}" connectedFex="{{ item['connected_fex'] | int }}"/>
                   {% elif item['interface_type_type'] | lower == "access" %}
                   {% if interface | length  == 2 %}
-                  <infraPortConfig node="{{ item['node_id'] | int  }}" card="{{ interface[0] }}" port="{{ interface[1] }}" description="{{ item['description'] }}" shutdown="{{ shutdown }}" assocGrp="uni/infra/funcprof/accportgrp-{{ item['interface_policy_group']}}"/>
+                  <infraPortConfig node="{{ item['node_id'] | int  }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int }}" description="{{ item['description'] }}" shutdown="{{ shutdown }}" assocGrp="uni/infra/funcprof/accportgrp-{{ item['interface_policy_group']}}"/>
                   {% else %}
-                  <infraPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] }}" port="{{ interface[1] }}" subPort="{{ interface[2] }}" description="{{ item['description'] }}" shutdown="{{ shutdown }}" assocGrp="uni/infra/funcprof/accportgrp-{{ item['interface_policy_group']}}"/>
+                  <infraPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int }}" subPort="{{ interface[2] }}" description="{{ item['description'] }}" shutdown="{{ shutdown }}" assocGrp="uni/infra/funcprof/accportgrp-{{ item['interface_policy_group']}}"/>
                   {% endif %}
                   {% elif item['interface_type_type'] | lower == "pc" or item['interface_type_type'] | lower == "vpc"%}
                   {% if interface | length  == 2 %}
-                  <infraPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] }}" port="{{ interface[1] }}" description="{{ item['description'] }}" shutdown="{{ shutdown }}" assocGrp="uni/infra/funcprof/accbundle-{{ item['interface_policy_group']}}"/>
+                  <infraPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int  }}" port="{{ interface[1] | int }}" description="{{ item['description'] }}" shutdown="{{ shutdown }}" assocGrp="uni/infra/funcprof/accbundle-{{ item['interface_policy_group']}}"/>
                   {% else %}
-                  <infraPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] }}" port="{{ interface[1] }}" subPort="{{ interface[2] }}" description="{{ item['description'] }}" shutdown="{{ shutdown }}" assocGrp="uni/infra/funcprof/accbundle-{{ item['interface_policy_group']}}"/>
+                  <infraPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int }}" subPort="{{ interface[2] }}" description="{{ item['description'] }}" shutdown="{{ shutdown }}" assocGrp="uni/infra/funcprof/accbundle-{{ item['interface_policy_group']}}"/>
                   {% endif %}
                   {% endif %}
                   {% else %}
-                  <infraPortConfig node="{{ item['node_id'] | int  }}" card="{{ interface[0] }}" port="{{ interface[1] }}" description="{{ item['description'] }}" shutdown="{{ shutdown }}" assocGrp="uni/infra/funcprof/spaccportgrp-{{ item['interface_policy_group']}}"/>
+                  <infraPortConfig node="{{ item['node_id'] | int  }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int }}" description="{{ item['description'] }}" shutdown="{{ shutdown }}" assocGrp="uni/infra/funcprof/spaccportgrp-{{ item['interface_policy_group']}}"/>
                   {% endif %}
               </infraInfra>
+              {% endif %}
           </polUni>
       delegate_to: localhost
       loop: "{{ interface_configuration }}"

@@ -354,3 +354,40 @@
       delegate_to: localhost
       loop: "{{ snmp_trap_forwarder }}"
       when: snmp_trap_forwarder is defined
+
+    - name: Fabric interface Policy Group
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
+          <polUni>
+              <fabricInst>
+                  <fabricFuncP>
+                      {% if item['switch_type'] is defined and item['switch_type'] == "spine" %}
+                      <fabricSpPortPGrp annotation="orchestrator:ansible" descr="{{ item['description'] }}" name="{{ item['name'] }}" status="{{ status }}">
+                      {% else %}
+                      <fabricLePortPGrp annotation="orchestrator:ansible" descr="{{ item['description'] }}" name="{{ item['name'] }}" status="{{ status }}">
+                      {% endif %}
+                          <fabricRsMacsecFabIfPol tnMacsecFabIfPolName="{{ item['macsec'] | default('',true) }}"/>
+                          <fabricRsL3IfPol tnL3IfPolName="" userdom="all"/>
+                          <fabricRsFLinkFlapPol tnFabricFLinkFlapPolName="" />
+                          <fabricRsMonIfFabricPol tnMonFabricPolName=""/>
+                          <fabricRsFIfPol tnFabricFIfPolName="" userdom="all"/>
+                          <fabricRsDwdmFabIfPol tnDwdmFabIfPolName=""/>
+                          {% if item['transceiver'] is defined and item['transceiver'] != "" %}
+                          <fabricRsOpticsFabIfPol tDn="uni/fabric/zrfab-{{ item['transceiver'] }}"/>
+                          {% endif %}
+                      {% if item['switch_type'] is defined and item['switch_type'] == "spine" %}
+                      </fabricSpPortPGrp>
+                      {% else %}
+                      </fabricLePortPGrp>
+                      {% endif %}
+                  </fabricFuncP>
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ fabric_interface_policy_group }}"
+      when: fabric_interface_policy_group is defined

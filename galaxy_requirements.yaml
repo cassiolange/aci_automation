@@ -5,3 +5,4 @@ collections:
   - cisco.mso
   - cisco.aci
   - cisco.nd
+  - community.general

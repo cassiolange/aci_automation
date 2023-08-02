@@ -611,9 +611,9 @@
               {% if item['port_type'] is defined and item['port_type'] == "fabric" %}
               <fabricInst>
               {% if item['node_type'] == "leaf" %}
-                  <fabricPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int  }}" assocGrp="uni/fabric/funcprof/leportgrp-{{ item['interface_policy_group']}}" status="{{ status }}"/>
+                  <fabricPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int  }}" assocGrp="uni/fabric/funcprof/leportgrp-{{ item['interface_policy_group']}}" status="{{ status }}" description="{{ item['description'] }}"/>
               {% else %}
-                  <fabricPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int }}" assocGrp="uni/fabric/funcprof/spportgrp-{{ item['interface_policy_group']}}" role="spine" status="{{ status }}" />
+                  <fabricPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int }}" assocGrp="uni/fabric/funcprof/spportgrp-{{ item['interface_policy_group']}}" role="spine" status="{{ status }}" description="{{ item['description'] }}"/>
               {% endif %}
               </fabricInst>
               {% else %}

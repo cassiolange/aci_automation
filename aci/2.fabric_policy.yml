@@ -190,18 +190,41 @@
         path: /api/mo/uni.xml
         method: post
         content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
           <polUni>
               <fabricInst>
-                  <fabricPodP  descr="{{item['description']}}" name="{{item['name']}}">
-                      <fabricPodS  name="default" type="ALL">
-                          <fabricRsPodPGrp  tDn="uni/fabric/funcprof/podpgrp-{{item['pod_policy_group']}}"/>
-                      </fabricPodS>
-                  </fabricPodP>
+                  <fabricPodP descr="{{item['description']}}" name="{{item['name']}}" status="{{ status }}" annotation="orchestrator:ansible"/>
               </fabricInst>
           </polUni>
       delegate_to: localhost
       with_items: "{{ pod_profile }}"
       when: pod_profile is defined
+
+    - name: POD Selector
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
+          {% set block_name = item['name']+range(1, 10000) | random | string %}
+          <polUni>
+              <fabricInst>
+                  <fabricPodP name="{{item['pod_profile']}}" status="modified">
+                      <fabricPodS name="{{item['name']}}" type="{{item['type'] | default("ALL",true)}}" status="{{ status }}" annotation="orchestrator:ansible">
+                          <fabricRsPodPGrp  tDn="uni/fabric/funcprof/podpgrp-{{item['pod_policy_group']}}"/>
+                          {% if item['type'] is defined and item['type']== "range" %}
+          			      <fabricPodBlk from_="{{ item['pod_id'] |int }}" name="{{block_name}}" nameAlias="" to_="{{ item['pod_id'] |int }}"/>
+                          {% endif %} 
+                      </fabricPodS>
+                  </fabricPodP>
+              </fabricInst>
+          </polUni>
+      delegate_to: localhost
+      with_items: "{{ pod_selector }}"
+      when: pod_selector is defined
 
     - name: DNS Profile
       cisco.aci.aci_rest:

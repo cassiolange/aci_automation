@@ -26,9 +26,13 @@
           {%- if item['host_route_leak'] == "yes" %}
           {% set ctrl="host-rt-leak" %}
           {% endif %}
+          {%set local_max_ecmp = 0 %} 
+          {% if item['local_max_ecmp'] is defined and item['local_max_ecmp'] != '' %}
+          {%set local_max_ecmp = item['local_max_ecmp'] | int %} 
+          {% endif %}
           <polUni>
               <fvTenant name="{{item['tenant']}}" status="modified">
-                  <bgpCtxAfPol name="{{item['name']}}" descr="{{item['description']}}" eDist="{{item['ebgp_distance']| int |default('20',True)}}" iDist="{{item['ibgp_distance']| int |default('200',True)}}" localDist="{{item['local_distance']| int |default('220',True)}}" maxEcmp="{{item['ebgp_max_ecmp']| int |default('16',True)}}" maxEcmpIbgp="{{item['ibgp_max_ecmp']| int |default('16',True)}}"  ctrl="{{ctrl}}" status="{{ status }}"/>
+                  <bgpCtxAfPol name="{{item['name']}}" descr="{{item['description']}}" eDist="{{item['ebgp_distance']| int |default('20',True)}}" iDist="{{item['ibgp_distance']| int |default('200',True)}}" localDist="{{item['local_distance']| int |default('220',True)}}" maxEcmp="{{item['ebgp_max_ecmp']| int |default('16',True)}}" maxEcmpIbgp="{{item['ibgp_max_ecmp']| int |default('16',True)}}"  ctrl="{{ctrl}}" status="{{ status }}" annotation="orchestrator:ansible" maxLocalEcmp="{{ local_max_ecmp }}"/>
               </fvTenant>
           </polUni>
       delegate_to: localhost
@@ -535,13 +539,23 @@
         path: /api/mo/uni.xml
         method: post
         content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
+          {%set le = 0 %} 
+          {% if item['le'] is defined and item['le'] != '' %}
+          {%set le = item['le'] | int %} 
+          {% endif %}
+          {%set ge = 0 %} 
+          {% if item['ge'] is defined and item['ge'] != '' %}
+          {%set ge = item['ge'] | int %} 
+          {% endif %}
           <polUni>
             <fvTenant name="{{item['tenant']}}" status="modified">
-              <rtctrlSubjP annotation="" descr="" dn="uni/tn-{{item['tenant']}}/subj-{{item['name']}}" name="{{item['name']}}" nameAlias="">
-              {% if item['prefix'] | length %}
-                <rtctrlMatchRtDest aggregate="{{item['aggregate']}}" annotation="" descr="" fromPfxLen="0" ip="{{item['prefix']}}" name="" nameAlias="" toPfxLen="0"/>
+              <rtctrlSubjP annotation="orchestrator:ansible" name="{{item['name']}}" status="{{ status }}">
+              {% if item['prefix'] is defined and item['prefix'] != '' %}
+                <rtctrlMatchRtDest aggregate="{{item['aggregate'] | default('no',true) }}" fromPfxLen="{{ ge }}" ip="{{item['prefix']}}"  toPfxLen="{{ le }}"/>
               {% endif %}
-              {% if item['match_community_name'] | length %}
+              {% if item['match_community_name'] is defined and item['match_community_name'] != '' %}
                 <rtctrlMatchCommTerm annotation="" descr="" name="{{item['match_community_name']}}" nameAlias="">
                   <rtctrlMatchCommFactor annotation="" community="regular:as2-nn2:{{item['community']}}" descr="" name="" nameAlias="" scope="transitive"/>
                 </rtctrlMatchCommTerm>

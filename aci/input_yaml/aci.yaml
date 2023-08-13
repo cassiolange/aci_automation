@@ -1,0 +1,2936 @@
+build_tasks:
+  build_tasks:
+    include: yes_no
+    description:
+    input_worksheet:
+    Category:
+    Comments:
+  ignore_build_task: yes
+  tab_color:
+    type: rgb
+    rgb: FF800000
+equipaments:
+  equipment_types:
+    equipment_type:
+    installation_guide:
+  transceiver_types:
+    transceiver_type:
+    connector_type:
+    cable_type:
+    datasheet:
+  ignore_build_task: yes
+  tab_color:
+    type: theme
+    theme: 9
+    tint: 0.0
+aci_basic:
+  equipment_list:
+    device_name:
+    equipment_type:
+      type: data_validation_from_worksheet
+      source: equipment_types
+      column: equipment_type
+    dc_room:
+    rack:
+    status: status
+  cabling_matrix:
+    Connection type:
+      type: data_validation_static_list
+      formula: host,apic,oob,console,ipn/isn,spine-upstream,leaf-upstream,appliance
+    from_node:
+      type: data_validation_from_worksheet
+      source: equipment_list
+      column: device_name
+    from_port:
+    from_transceiver:
+      type: data_validation_from_worksheet
+      source: transceiver_types
+      column: transceiver_type
+    to_node:
+      type: data_validation_from_worksheet
+      source: equipment_list
+      column: device_name
+    to_port:
+    to_transceiver:
+      type: data_validation_from_worksheet
+      source: transceiver_types
+      column: transceiver_type
+    cable type:
+      type: data_validation_static_list
+      formula: lc-lc mmf,twinax,cat6_copper,utp,smf
+    comment:
+    Leaf Node_id:
+      type: formula_static
+      formula: =IF(ISBLANK(cabling_matrix[[#This Row],[from_node]]),"",_xlfn.XLOOKUP(cabling_matrix[[#This Row],[from_node]],node_provisioning[name],node_provisioning[node_id]))
+    from_room:
+      type: formula_static
+      formula: =IF(ISBLANK(cabling_matrix[[#This Row],[from_node]]),"",_xlfn.XLOOKUP(cabling_matrix[[#This Row],[from_node]],equipment_list[device_name],equipment_list[dc_room]))
+    to_room:
+      type: formula_static
+      formula: =IF(ISBLANK(cabling_matrix[[#This Row],[to_node]]),"",_xlfn.XLOOKUP(cabling_matrix[[#This Row],[to_node]],equipment_list[device_name],equipment_list[dc_room]))
+    status: status
+  fabric_initial_config:
+    Parameters:
+    Value:
+  ignore_build_task: yes
+  tab_color:
+    type: theme
+    theme: 9
+    tint: 0.3999755851924192
+node_deployement:
+  apic_controller:
+    apic_id:
+    apic_hostname:
+    pod_id:
+    oob_ipv4:
+    oob_ipv4_gw:
+    inband_ipv4:
+    inband_ipv4_gw:
+    oob_ipv6:
+    oob_ipv6_gw:
+    inband_ipv6:
+    inband_ipv6_gw:
+    cimc_ip:
+    cimc_gw:
+    status: status
+    username:
+      type: formula_static
+      formula: =IF(ISBLANK(fabric_initial_config!$B$8),"",fabric_initial_config!$B$8)
+    password:
+      type: formula_static
+      formula: =IF(ISBLANK(fabric_initial_config!$B$9),"",fabric_initial_config!$B$9)
+    build_tasks_description: APIC Addressing
+  firmware_group:
+    name:
+    firmware_version:
+    status: status
+    build_tasks_description: Firmware group
+  maintenance_groups:
+    name:
+    status: status
+    build_tasks_description: Maintenance group
+  node_provisioning:
+    name:
+      type: data_validation_from_worksheet
+      source: equipment_list
+      column: device_name
+    serial_number:
+    oob_ip:
+    oob_gw:
+    inband_ip:
+    inband_gw:
+    node_id:
+    device_type:
+      type: xlookup
+      lookup_field: name
+      match_field: device_name
+      return_field: equipment_type
+      source_table: equipment_list
+    pod_id:
+    role:
+      type: data_validation_static_list
+      formula: spine,leaf
+    firmware_group:
+      type: data_validation_from_worksheet
+      source: firmware_group
+      column: name
+    maintenance_group:
+      type: data_validation_from_worksheet
+      source: maintenance_groups
+      column: name
+    status: status
+    build_tasks_description: Node Provisioning
+  access_spine_policy_group:
+    name:
+    description:
+    copp_spine_policy:
+    bfd_ipv6_policy:
+    bfd_ipv4_policy:
+    copp_pre_filter:
+    status: status
+    build_tasks_description: Create Spine Access Switch Policy Group
+  access_leaf_policy_group:
+    name:
+    description:
+    spanning_tree_policy:
+    bfd_ipv4_policy:
+    bfd_ipv6_policy:
+    fibre_channel_node_policy:
+    fibre_channel_san_policy:
+    monitoring_policy:
+    netflow_node_policy:
+    forward_scale_profile:
+    fast_link_failover_policy:
+    do1x_node_auth_policy:
+    copp_pre_filter_policy:
+    leaf_copp_policy:
+    status: status
+    build_tasks_description: Create Leaf Access Switch Policy Group
+  switch_profile:
+    name:
+    description:
+    switch_profile_type:
+    switch_selector:
+    from_node_id:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: node_id
+    to_node_id:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: node_id
+    switch_policy_group:
+    status: status
+    build_tasks_description: Switch Profile
+  vpc_domain:
+    name:
+    left_node_id:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: node_id
+    right_node_id:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: node_id
+    logical_pair_id:
+    status: status
+    build_tasks_description: vPC Domain
+  port_direction:
+    node_id:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: node_id
+    pod_id:
+      type: xlookup
+      lookup_field: node_id
+      source_table: node_provisioning
+    interface_slot_port:
+    direction:
+      type: data_validation_static_list
+      formula: UpLink,DownLink
+    reboot: yes_no
+    status: status
+    build_tasks_description: Configure Port Direction
+  inb_mgmt_epg:
+    name:
+    description:
+    bridge_domain:
+      type: data_validation_from_worksheet
+      source: bridge_domain
+      column: name
+    encap_vlan_id:
+    status: status
+    build_tasks_description: Inband Management EPG
+  tab_color:
+    type: theme
+    theme: 6
+    tint: 0.5999938962981048
+  category: Node deployment
+  playbook: 1.node_deployement
+fabric_policy:
+  power_supply_policy:
+    name:
+    description:
+    power_state:
+      type: data_validation_static_list
+      formula: rdn,comb,ps-rdn
+    status: status
+    build_tasks_description: Fabric Switch Policies - Power Supply Redundancy
+  node_control:
+    name:
+    description:
+    enable_dom: yes_no
+    feature_selection:
+      type: data_validation_static_list
+      formula: analytics,netflow,telemetry
+    status: status
+    build_tasks_description: Fabric Switch Policies - Fabric Node Controls
+  fabric_spine_policy_group:
+    name:
+    description:
+    monitoring_policy:
+    techsupport_export_policy:
+    core_export_policy:
+    callhome_policy:
+    power_supply_policy:
+      type: data_validation_from_worksheet
+      source: power_supply_policy
+      column: name
+    node_control_policy:
+      type: data_validation_from_worksheet
+      source: node_control
+      column: name
+    status: status
+    build_tasks_description: Fabric Spine Switch Policy Group
+  fabric_leaf_policy_group:
+    name:
+    description:
+    monitoring_policy:
+    techsupport_export_policy:
+    core_export_policy:
+    callhome_policy:
+    power_supply_policy:
+      type: data_validation_from_worksheet
+      source: power_supply_policy
+      column: name
+    node_control_policy:
+      type: data_validation_from_worksheet
+      source: node_control
+      column: name
+    status: status
+    build_tasks_description: Fabric Leaf Policy Group
+  fabric_switch_profile:
+    name:
+    description:
+    switch_profile_type:
+      type: data_validation_static_list
+      formula: spine,leaf
+    switch_selector:
+    from_node_id:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: node_id
+    to_node_id:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: node_id
+    switch_policy_group:
+    status: status
+    build_tasks_description: Fabric Switch Profile
+  bgp_rr:
+    fabric_bgp_as:
+    bgp_rr_node_id:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: node_id
+    pod_id:
+      type: formula_static
+      formula: =IF(ISBLANK(bgp_rr[[#This Row],[bgp_rr_node_id]]),"",_xlfn.XLOOKUP(bgp_rr[[#This Row],[bgp_rr_node_id]],node_provisioning[node_id],node_provisioning[pod_id]))
+    status: status
+    build_tasks_description: BGP AS and Route Reflector
+  bgp_rr_external:
+    bgp_rr_node_id:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: node_id
+    pod_id:
+      type: formula_static
+      formula: =IF(ISBLANK(bgp_rr[[#This Row],[bgp_rr_node_id]]),"",_xlfn.XLOOKUP(bgp_rr[[#This Row],[bgp_rr_node_id]],node_provisioning[node_id],node_provisioning[pod_id]))
+    status: status
+  pod_policy_group:
+    name:
+    description:
+    snmp_pol:
+      type: data_validation_from_worksheet
+      source: snmp_policy
+      column: name
+    isis_pol:
+    coop_pol:
+    bgp_pol:
+    date_time_pol:
+    macsec_pol:
+    com_pol:
+    status: status
+    build_tasks_description: POD Policy Group
+  pod_profile:
+    name:
+    description:
+    status: status
+    build_tasks_description: POD Profile
+  pod_selector:
+    name:
+    pod_profile:
+      type: data_validation_from_worksheet
+      source: pod_profile
+      column: name
+    type:
+      type: data_validation_static_list
+      formula: ALL,range
+    pod_id:
+    pod_policy_group:
+      type: data_validation_from_worksheet
+      source: pod_policy_group
+      column: name
+    status: status
+    build_tasks_description: Pod Selector
+  dns_profile:
+    name:
+    description:
+    management_epg:
+      type: data_validation_static_list
+      formula: inb,oob
+    domain_name:
+    is_default_domain: yes_no
+    status: status
+    build_tasks_description: DNS Profile
+  dns_provider:
+    dns_server_name:
+    dns_server_address:
+    dns_profile_name:
+      type: data_validation_from_worksheet
+      source: dns_profile
+      column: name
+    is_preferred_dns: yes_no
+    status: status
+    build_tasks_description: DNS Provider
+  datetime_pol:
+    name:
+    description:
+    admin_state: enabled_disabled
+    authentication_state: enabled_disabled
+    server_state: enabled_disabled
+    master_mode: enabled_disabled
+    stratum_value:
+    status: status
+    build_tasks_description: Datetime Policy
+  datetime_auth_key:
+    name:
+    key_id:
+    datetime_policy:
+      type: data_validation_from_worksheet
+      source: datetime_pol
+      column: name
+    auth_key:
+    auth_key_trusted: yes_no
+    auth_key_type:
+      type: data_validation_static_list
+      formula: md5,sha1
+    status: status
+    build_tasks_description: Datetime authentication key
+  datetime_ntp_prov:
+    name:
+    description:
+    datetime_pol_name:
+      type: data_validation_from_worksheet
+      source: datetime_pol
+      column: name
+    min_poll:
+    max_poll:
+    is_preferred: yes_no
+    key_id:
+    management_epg:
+      type: data_validation_static_list
+      formula: inb,oob
+    status: status
+    build_tasks_description: Datetime NTP Provider
+  snmp_policy:
+    name:
+    admin_state: enabled_disabled
+    contact:
+    location:
+    status: status
+    build_tasks_description: SNMP Policy
+  snmp_community:
+    snmp_policy_name:
+      type: data_validation_from_worksheet
+      source: snmp_policy
+      column: name
+    community_name:
+    community_description:
+    status: status
+    build_tasks_description: SNMP Community
+  snmp_v3_users:
+    snmp_policy_name:
+      type: data_validation_from_worksheet
+      source: snmp_policy
+      column: name
+    v3_user:
+    privacy_type:
+      type: data_validation_static_list
+      formula: none,des,aes-128
+    privacy_key:
+    auth_type:
+      type: data_validation_static_list
+      formula: hmac-md5-96,hmac-sha1-96
+    auth_key:
+    status: status
+    build_tasks_description: SNMP V3 Users
+  snmp_client_group:
+    name:
+    description:
+    snmp_policy:
+      type: data_validation_from_worksheet
+      source: snmp_policy
+      column: name
+    management_epg:
+      type: data_validation_static_list
+      formula: oob-default,inb-default
+    client_entry_name:
+    client_entry_address:
+    status: status
+    build_tasks_description: SNMP Client Identities
+  snmp_trap_forwarder:
+    snmp_trap_fwd_address:
+    snmp_trap_fwd_port:
+    snmp_policy:
+      type: data_validation_from_worksheet
+      source: snmp_policy
+      column: name
+    status: status
+    build_tasks_description: SNMP Trap forwarder
+  fabric_interface_policy_group:
+    name:
+    description:
+    switch_type:
+      type: data_validation_static_list
+      formula: leaf,spine
+    link_level:
+    link_flap:
+    monitoring:
+    macsec:
+    l3_interface:
+    dwdm:
+    transceiver:
+    status: status
+    build_tasks_description: Fabric Interface Policy Group
+  tab_color:
+    type: theme
+    theme: 3
+    tint: 0.3999755851924192
+  category: Fabric Policy
+  playbook: 2.fabric_policy
+multipod_setup:
+  pod_tep_pool:
+    pod_id:
+    tep_pool:
+    status: status
+    build_tasks_description: 'POD and TEP Pool '
+  pod_connection_profile:
+    pod_id:
+      type: data_validation_from_worksheet
+      source: pod_tep_pool
+      column: pod_id
+    pod_data_plane_tep:
+    fabricId:
+      type: formula_static
+      formula: =fabric_initial_config!B3
+    status: status
+    build_tasks_description: POD Connection Profile
+  fabric_conn_prof:
+    community_route_target:
+    bgp_peering_type:
+      type: data_validation_static_list
+      formula: automatic_with_rr,automatic_with_full_mesh
+    use_bgp_password:
+    bgp_password: yes_no
+    fabric_external_routing_profile:
+    fabricId:
+      type: formula_static
+      formula: =fabric_initial_config!B3
+    status: status
+    build_tasks_description: Fabric Connectivity Profile
+  fabric_external_routing_profile:
+    fabric_external_routing_profile:
+      type: data_validation_from_worksheet
+      source: fabric_conn_prof
+      column: fabric_external_routing_profile
+    ipn_leaked_subnet:
+    fabricId:
+      type: formula_static
+      formula: =fabric_initial_config!B3
+    status: status
+    build_tasks_description: Fabric External Routing Profile
+  dscp_cos_translation:
+    translation_policy_state: enabled_disabled
+    level1:
+    level2:
+    level3:
+    level4:
+    level5:
+    level6:
+    control_plane:
+    policy_plane:
+    span:
+    traceroute:
+    status: status
+    build_tasks_description: 'DSCP Class CoS Translation Policy For L3 Traffic '
+  tab_color:
+    type: rgb
+    rgb: FFFF0000
+  category: MultiPOD Setup
+  playbook: 3.multipod
+access_policy:
+  vlan_pool:
+    name:
+    alloc_mode:
+      type: data_validation_static_list
+      formula: static,dynamic
+    status: status
+    build_tasks_description: Vlan Pool
+  vlan_encap_block:
+    vlan_pool:
+      type: data_validation_from_worksheet
+      source: vlan_pool
+      column: name
+    poolAllocMode:
+      type: formula_static
+      formula: =IF(ISBLANK(vlan_encap_block[[#This Row],[vlan_pool]]),"",_xlfn.XLOOKUP(vlan_encap_block[[#This Row],[vlan_pool]],vlan_pool[name],vlan_pool[alloc_mode]))
+    start_vlan:
+    stop_vlan:
+    alloc_mode:
+      type: data_validation_static_list
+      formula: static,dynamic
+    role:
+      type: data_validation_static_list
+      formula: external,internal
+    status: status
+    build_tasks_description: Vlan Encapsulation Block
+  domain:
+    name:
+    type:
+      type: data_validation_static_list
+      formula: phys,l3dom,l2dom,vmm
+    vlan_pool:
+      type: data_validation_from_worksheet
+      source: vlan_pool
+      column: name
+    status: status
+    build_tasks_description: Domain
+  aaep:
+    name:
+    description:
+    enable_infra_vlan: yes_no
+    infra_vlan:
+      type: formula_static
+      formula: =IF(aaep[[#This Row],[enable_infra_vlan]]="yes",fabric_initial_config!B3,"")
+    status: status
+    build_tasks_description: AAEP
+  aaep_domain_association:
+    aaep_name:
+      type: data_validation_from_worksheet
+      source: aaep
+      column: name
+    domain_name:
+      type: data_validation_from_worksheet
+      source: domain
+      column: name
+    domain_type:
+      type: formula_static
+      formula: =IF(ISBLANK(aaep_domain_association[[#This Row],[domain_name]]),"",_xlfn.XLOOKUP(aaep_domain_association[[#This Row],[domain_name]],domain[name],domain[type]))
+    status: status
+    build_tasks_description: Associate a Domain with an AAEP
+  aaep_attach_epg:
+    epg_name:
+      type: data_validation_from_worksheet
+      source: end_point_group
+      column: name
+    app_profile:
+      type: xlookup
+      lookup_field: epg_name
+      match_field: name
+      return_field: app_profile
+      source_table: end_point_group
+    tenant:
+      type: xlookup
+      lookup_field: epg_name
+      match_field: name
+      return_field: tenant
+      source_table: end_point_group
+    aaep_name:
+      type: data_validation_from_worksheet
+      source: aaep
+      column: name
+    encap_vlan_id:
+    mode:
+      type: data_validation_static_list
+      formula: regular,untagged,native
+    status: status
+    build_tasks_description: Associate EPG to AAEP (Instead of Static Binding)
+  intpol_cdp:
+    name:
+    description:
+    cdp_state: enabled_disabled
+    status: status
+    build_tasks_description: Access Interface Policies - CDP
+  intpol_l2:
+    name:
+    description:
+    vlan_scope:
+      type: data_validation_static_list
+      formula: global,portlocal
+    qinq: enabled_disabled
+    reflective_relay: enabled_disabled
+    status: status
+    build_tasks_description: Access Interface Policies - L2
+  intpol_link:
+    name:
+    autoneg:
+      type: data_validation_static_list
+      formula: on,off
+    speed:
+      type: data_validation_static_list
+      formula: inherit,100G,40G,25G,10G,1G,100M
+    debounce:
+    fec_mode:
+      type: data_validation_static_list
+      formula: inherit,cl74-fc-fec,cl91-rs-fec,disable-fec
+    dfe_delay:
+    status: status
+    build_tasks_description: Access Interface Policies - Link Level
+  intpol_lldp:
+    name:
+    description:
+    lldp_receive: enabled_disabled
+    lldp_transmit: enabled_disabled
+    status: status
+    build_tasks_description: Access Interface Policies - LLDP
+  intpol_storm:
+    name:
+    description:
+    type:
+      type: data_validation_static_list
+      formula: percentage,packets_per_second
+    rate:
+    max_burst:
+    status: status
+    build_tasks_description: Access Interface Policies - Storm Control
+  intpol_port_channel:
+    name:
+    description:
+    pc_mode:
+      type: data_validation_static_list
+      formula: active,passive,mac-pin,mac-pin-nicload,off
+    fast_select_hot_stdby: yes_no
+    gracefull_converge: yes_no
+    load_defer: yes_no
+    suspend_individual: yes_no
+    symmetrical_hash: yes_no
+    hash_key:
+    min_links:
+    max_links:
+    status: status
+    build_tasks_description: Access Interface Policies - Port Channel
+  intpol_mcp:
+    name:
+    description:
+    mcp_state: enabled_disabled
+    status: status
+    build_tasks_description: Access Interface Policies - MCP
+  intpol_stp:
+    name:
+    description:
+    stp_control:
+      type: data_validation_static_list
+      formula: bpdu-filter,bpdu-guard
+    status: status
+    build_tasks_description: Access Interface Policies - Spanning Tree
+  interface_policy_group:
+    name:
+    description:
+    switch_type:
+      type: data_validation_static_list
+      formula: spine,leaf
+    interface_policy_group_type:
+      type: data_validation_static_list
+      formula: vPC,PC,Access
+    aaep:
+      type: data_validation_from_worksheet
+      source: aaep
+      column: name
+    link_pol:
+      type: data_validation_from_worksheet
+      source: intpol_link
+      column: name
+    cdp_pol:
+      type: data_validation_from_worksheet
+      source: intpol_cdp
+      column: name
+    lldp_pol:
+      type: data_validation_from_worksheet
+      source: intpol_lldp
+      column: name
+    stp_pol:
+      type: data_validation_from_worksheet
+      source: intpol_stp
+      column: name
+    lacp_pol:
+      type: data_validation_from_worksheet
+      source: intpol_port_channel
+      column: name
+    storm_pol:
+      type: data_validation_from_worksheet
+      source: intpol_storm
+      column: name
+    l2_int_pol:
+      type: data_validation_from_worksheet
+      source: intpol_l2
+      column: name
+    ingress_data_plane_policing_policy:
+      type: data_validation_from_worksheet
+      source: access_dpp_policy
+      column: name
+    egress_data_plane_policing_policy:
+      type: data_validation_from_worksheet
+      source: access_dpp_policy
+      column: name
+    mcp_pol:
+      type: data_validation_from_worksheet
+      source: intpol_mcp
+      column: name
+    status: status
+    build_tasks_description: Interface Policy Group
+  interface_profile:
+    name:
+    profile_type:
+      type: data_validation_static_list
+      formula: spine,leaf
+    description:
+    status: status
+    build_tasks_description: Interface Profile
+  fex_interface_profile:
+    name:
+    fex_id:
+    status: status
+    build_tasks_description: Fex Interface Profile
+  fex_uplinks:
+    name:
+    description:
+    interface_profile:
+      type: data_validation_from_worksheet
+      source: interface_profile
+      column: name
+    from_slot:
+    from_port:
+    to_slot:
+    to_port:
+    port_block_description:
+    fex_interface_profile:
+      type: data_validation_from_worksheet
+      source: fex_interface_profile
+      column: name
+    fex_id:
+      type: formula_static
+      formula: =IF(ISBLANK(fex_uplinks[[#This Row],[fex_interface_profile]]),"",_xlfn.XLOOKUP(fex_uplinks[[#This Row],[fex_interface_profile]],fex_interface_profile[name],fex_interface_profile[fex_id]))
+    status: status
+    build_tasks_description: Fex Uplinks
+  associate_switchprof_intprof:
+    switch_profile:
+      type: data_validation_from_worksheet
+      source: switch_profile
+      column: name
+    interface_profile:
+      type: data_validation_from_worksheet
+      source: interface_profile
+      column: name
+    switch_profile_type:
+      type: xlookup
+      lookup_field: switch_profile
+      match_field: name
+      return_field: switch_profile_type
+      source_table: switch_profile
+    interface_profile_type:
+      type: xlookup
+      lookup_field: interface_profile
+      match_field: name
+      return_field: profile_type
+      source_table: interface_profile
+    status: status
+    build_tasks_description: Associating Interface Profile to Switch Profile
+  interface_description:
+    name:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: name
+    pod_id:
+      type: xlookup
+      lookup_field: name
+      source_table: node_provisioning
+    node_id:
+      type: xlookup
+      lookup_field: name
+      source_table: node_provisioning
+    fex_id:
+    role:
+      type: xlookup
+      lookup_field: name
+      source_table: node_provisioning
+    interface:
+    description:
+    status: status
+    build_tasks_description: Interface Description
+  interface_selector:
+    name:
+    description:
+    interface_profile:
+      type: data_validation_from_worksheet
+      source: interface_profile
+      column: name
+    from_slot:
+    from_port:
+    to_slot:
+    to_port:
+    port_block_description:
+    interface_policy_group:
+      type: data_validation_from_worksheet
+      source: interface_policy_group
+      column: name
+    interface_polgroup_type:
+      type: xlookup
+      lookup_field: interface_policy_group
+      match_field: name
+      return_field: interface_policy_group_type
+      source_table: interface_policy_group
+    interface_profile_type:
+      type: xlookup
+      lookup_field: interface_profile
+      match_field: name
+      return_field: profile_type
+      source_table: interface_profile
+    status: status
+    build_tasks_description: Interface Selector
+  switch_configuration:
+    node:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: name
+    node_type:
+      type: xlookup
+      lookup_field: node
+      match_field: name
+      return_field: role
+      source_table: node_provisioning
+    node_id:
+      type: xlookup
+      lookup_field: node
+      match_field: name
+      return_field: node_id
+      source_table: node_provisioning
+    access_policy_group:
+      type: data_validation_static_list
+      formula: INDIRECT(_xlfn.CONCAT($B2,"_access_policy_group"))
+      check_quotes: false
+    fabric_policy_group:
+      type: data_validation_static_list
+      formula: INDIRECT(_xlfn.CONCAT($B2,"_fabric_policy_group"))
+      check_quotes: false
+    status: status
+    build_tasks_description: Switch Configuration
+  interface_configuration:
+    node:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: name
+    node_type:
+      type: xlookup
+      lookup_field: node
+      match_field: name
+      return_field: role
+      source_table: node_provisioning
+    node_id:
+      type: xlookup
+      lookup_field: node
+      match_field: name
+      return_field: node_id
+      source_table: node_provisioning
+    port_type:
+      type: data_validation_static_list
+      formula: access,fabric
+    interface:
+    interface_policy_group:
+      type: data_validation_static_list
+      formula: INDIRECT(_xlfn.CONCAT($D2,"_interface_policy_grp"))
+      check_quotes: false
+    interface_type_type:
+      type: formula_static
+      formula: =IF(AND(NOT(ISBLANK(interface_configuration[[#This Row],[interface_policy_group]])),interface_configuration[[#This Row],[port_type]] = "access"),_xlfn.XLOOKUP(interface_configuration[[#This Row],[interface_policy_group]],interface_policy_group[name],interface_policy_group[interface_policy_group_type]),"")
+    brekout_interface:
+      type: data_validation_static_list
+      formula: 100g-2x,100g-4x,10g-4x,25g-4x,50g-8x
+    connected_fex:
+    description:
+    shutdown: yes_no
+    status: status
+    build_tasks_description: Interface Configuration
+  err_disabled_recovery_policy:
+    errdis_recovery_interval: yes_no
+    recover_events_endpoint_move: yes_no
+    recover_events_endpoint_bpduguard: yes_no
+    recover_events_mcp_loop: yes_no
+    status: status
+    build_tasks_description: Error Disabled Recovery Policy
+  mcp_instance_policy:
+    admin_state: enabled_disabled
+    control:
+      type: data_validation_static_list
+      formula: pdu-per-vlan
+    mcp_key:
+    loop_detect_mult_factor:
+    loop_protection_action:
+      type: data_validation_static_list
+      formula: port-disable
+    initial_delay:
+    transmission_frequency:
+    status: status
+    build_tasks_description: MCP Instance Policy
+  dot1p_preserve:
+    dot1p_preserve: yes_no
+    status: status
+    build_tasks_description: Preserving 802.1P
+  qos_classes:
+    qos_class:
+      type: data_validation_static_list
+      formula: level1,level2,level3,level4,level5,level6
+    admin_state: enabled_disabled
+    mtu:
+    minimum_buffers:
+    congestion_algorithm:
+      type: data_validation_static_list
+      formula: tail-drop,wred
+    wred_min_threshold:
+    wred_max_threshold:
+    wred_probability:
+    wred_weight:
+    congestion_notification: enabled_disabled
+    forward_non_ecn_traffic: enabled_disabled
+    queue_control:
+      type: data_validation_static_list
+      formula: dynamic
+    queue_limit:
+    scheduling_algorithm:
+      type: data_validation_static_list
+      formula: strict_priority,weighted_round_robin
+    bandwidth_allocated:
+    pfc_admin_state: yes_no
+    no_drop_cos:
+      type: data_validation_static_list
+      formula: cos1,cos2,cos3,cos4,cos5,cos6,cos7
+    pfc_scope:
+    status: status
+    build_tasks_description: QoS Classes
+  access_dpp_policy:
+    name:
+    admin_status: enabled_disabled
+    bgp_domain_mode:
+      type: data_validation_static_list
+      formula: bit,packet
+    type:
+      type: data_validation_static_list
+      formula: 1R2C,2R3C
+    conform_action:
+      type: data_validation_static_list
+      formula: transmit,drop,mark
+    conform_mark_dscp:
+    conform_mark_cos:
+    exceed_action:
+      type: data_validation_static_list
+      formula: transmit,drop,mark
+    exceed_mark_dscp:
+    exceed_mark_cos:
+    violate_action:
+      type: data_validation_static_list
+      formula: transmit,drop,mark
+    violate_mark_dscp:
+    violate_mark_cos:
+    sharing_mode:
+      type: data_validation_static_list
+      formula: shared,dedicated
+    rate:
+    rate_unit:
+      type: data_validation_static_list
+      formula: unspecified,kilo,mega,giga
+    burst:
+    burst_unit:
+      type: data_validation_static_list
+      formula: unspecified,kilo,mega,giga
+    peak_rate:
+    peak_rate_unit:
+      type: data_validation_static_list
+      formula: unspecified,kilo,mega,giga
+    excessive_burst:
+    excessive_burst_unit:
+      type: data_validation_static_list
+      formula: unspecified,kilo,mega,giga
+    status: status
+    build_tasks_description: Data Plane Policing Policy
+  access_span_destination:
+    name:
+    description:
+    destination_type:
+      type: data_validation_static_list
+      formula: epg,access_interface
+    destination_epg:
+      type: data_validation_from_worksheet
+      source: end_point_group
+      column: name
+    destination_anp:
+      type: xlookup
+      lookup_field: destination_epg
+      match_field: name
+      return_field: app_profile
+      source_table: end_point_group
+    destination_tenant:
+      type: xlookup
+      lookup_field: destination_epg
+      match_field: name
+      return_field: tenant
+      source_table: end_point_group
+    span_version:
+      type: data_validation_static_list
+      formula: ver1,ver2
+    enforce_span_version: yes_no
+    source_ip:
+    destination_ip:
+    flow_id:
+    ttl:
+    mtu:
+    dscp:
+    path_type:
+      type: data_validation_static_list
+      formula: port,port-channel
+    node:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: name
+    node_id:
+      type: xlookup
+      lookup_field: node
+      match_field: name
+      return_field: node_id
+      source_table: node_provisioning
+    pod_id:
+      type: xlookup
+      lookup_field: node
+      match_field: name
+      return_field: pod_id
+      source_table: node_provisioning
+    interface:
+    interface_policy:
+      type: data_validation_from_worksheet
+      source: interface_policy_group
+      column: name
+    status: status
+    build_tasks_description: SPAN Destination Group
+  access_span_source_group:
+    name:
+    description:
+    admin_status: enabled_disabled
+    destination_group:
+      type: data_validation_from_worksheet
+      source: access_span_destination
+      column: name
+    source_name:
+    source_description:
+    direction:
+      type: data_validation_static_list
+      formula: both,in,out
+    span_on_drop: yes_no
+    type:
+      type: data_validation_static_list
+      formula: none,epg,routed_outside
+    source_epg:
+      type: data_validation_from_worksheet
+      source: end_point_group
+      column: name
+    source_anp:
+      type: xlookup
+      lookup_field: source_epg
+      match_field: name
+      return_field: app_profile
+      source_table: end_point_group
+    source_tenant:
+      type: xlookup
+      lookup_field: source_epg
+      match_field: name
+      return_field: tenant
+      source_table: end_point_group
+    l3out_name:
+      type: data_validation_from_worksheet
+      source: end_point_group
+      column: name
+    l3out_tenant:
+      type: xlookup
+      lookup_field: l3out_name
+      match_field: name
+      return_field: tenant
+      source_table: l3out
+    l3out_encap_vlan:
+    source_path_type:
+      type: data_validation_static_list
+      formula: port,port-channel,vpc
+    node:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: name
+    node_id:
+      type: xlookup
+      lookup_field: node
+      match_field: name
+      return_field: node_id
+      source_table: node_provisioning
+    pod_id:
+      type: xlookup
+      lookup_field: node
+      match_field: name
+      return_field: pod_id
+      source_table: node_provisioning
+    interface:
+    interface_policy:
+      type: data_validation_from_worksheet
+      source: interface_policy_group
+      column: name
+    status: status
+    build_tasks_description: SPAN Source Group
+  tab_color:
+    type: theme
+    theme: 3
+    tint: 0.5999938962981048
+  category: Fabric External Access Policy
+  playbook: 4.fabric_access_policy
+vmm:
+  vmm_domain:
+    name:
+    vcenter_hostname_ip:
+    vcenter_controller_name:
+    vcenter_datacenter_name:
+    vcenter_credential_profile:
+    vcenter_username:
+    vcenter_password:
+    status: status
+    build_tasks_description: VMware VMM Domain
+  vmm_vswitch_policy:
+    vmm_domain_name:
+      type: data_validation_from_worksheet
+      source: vmm_domain
+      column: name
+    port_channel_policy:
+      type: data_validation_from_worksheet
+      source: intpol_port_channel
+      column: name
+    cdp_policy:
+      type: data_validation_from_worksheet
+      source: intpol_cdp
+      column: name
+    lldp_policy:
+      type: data_validation_from_worksheet
+      source: intpol_lldp
+      column: name
+    enhanced_lag_policy_name:
+    enhanced_lag_mode:
+      type: data_validation_static_list
+      formula: active,passive
+    enhanced_lag_lb_mode:
+      type: data_validation_static_list
+      formula: dst-ip,dst-ip-l4port,dst-ip-vlan,dst-ip-l4port-vlan,dst-mac,dst-l4port,src-ip,src-ip-l4port,src-ip-vlan,src-ip-l4port-vlan,src-mac,src-l4port,src-dst-ip,src-dst-ip-l4port,src-dst-ip-vlan,src-dst-ip-l4port-vlan,src-dst-mac,src-dst-l4port,src-port-id,vlan
+    enhanced_lag_number_of_links:
+    status: status
+    build_tasks_description: VMware vswitch Policy
+  tab_color:
+    type: rgb
+    rgb: FFE9A758
+  category: VMM
+  playbook: 4.fabric_access_policy
+tenant:
+  tenant:
+    name:
+    description:
+    name_alias:
+    security_domain:
+    status: status
+    build_tasks_description: Tenant
+  tenant_dpp_policy:
+    name:
+    tenant:
+      type: data_validation_from_worksheet
+      source: tenant
+      column: name
+    admin_status: enabled_disabled
+    bgp_domain_mode:
+      type: data_validation_static_list
+      formula: bit,packet
+    type:
+      type: data_validation_static_list
+      formula: 1R2C,2R3C
+    conform_action:
+      type: data_validation_static_list
+      formula: transmit,drop,mark
+    conform_mark_dscp:
+    conform_mark_cos:
+    exceed_action:
+      type: data_validation_static_list
+      formula: transmit,drop,mark
+    exceed_mark_dscp:
+    exceed_mark_cos:
+    violate_action:
+      type: data_validation_static_list
+      formula: transmit,drop,mark
+    violate_mark_dscp:
+    violate_mark_cos:
+    sharing_mode:
+      type: data_validation_static_list
+      formula: shared,dedicated
+    rate:
+    rate_unit:
+      type: data_validation_static_list
+      formula: unspecified,kilo,mega,giga
+    burst:
+    burst_unit:
+      type: data_validation_static_list
+      formula: unspecified,kilo,mega,giga
+    peak_rate:
+    peak_rate_unit:
+      type: data_validation_static_list
+      formula: unspecified,kilo,mega,giga
+    excessive_burst:
+    excessive_burst_unit:
+      type: data_validation_static_list
+      formula: unspecified,kilo,mega,giga
+    status: status
+    build_tasks_description: Data Plane Policing Police
+  custom_qos_policy:
+    name:
+    tenant:
+      type: data_validation_from_worksheet
+      source: tenant
+      column: name
+    description:
+    status: status
+    build_tasks_description: Custom QoS Policy
+  custom_qos_dscp_to_priority:
+    name:
+      type: data_validation_from_worksheet
+      source: custom_qos_policy
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: name
+      source_table: custom_qos_policy
+    level:
+      type: data_validation_static_list
+      formula: level1,level2,level3,level4,level5,level6
+    from:
+    to:
+    target_dscp:
+    target_cos:
+    status: status
+    build_tasks_description: Custom QoS DSCP to Priority
+  custom_qos_dot1p_to_priority:
+    name:
+      type: data_validation_from_worksheet
+      source: custom_qos_policy
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: name
+      source_table: custom_qos_policy
+    level:
+      type: data_validation_static_list
+      formula: level1,level2,level3,level4,level5,level6
+    from:
+    to:
+    target_dscp:
+    target_cos:
+    status: status
+    build_tasks_description: Custom QoS DOT1P to Priority
+  vrf:
+    name:
+    tenant:
+      type: data_validation_from_worksheet
+      source: tenant
+      column: name
+    description:
+    policy_enforcement:
+      type: data_validation_static_list
+      formula: enforced,unenforced
+    policy_enforcement_direction:
+      type: data_validation_static_list
+      formula: ingress,egress
+    vzAnyPrefGroup: enabled_disabled
+    bgp_timers:
+    bgp_context_ipv4:
+    bgp_context_ipv6:
+    ospf_timers:
+    ospf_context_af:
+    endpoint_retention_policy:
+    dns_label:
+    route_tag_policy:
+    golf_opflex_mode: yes_no
+    golf_vrf_name:
+    monitoring_policy:
+    status: status
+    build_tasks_description: VRF
+  vrf_bgp_route_target:
+    vrfName:
+      type: data_validation_from_worksheet
+      source: vrf
+      column: vrf
+    tenant:
+      type: xlookup
+      lookup_field: vrfName
+      match_field: name
+      return_field: tenant
+      source_table: vrf
+    addressFamily:
+      type: data_validation_static_list
+      formula: ipv4-ucast
+    routeTarget:
+    routeTargetType:
+      type: data_validation_static_list
+      formula: import,export
+    status: status
+    build_tasks_description: VRF BGP Route-Target
+  vrf_bgp_route_sum:
+    name:
+    vrf:
+      type: data_validation_from_worksheet
+      source: vrf
+      column: vrf
+    tenant:
+      type: xlookup
+      lookup_field: vrf
+      match_field: name
+      return_field: tenant
+      source_table: vrf
+    status: status
+    build_tasks_description: VRF BGP Route Summarization Policy
+  vrf_bgp_route_sum_nodes:
+    name:
+      type: data_validation_from_worksheet
+      source: vrf_bgp_route_sum
+      column: name
+    vrf:
+      type: xlookup
+      lookup_field: name
+      source_table: vrf_bgp_route_sum
+    tenant:
+      type: xlookup
+      lookup_field: name
+      source_table: vrf_bgp_route_sum
+    node:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: name
+    node_id:
+      type: xlookup
+      lookup_field: node
+      match_field: name
+      return_field: node_id
+      source_table: node_provisioning
+    pod_id:
+      type: xlookup
+      lookup_field: node
+      match_field: name
+      return_field: pod_id
+      source_table: node_provisioning
+    status: status
+    build_tasks_description: VRF BGP Route Summarization Policy - Nodes
+  vrf_bgp_route_sum_subnet:
+    name:
+      type: data_validation_from_worksheet
+      source: vrf_bgp_route_sum
+      column: name
+    vrf:
+      type: xlookup
+      lookup_field: name
+      source_table: vrf_bgp_route_sum
+    tenant:
+      type: xlookup
+      lookup_field: name
+      source_table: vrf_bgp_route_sum
+    subnet:
+    summarization_policy:
+      type: data_validation_from_worksheet
+      source: bgp_route_summarization
+      column: name
+    status:
+    build_tasks_description: VRF BGP Route Summarization Policy - Subnet
+  bridge_domain:
+    name:
+    name_alias:
+    description:
+    tenant:
+      type: data_validation_from_worksheet
+      source: tenant
+      column: name
+    vrf:
+      type: data_validation_from_worksheet
+      source: vrf
+      column: name
+    l2_unknown_unicast:
+      type: data_validation_static_list
+      formula: flood,proxy
+    l3_unknown_multicast:
+      type: data_validation_static_list
+      formula: flood,opt-flood
+    multi_dest_flood:
+      type: data_validation_static_list
+      formula: bd-flood,encap-flood,drop
+    enablePim: yes_no
+    arp_flood: yes_no
+    unicast_routing: yes_no
+    limit_ip_learning_to_subnet: yes_no
+    endpoint_data_plane_learning: yes_no
+    endpoint_move_detect_mode:
+      type: data_validation_static_list
+      formula: garp
+    igmp_snoop_policy:
+    endpoint_retention_policy:
+    igmpInterfacePolicy:
+    is_bd_legacy: yes_no
+    legacy_bd_vlan:
+    route_control_profile:
+    l3out_for_route_control:
+    status: status
+    build_tasks_description: Bridge Domain
+  bd_subnet:
+    bd_subnet:
+    description:
+    bridge_domain:
+      type: data_validation_from_worksheet
+      source: bridge_domain
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: bridge_domain
+      match_field: name
+      return_field: tenant
+      source_table: bridge_domain
+    subnet_scope:
+      type: data_validation_static_list
+      formula: private,public,shared,public;shared
+    is_primary_address: yes_no
+    is_virtual_ip: yes_no
+    subnet_control:
+      type: data_validation_static_list
+      formula: querier,no-default-gateway,querier,nd
+    ndRAprefixPolicy:
+    status: status
+    build_tasks_description: Bridge Domain Subnet
+  bd_l3out:
+    bd_name:
+      type: data_validation_from_worksheet
+      source: bridge_domain
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: bd_name
+      match_field: name
+      return_field: tenant
+      source_table: bridge_domain
+    l3out_name:
+      type: data_validation_from_worksheet
+      source: l3out
+      column: name
+    status:
+    build_tasks_description: Bridge Domain L3Out
+  dhcp_relay_policy:
+    name:
+    tenant:
+      type: data_validation_from_worksheet
+      source: tenant
+      column: name
+    description:
+    status: status
+    build_tasks_description: DHCP Relay Police
+  dhcp_relay_policy_provider:
+    dhcp_relay_policy:
+      type: data_validation_from_worksheet
+      source: dhcp_relay_policy
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: dhcp_relay_policy
+      match_field: name
+      return_field: tenant
+      source_table: dhcp_relay_policy
+    epg:
+      type: data_validation_from_worksheet
+      source: external_epg
+      column: name
+    anp:
+      type: xlookup
+      lookup_field: epg
+      match_field: name
+      return_field: app_profile
+      source_table: end_point_group
+    external_epg:
+      type: data_validation_from_worksheet
+      source: external_epg
+      column: name
+    l3out:
+      type: xlookup
+      lookup_field: external_epg
+      match_field: name
+      return_field: l3_out
+      source_table: external_epg
+    ip:
+    status: status
+    build_tasks_description: 'DHCP Relay Policy Provider '
+  bd_dhcp:
+    name:
+      type: data_validation_from_worksheet
+      source: bridge_domain
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: name
+      source_table: bridge_domain
+    dhcp_relay_policy:
+      type: data_validation_from_worksheet
+      source: dhcp_relay_policy
+      column: name
+    status: status
+    build_tasks_description: Associate BD to DHCP Relay Policy
+  application_profile:
+    name:
+    tenant:
+      type: data_validation_from_worksheet
+      source: tenant
+      column: name
+    description:
+    qos_class:
+      type: data_validation_static_list
+      formula: unspecified,level1,level2,level3,level4,level5,level6
+    status:
+    build_tasks_description: Application Profile
+  end_point_group:
+    name:
+    name_alias:
+    description:
+    tenant:
+      type: xlookup
+      lookup_field: app_profile
+      match_field: name
+      return_field: tenant
+      source_table: application_profile
+    app_profile:
+      type: data_validation_from_worksheet
+      source: application_profile
+      column: name
+    bridge_domain:
+      type: data_validation_from_worksheet
+      source: bridge_domain
+      column: name
+    vrf:
+      type: xlookup
+      lookup_field: bridge_domain
+      match_field: name
+      return_field: vrf
+      source_table: bridge_domain
+    intra_epg_isolation:
+      type: data_validation_static_list
+      formula: enforced,unenforced
+    dataPlanePolicer:
+      type: data_validation_from_worksheet
+      source: tenant_dpp_policy
+      column: name
+    prefGrMemb:
+      type: data_validation_static_list
+      formula: enforced,unenforced
+    floodOnEncap: enabled_disabled
+    qos_class:
+      type: data_validation_static_list
+      formula: level1,level2,level3,level4,level5,level6
+    custom_qos_pol:
+      type: data_validation_from_worksheet
+      source: custom_qos_policy
+      column: name
+    status: status
+    build_tasks_description: EPG
+  epg_domain_association:
+    epg_name:
+      type: data_validation_from_worksheet
+      source: end_point_group
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: epg_name
+      match_field: name
+      return_field: tenant
+      source_table: end_point_group
+    app_profile:
+      type: xlookup
+      lookup_field: epg_name
+      match_field: name
+      return_field: app_profile
+      source_table: end_point_group
+    domainName:
+      type: data_validation_from_worksheet
+      source: domain
+      column: name
+    domainType:
+      type: xlookup
+      lookup_field: domainName
+      match_field: name
+      return_field: type
+      source_table: domain
+    deployImedcy:
+      type: data_validation_static_list
+      formula: immediate,lazy
+    resImedcy:
+      type: data_validation_static_list
+      formula: immediate,lazy,pre-provision
+    staticVlanForVmm:
+    netflowPref: enabled_disabled
+    status: status
+    build_tasks_description: Associate a Domain to an EPG
+  epg_static_binding:
+    name:
+      type: data_validation_from_worksheet
+      source: end_point_group
+      column: name
+    app_profile:
+      type: xlookup
+      lookup_field: name
+      source_table: end_point_group
+    tenant:
+      type: xlookup
+      lookup_field: name
+      source_table: end_point_group
+    static_binding_type:
+      type: data_validation_static_list
+      formula: vPC,PC,Access,Fex,Fex_PO,Fex_vPC
+    interface_policy_group:
+      type: data_validation_from_worksheet
+      source: interface_policy_group
+      column: name
+    access_port_id:
+    left_node_id:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: node_id
+    right_node_id:
+      type: formula_static
+      formula: =IF(OR(epg_static_binding[[#This Row],[static_binding_type]]="vPC", epg_static_binding[[#This Row],[static_binding_type]]="Fex_vPC"),_xlfn.XLOOKUP(epg_static_binding[[#This Row],[left_node_id]],vpc_domain[left_node_id],vpc_domain[right_node_id]),"")
+    pod_id:
+      type: xlookup
+      lookup_field: left_node_id
+      match_field: node_id
+      return_field: pod_id
+      source_table: node_provisioning
+    left_fex_id:
+    right_fex_id:
+    encap_vlan_id:
+    mode:
+      type: data_validation_static_list
+      formula: regular,untagged,native
+    deploy_immediacy:
+      type: data_validation_static_list
+      formula: immediate,on_demand
+    primary_encap_id:
+    status: status
+    build_tasks_description: EPG Static Binding
+  static_route_on_bd:
+    epg:
+      type: data_validation_from_worksheet
+      source: end_point_group
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: epg
+      match_field: name
+      return_field: tenant
+      source_table: end_point_group
+    app_profile:
+      type: xlookup
+      lookup_field: epg
+      match_field: name
+      return_field: app_profile
+      source_table: end_point_group
+    ip:
+    next_hop:
+    scope:
+      type: data_validation_static_list
+      formula: private,public,shared,public;shared
+    description:
+    status: status
+    build_tasks_description: Static Route on BD
+  tab_color:
+    type: theme
+    theme: 7
+    tint: 0.5999938962981048
+  category: Tenant Base Configuration
+  playbook: 5.tenant
+tenant_protocol_policies:
+  bgp_address_family_context:
+    name:
+    description:
+    tenant:
+      type: data_validation_from_worksheet
+      source: tenant
+      column: name
+    ebgp_distance:
+    ibgp_distance:
+    local_distance:
+    ebgp_max_ecmp:
+    ibgp_max_ecmp:
+    local_max_ecmp:
+    host_route_leak: yes_no
+    status: status
+    build_tasks_description: BGP Address Family Context
+  bgp_route_summarization:
+    name:
+    description:
+    tenant:
+      type: data_validation_from_worksheet
+      source: tenant
+      column: name
+    as_set: yes_no
+    summary_only: yes_no
+    status: status
+    build_tasks_description: BGP Route Summarization
+  ospf_int_pol:
+    name:
+    description:
+    tenant:
+      type: data_validation_from_worksheet
+      source: tenant
+      column: name
+    advertise_subnet: yes_no
+    use_bfd: yes_no
+    mtu_ignore: yes_no
+    passive_participation: yes_no
+    network_type:
+      type: data_validation_static_list
+      formula: p2p,bcast
+    priority:
+    interface_cost:
+    hello_interval:
+    dead_interval:
+    retransmit_interval:
+    transmit_delay:
+    status: status
+    build_tasks_description: OSPF Interface Policy
+  tab_color:
+    type: rgb
+    rgb: FF92D050
+  category: Tenant Protocol Policy
+  playbook: 6.l3out
+tenant_l3out:
+  l3out:
+    name:
+    tenant:
+      type: data_validation_from_worksheet
+      source: tenant
+      column: name
+    vrf:
+      type: data_validation_from_worksheet
+      source: vrf
+      column: name
+    l3out_domain:
+      type: data_validation_from_worksheet
+      source: domain
+      column: name
+    route_control_enforcement:
+      type: data_validation_static_list
+      formula: export,import,import;export
+    enable_bgp: yes_no
+    enable_ospf: yes_no
+    enable_pim: yes_no
+    ospf_area_id:
+    ospf_area_type:
+      type: data_validation_static_list
+      formula: regular,stub,nssa
+    ospf_area_cost:
+    consumer_label:
+    provider_label:
+    status: status
+    build_tasks_description: External Routed Networks (L3Out)
+  l3out_route_prof_redistribution:
+    l3out:
+      type: data_validation_from_worksheet
+      source: l3out
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: l3out
+      match_field: name
+      return_field: tenant
+      source_table: l3out
+    source:
+      type: data_validation_static_list
+      formula: direct,static,attached-host
+    route_map:
+      type: data_validation_from_worksheet
+      source: route_maps
+      column: name
+    status: status
+    build_tasks_description: L3Out Route Profile Redistribution
+  l3out_route_maps:
+    l3out:
+      type: data_validation_from_worksheet
+      source: l3out
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: l3out
+      match_field: name
+      return_field: tenant
+      source_table: l3out
+    name:
+      type: data_validation_static_list
+      formula: default-import,default-export
+    type:
+      type: data_validation_static_list
+      formula: match_prefix_and_routing_policy,match_routing_policy_only
+    auto_continue: yes_no
+    context_name:
+    action:
+      type: data_validation_static_list
+      formula: permit,deny
+    order:
+    match_rule:
+      type: data_validation_from_worksheet
+      source: match_rules
+      column: name
+    set_rule:
+      type: data_validation_from_worksheet
+      source: set_rules
+      column: name
+    status: status
+    build_tasks_description: L3Out Route Maps
+  l3out_node_profile:
+    name:
+    l3out:
+      type: data_validation_from_worksheet
+      source: l3out
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: l3out
+      match_field: name
+      return_field: tenant
+      source_table: l3out
+    node_id:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: node_id
+    pod_id:
+      type: xlookup
+      lookup_field: node_id
+      source_table: node_provisioning
+    router_id:
+    router_id_as_loopback: yes_no
+    loopback_ip:
+    enable_golf: yes_no
+    enable_mpod: yes_no
+    status: status
+    build_tasks_description: L3Out Node Profile
+  nodeBgpPeer:
+    l3out_node_profile:
+      type: data_validation_from_worksheet
+      source: l3out_node_profile
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: l3out_node_profile
+      match_field: name
+      return_field: tenant
+      source_table: l3out_node_profile
+    l3out:
+      type: xlookup
+      lookup_field: l3out_node_profile
+      match_field: name
+      return_field: l3out
+      source_table: l3out_node_profile
+    bgp_peer_ip:
+    bgp_peer_name:
+    isGolfPeer: yes_no
+    remote_bgp_as:
+    local_bgp_as:
+    ttl:
+    status: status
+    build_tasks_description: BGP Peer at Node Profile
+  node_static_route:
+    prefix:
+    route_control:
+      type: data_validation_static_list
+      formula: bfd
+    admin_distance:
+    next_hop_address:
+    next_hop_preference:
+    pod_id:
+      type: xlookup
+      lookup_field: node_id
+      source_table: node_provisioning
+    node_id:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: node_id
+    l3out_node_profile:
+      type: data_validation_from_worksheet
+      source: l3out_node_profile
+      column: name
+    l3out:
+      type: xlookup
+      lookup_field: l3out_node_profile
+      match_field: name
+      return_field: l3out
+      source_table: l3out_node_profile
+    tenant:
+      type: xlookup
+      lookup_field: l3out_node_profile
+      match_field: name
+      return_field: tenant
+      source_table: l3out_node_profile
+    status: status
+    build_tasks_description: Node Static route
+  l3out_int_profile:
+    name:
+    l3out_node_profile:
+      type: data_validation_from_worksheet
+      source: l3out_node_profile
+      column: name
+    l3out:
+      type: xlookup
+      lookup_field: l3out_node_profile
+      match_field: name
+      return_field: l3out
+      source_table: l3out_node_profile
+    tenant:
+      type: xlookup
+      lookup_field: l3out_node_profile
+      match_field: name
+      return_field: tenant
+      source_table: l3out_node_profile
+    description:
+    egress_dpp_policy:
+      type: data_validation_from_worksheet
+      source: tenant_dpp_policy
+      column: name
+    ingress_dpp_policy:
+      type: data_validation_from_worksheet
+      source: tenant_dpp_policy
+      column: name
+    qos_priority:
+      type: data_validation_static_list
+      formula: level1,level2,level3,level4,level5,level6
+    custom_qos:
+      type: data_validation_from_worksheet
+      source: custom_qos_policy
+      column: name
+    status: status
+    build_tasks_description: L3Out Interface Profile
+  l3out_interfaces:
+    name:
+      type: data_validation_from_worksheet
+      source: l3out_int_profile
+      column: name
+    l3out_node_profile:
+      type: xlookup
+      lookup_field: name
+      source_table: l3out_int_profile
+    l3out:
+      type: xlookup
+      lookup_field: name
+      source_table: l3out_int_profile
+    tenant:
+      type: xlookup
+      lookup_field: name
+      source_table: l3out_int_profile
+    interface_type:
+      type: data_validation_static_list
+      formula: routed,routed_sub,svi,floating_svi
+    path_type:
+      type: data_validation_static_list
+      formula: vPC,PC,Access
+    vlan_encap_id:
+    trunk_mode:
+      type: data_validation_static_list
+      formula: regular,untagged,native
+    left_node_id:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: node_id
+    right_node_id:
+      type: formula_static
+      formula: =IF(l3out_interfaces[[#This Row],[path_type]]="vPC",_xlfn.XLOOKUP(l3out_interfaces[[#This Row],[left_node_id]],vpc_domain[left_node_id],vpc_domain[right_node_id]),"")
+    pod_id:
+      type: xlookup
+      lookup_field: left_node_id
+      match_field: node_id
+      return_field: pod_id
+      source_table: node_provisioning
+    int_pol_group:
+      type: data_validation_from_worksheet
+      source: interface_policy_group
+      column: node_id
+    port_id:
+    ip_addr_side_a:
+    ip_addr_side_b:
+    secondary_ip:
+    ospf_interface_policy:
+      type: data_validation_from_worksheet
+      source: ospf_int_pol
+      column: name
+    mtu:
+    autostate: enabled_disabled
+    use_bfd: yes_no
+    bfd_policy:
+      type: data_validation_from_worksheet
+      source: bfd_policy
+      column: name
+    ospf_password:
+    floating_svi_domain:
+      type: data_validation_from_worksheet
+      source: domain
+      column: name
+    floating_primary_ip:
+    status: status
+    build_tasks_description: L3Out Interfaces
+  bgp_peer_prefix_policy:
+    name:
+    tenant:
+      type: data_validation_from_worksheet
+      source: tenant
+      column: name
+    description:
+    action:
+      type: data_validation_static_list
+      formula: reject,log,restart,shut
+    maximum_number_of_prefixes:
+    threshold_percentage:
+    restart_time_minutes:
+    status: status
+    build_tasks_description: BGP Peer Prefix Policy
+  interfaceBgpPeer:
+    name:
+      type: data_validation_from_worksheet
+      source: l3out_interfaces
+      column: name
+    l3out_node_profile:
+      type: xlookup
+      lookup_field: name
+      source_table: l3out_interfaces
+    l3out:
+      type: xlookup
+      lookup_field: name
+      source_table: l3out_interfaces
+    tenant:
+      type: xlookup
+      lookup_field: name
+      source_table: l3out_interfaces
+    path_type:
+      type: xlookup
+      lookup_field: name
+      source_table: l3out_interfaces
+    left_node_id:
+      type: xlookup
+      lookup_field: name
+      source_table: l3out_interfaces
+    right_node_id:
+      type: formula_static
+      formula: =IF(l3out_interfaces[[#This Row],[path_type]]="vPC",_xlfn.XLOOKUP(l3out_interfaces[[#This Row],[left_node_id]],vpc_domain[left_node_id],vpc_domain[right_node_id]),"")
+    pod_id:
+      type: xlookup
+      lookup_field: name
+      source_table: l3out_interfaces
+    int_pol_group:
+      type: formula_static
+      formula: =IF(interfaceBgpPeer[[#This Row],[interface_type]]<>"floating_svi",_xlfn.XLOOKUP(interfaceBgpPeer[[#This Row],[name]],l3out_interfaces[name],l3out_interfaces[int_pol_group]),"")
+    port_id:
+      type: xlookup
+      lookup_field: name
+      source_table: l3out_interfaces
+    interface_type:
+      type: xlookup
+      lookup_field: name
+      source_table: l3out_interfaces
+    vlan_encap_id:
+      type: formula_static
+      formula: =IF(interfaceBgpPeer[[#This Row],[interface_type]]="floating_svi",_xlfn.XLOOKUP(interfaceBgpPeer[[#This Row],[name]],l3out_interfaces[name],l3out_interfaces[vlan_encap_id]),"")
+    bgp_peer_ip:
+    bgp_peer_name:
+    bgp_peer_as:
+    use_bfd: yes_no
+    password:
+    Import_Route_Map:
+      type: data_validation_from_worksheet
+      source: route_maps
+      column: name
+    Export_Route_Map:
+      type: data_validation_from_worksheet
+      source: route_maps
+      column: name
+    Local_AS:
+    Local_AS_Options:
+      type: data_validation_static_list
+      formula: no-Prepend+replace-as+dual-as,no-prepend,no options,no-Prepend+replace-as
+    Allow_Self_AS: yes_no
+    allow_self_as_count:
+    private_as_control:
+      type: data_validation_static_list
+      formula: remove_private_as,remove_all_private_as,replace_private_as_with_local_as
+    address_type_controls:
+      type: data_validation_static_list
+      formula: af-ucast,af-mcast,af-ucast;af-mcast
+    disable_connected_check: yes_no
+    as_override: yes_no
+    disable_peer_as_check: yes_no
+    next_hop_self: yes_no
+    send_community: yes_no
+    send_extended_community: yes_no
+    send_domain_path: yes_no
+    admin_status: enabled_disabled
+    ebgp_multihop_ttl:
+    weight:
+    site_of_origin:
+    bgp_peer_prefix_policy:
+      type: data_validation_from_worksheet
+      source: bgp_peer_prefix_policy
+      column: name
+    status: status
+    build_tasks_description: BGP Peer at interface Profile
+  external_epg:
+    name:
+    description:
+    l3_out:
+      type: data_validation_from_worksheet
+      source: l3_out
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: l3_out
+      match_field: name
+      return_field: tenant
+      source_table: l3out
+    prefered_group_member:
+      type: data_validation_static_list
+      formula: include,exclude
+    qos_class:
+      type: data_validation_static_list
+      formula: unspecified,level1,level2,level3,level4,level5,level6
+    target_dscp:
+      type: data_validation_static_list
+      formula: unspecified,CS0,CS1,AF11,AF12,AF13,CS2,AF21,AF22,AF23,CS3,AF31,AF32,AF33,CS4,AF41,AF42,AF43,VA,CS5,EF,CS6,CS7
+    status: status
+    build_tasks_description: External EPG
+  external_epg_subnet:
+    external_subnet:
+    external_epg:
+      type: data_validation_from_worksheet
+      source: external_epg
+      column: name
+    l3_out:
+      type: xlookup
+      lookup_field: external_epg
+      match_field: name
+      return_field: l3_out
+      source_table: external_epg
+    tenant:
+      type: xlookup
+      lookup_field: external_epg
+      match_field: name
+      return_field: tenant
+      source_table: external_epg
+    external_subnet_for_external_epg: yes_no
+    export_route_control: yes_no
+    shared_route_control: yes_no
+    import_route_control: yes_no
+    shared_security: yes_no
+    aggregate_shared_routes: yes_no
+    route_control_profile:
+    route_control_profile_direction:
+      type: data_validation_static_list
+      formula: import,export
+    status: status
+    build_tasks_description: External EPG Subnet
+  set_rules:
+    name:
+    description:
+    tenant:
+      type: data_validation_from_worksheet
+      source: tenant
+      column: name
+    prepend: yes_no
+    number_prepend:
+    as_prepend:
+    set_community: yes_no
+    community_criteria:
+      type: data_validation_static_list
+      formula: append,replace
+    community:
+    set_ext_epg:
+      type: data_validation_from_worksheet
+      source: external_epg
+      column: name
+    l3out:
+      type: xlookup
+      lookup_field: set_ext_epg
+      match_field: name
+      return_field: l3_out
+      source_table: external_epg
+    prepend_last_as:
+    next_hop_propagation: yes_no
+    status: status
+    build_tasks_description: Set Rules
+  match_rules:
+    name:
+    description:
+    tenant:
+      type: data_validation_from_worksheet
+      source: tenant
+      column: name
+    prefix:
+    aggregate: yes_no
+    ge:
+    le:
+    match_community_name:
+    community:
+    status: status
+    build_tasks_description: Match Rules
+  route_maps:
+    name:
+    description:
+    tenant:
+      type: data_validation_from_worksheet
+      source: tenant
+      column: name
+    auto_continue: yes_no
+    context_name:
+    action:
+      type: data_validation_static_list
+      formula: permit,deny
+    order:
+    match_rule:
+      type: data_validation_from_worksheet
+      source: match_rules
+      column: name
+    set_rule:
+      type: data_validation_from_worksheet
+      source: set_rules
+      column: name
+    status: status
+    build_tasks_description: Route Maps
+  bfd_policy:
+    name:
+    tenant:
+      type: data_validation_from_worksheet
+      source: tenant
+      column: name
+    admin_state: enabled_disabled
+    detection_multiplier:
+    minimum_receive:
+    minimum_transmit:
+    echo_receive:
+    status: status
+    build_tasks_description: BFD Policy
+  tab_color:
+    type: rgb
+    rgb: FFCCFFCC
+  category: Tenant L3OUT related configuration
+  playbook: 6.l3out
+tenant_security:
+  external_management_entity:
+    name:
+    qos_class:
+      type: data_validation_static_list
+      formula: level1,level2,level3,level4,level5,level6
+    subnet:
+    status: status
+    build_tasks_description: OOB External Management Instance Profile
+  filter:
+    name:
+    tenant:
+      type: data_validation_from_worksheet
+      source: tenant
+      column: name
+    status: status
+    build_tasks_description: Filter
+  filter_entry:
+    name:
+    description:
+    filter:
+      type: data_validation_from_worksheet
+      source: filter
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: filter
+      match_field: name
+      return_field: tenant
+      source_table: filter
+    ether_type:
+      type: data_validation_static_list
+      formula: ip,arp,unspecified
+    IP_protocol:
+      type: data_validation_static_list
+      formula: udp,tcp,pim,ospf,l2tp,igp,icmp,igmp,icmpv6,eigrp,egp,unspecified
+    match_only_fragments: yes_no
+    arp_flag:
+      type: data_validation_static_list
+      formula: reply,request,unspecified,N/A
+    from_source_port:
+    to_source_port:
+    from_destination_port:
+    to_destination_port:
+    icmp_message:
+      type: data_validation_static_list
+      formula: dst-unreach,echo,echo-rep,src-quench,time-exceeded,unspecified,N/A
+    icmpv6_message:
+      type: data_validation_static_list
+      formula: echo-req,echo-rep,dst-unreach,nbr-advert,nbr-solicit,time-exceeded,redirect,unspecified,N/A
+    tcp_flags:
+      type: data_validation_static_list
+      formula: ack,est,fin,rset,syn,rset;syn;ack;fin,syn;reset,syn;ack,syn;fin,rset;ack,rset;fin,ack;fin
+    stateful: yes_no
+    status: status
+    build_tasks_description: Filter Entry
+  contract:
+    name:
+    description:
+    contract_type:
+      type: data_validation_static_list
+      formula: standard,outofband
+    tenant:
+      type: data_validation_from_worksheet
+      source: tenant
+      column: name
+    scope:
+      type: data_validation_static_list
+      formula: application-profile,tenant,context,global
+    qos_class:
+      type: data_validation_static_list
+      formula: level1,level2,level3,level4,level5,level6
+    name_alias:
+    target_dscp:
+      type: data_validation_static_list
+      formula: unspecified,CS0,CS1,AF11,AF12,AF13,CS2,AF21,AF22,AF23,CS3,AF31,AF32,AF33,CS4,AF41,AF42,AF43,VA,CS5,EF,CS6,CS7
+    tag:
+    status: status
+    build_tasks_description: Contract
+  subject:
+    name:
+    contract:
+      type: data_validation_from_worksheet
+      source: contract
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: contract
+      match_field: name
+      return_field: tenant
+      source_table: contract
+    contract_type:
+      type: xlookup
+      lookup_field: contract
+      match_field: name
+      return_field: contract_type
+      source_table: contract
+    description:
+    qos_class:
+      type: data_validation_static_list
+      formula: level1,level2,level3,level4,level5,level6
+    apply_both_direction: yes_no
+    reverse_filter_port: yes_no
+    filter:
+      type: data_validation_from_worksheet
+      source: filter
+      column: name
+    name_alias:
+    target_dscp:
+      type: data_validation_static_list
+      formula: unspecified,CS0,CS1,AF11,AF12,AF13,CS2,AF21,AF22,AF23,CS3,AF31,AF32,AF33,CS4,AF41,AF42,AF43,VA,CS5,EF,CS6,CS7
+    status: status
+    build_tasks_description: Subject
+  epg_contract:
+    name:
+      type: data_validation_from_worksheet
+      source: end_point_group
+      column: name
+    app_profile:
+      type: xlookup
+      lookup_field: name
+      source_table: end_point_group
+    tenant:
+      type: xlookup
+      lookup_field: name
+      source_table: end_point_group
+    contract:
+      type: data_validation_from_worksheet
+      source: contract
+      column: name
+    consumed_ctr: yes_no
+    provided_ctr: yes_no
+    contract_qos_class:
+      type: data_validation_static_list
+      formula: level1,level2,level3,level4,level5,level6
+    status: status
+    build_tasks_description: Assign Contract to EPG
+  external_epg_contract:
+    name:
+      type: data_validation_from_worksheet
+      source: external_epg
+      column: name
+    l3out:
+      type: xlookup
+      lookup_field: name
+      match_field: name
+      return_field: l3_out
+      source_table: external_epg
+    tenant:
+      type: xlookup
+      lookup_field: name
+      source_table: external_epg
+    contract:
+      type: data_validation_from_worksheet
+      source: contract
+      column: name
+    consumed_ctr: yes_no
+    provided_ctr: yes_no
+    contract_qos_class:
+      type: data_validation_static_list
+      formula: level1,level2,level3,level4,level5,level6
+    status: status
+    build_tasks_description: Assign Contract to external EPG
+  vrf_contract:
+    vrf_name:
+      type: data_validation_from_worksheet
+      source: vrf
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: vrf_name
+      match_field: name
+      return_field: tenant
+      source_table: vrf
+    contract:
+      type: data_validation_from_worksheet
+      source: contract
+      column: name
+    consumed_ctr: yes_no
+    provided_ctr: yes_no
+    contract_qos_class:
+      type: data_validation_static_list
+      formula: level1,level2,level3,level4,level5,level6
+    status: status
+    build_tasks_description: Assign Contract to a VRF(vzAny)
+  inband_mgmt_epg_contract:
+    name:
+    contract:
+      type: data_validation_from_worksheet
+      source: contract
+      column: name
+    consumed_ctr: yes_no
+    provided_ctr: yes_no
+    contract_qos_class:
+      type: data_validation_static_list
+      formula: level1,level2,level3,level4,level5,level6
+    status: status
+    build_tasks_description: Assign Contract to Inband Management EPG
+  oob_mgmt_epg_contract:
+    name:
+    contract:
+      type: data_validation_from_worksheet
+      source: contract
+      column: name
+    contract_qos_class:
+      type: data_validation_static_list
+      formula: level1,level2,level3,level4,level5,level6
+    status: status
+    build_tasks_description: Assign Contract to OoB Management EPG
+  ext_mgmt_entity_contract:
+    external_management_profile_name:
+      type: data_validation_from_worksheet
+      source: external_management_entity
+      column: name
+    oob_contract_name:
+      type: data_validation_from_worksheet
+      source: contract
+      column: name
+    contract_qos_class:
+      type: data_validation_static_list
+      formula: level1,level2,level3,level4,level5,level6
+    status: status
+    build_tasks_description: Assign Contract to a External Management Profile
+  tab_color:
+    type: rgb
+    rgb: FFFFFF00
+  category: Tenant Security related configuration
+  playbook: 7.contract
+aaa:
+  tacacs_provider:
+    host_or_ip:
+    auth_protocol:
+      type: data_validation_static_list
+      formula: pap,chap,mschap
+    key:
+    description:
+    monitor_server: enabled_disabled
+    monitor_user:
+    monitor_password:
+    port:
+    retries:
+    time_out:
+    management_epg:
+      type: data_validation_static_list
+      formula: oob,inb
+    status: status
+    build_tasks_description: TACACS Provider
+  tacacs_provider_group:
+    name:
+    description:
+    provider_name:
+      type: data_validation_from_worksheet
+      source: tacacs_provider
+      column: name
+    provider_descr:
+    provider_order:
+    status: status
+    build_tasks_description: TACACS Provider Group
+  security_domain:
+    security_domain_name:
+    description:
+    status: status
+    build_tasks_description: Security Domain
+  aaa_login_domain:
+    name:
+    description:
+    realm:
+      type: data_validation_static_list
+      formula: local,tacacs,radius,ldap,saml,rsa
+    provider_group:
+    status: status
+    build_tasks_description: Login Domain
+  aaa_auth:
+    remote_policy:
+      type: data_validation_static_list
+      formula: no-login,assign-default-role
+    ping_check: yes_no
+    default_auth_realm:
+      type: data_validation_static_list
+      formula: local,tacacs,radius,ldap,saml,rsa
+    default_auth_provider_group:
+    fallback_check: yes_no
+    console_auth_realm:
+      type: data_validation_static_list
+      formula: local,tacacs,radius,ldap,saml,rsa
+    console_auth_provider_group:
+    status: status
+    build_tasks_description: AAA Authentication Realm
+  tab_color:
+    type: theme
+    theme: 7
+    tint: 0.3999755851924192
+  category: AAA related configuration
+  playbook:
+monitoring:
+  snmp_trap_dest:
+    name:
+    description:
+    snmp_trap_dest_host_or_ip:
+    port:
+    version:
+      type: data_validation_static_list
+      formula: v1,v2c,v3
+    community_or_user:
+    v3_sec_level:
+      type: data_validation_static_list
+      formula: auth,noauth,priv
+    management_epg:
+      type: data_validation_static_list
+      formula: oob,inb
+    status: status
+    build_tasks_description: SNMP Trap Destination
+  syslog_group:
+    name:
+    description:
+    syslog_prof_admin_state: enabled_disabled
+    syslog_local_file_admin_state: enabled_disabled
+    local_file_severity_level:
+      type: data_validation_static_list
+      formula: emergencies,alerts,critical,errors,warnings,notifications,information,debugging
+    syslog_console_admin_state: enabled_disabled
+    console_severity_level:
+      type: data_validation_static_list
+      formula: emergencies,alerts,critical
+    format:
+      type: data_validation_static_list
+      formula: aci,nxos
+    include_ms:
+      type: data_validation_static_list
+      formula: yes_no
+    include_time_zone: yes_no
+    status: status
+    build_tasks_description: Syslog Group
+  syslog_destination:
+    name:
+    description:
+    syslog_group:
+      type: data_validation_from_worksheet
+      source: syslog_group
+      column: name
+    host_or_ip:
+    port:
+    severity:
+      type: data_validation_static_list
+      formula: emergencies,alerts,critical,errors,warnings,notifications,information,debugging
+    destination_admin_state: enabled_disabled
+    management_epg:
+      type: data_validation_static_list
+      formula: oob,inb
+    forwarding_facility:
+      type: data_validation_static_list
+      formula: local0,local1,local2,local3,local4,local5,local6,local7
+    status: status
+    build_tasks_description: Syslog Destination
+  tab_color:
+    type: theme
+    theme: 2
+    tint: -0.249977111117893
+  category: Monitoring related configuration
+  playbook: 8.monitoring
+system_settings:
+  apic_con_pref:
+    apic_connectivity_preference:
+      type: data_validation_static_list
+      formula: ooband,inband
+    status: status
+    build_tasks_description: APIC Connectivity Preference
+  datetime_format:
+    display:
+      type: data_validation_static_list
+      formula: utc,local
+    offset: enabled_disabled
+    timezone:
+    timezone_code:
+    status: status
+    build_tasks_description: Datetime Format
+  ep_loop_protection_ip_aging:
+    ip_aging_state: enabled_disabled
+    ep_loop_state: enabled_disabled
+    ep_loop_detect_interval:
+    ep_loop_detect_mult:
+    ep_loop_action:
+      type: data_validation_static_list
+      formula: port-disable,bd-learn-disable
+    status: status
+    build_tasks_description: Endpoint Loop Protection and IP Aging
+  rogue_endpoint_control:
+    admin_state: enabled_disabled
+    rogue_ep_detection_intvl:
+    rogue_ep_detection_multiplier:
+    hold_interval:
+    status: status
+    build_tasks_description: Rogue Endpoint Control
+  fabric_wide_setting_policy:
+    disable_remote_endpoint_learning: yes_no
+    enforce_subnet_check: yes_no
+    reallocate_gipo: yes_no
+    enforce_domain_validation: yes_no
+    opflex_client_authentication: yes_no
+    enforce_epg_vlan_validation: yes_no
+    status: status
+    build_tasks_description: Fabric Wide Setting Policy
+  port_tracking:
+    admin_state:
+      type: data_validation_static_list
+      formula: on,off
+    delay_restore_timer:
+    min_links_trigger_port_tracking:
+    include_apic: yes_no
+    status: status
+    build_tasks_description: Port Tracking
+  global_aes_passphrase:
+    enable_encryption: yes_no
+    global_aes_passphrase:
+    status: status
+    build_tasks_description: Global ASE Passphrase
+  tab_color:
+    type: theme
+    theme: 8
+    tint: 0.3999755851924192
+  category: System Settings
+  playbook: 9.system_settings
+service_graph:
+  sg_device:
+    name:
+    tenant:
+      type: data_validation_from_worksheet
+      source: tenant
+      column: name
+    contextAware:
+      type: data_validation_static_list
+      formula: single-Context,multi-Context
+    devtype:
+      type: data_validation_static_list
+      formula: PHYSICAL,VIRTUAL
+    funcType:
+      type: data_validation_static_list
+      formula: GoTo,GoThrough,None
+    isCopy: yes_no
+    svcType:
+      type: data_validation_static_list
+      formula: ADC,FW,OTHERS,COPY
+    phyDomain:
+      type: data_validation_from_worksheet
+      source: domain
+      column: name
+    VMMDomain:
+      type: data_validation_from_worksheet
+      source: vmm_domain
+      column: name
+    promMode: yes_no
+    trunking: yes_no
+    status: status
+    build_tasks_description: L4_L7 Device
+  sg_concrete_device:
+    name:
+    device:
+      type: data_validation_from_worksheet
+      source: sg_device
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: device
+      match_field: name
+      return_field: tenant
+      source_table: sg_device
+    devtype:
+      type: xlookup
+      lookup_field: device
+      match_field: name
+      return_field: devtype
+      source_table: sg_device
+    VMname:
+    vCenterName:
+    intf_name:
+    vnicName:
+    connection_type:
+      type: data_validation_static_list
+      formula: vPC,PC,Access
+    interface_policy_group:
+      type: data_validation_from_worksheet
+      source: interface_policy_group
+      column: name
+    access_port_id:
+    left_node_id:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: node_id
+    right_node_id:
+      type: formula_static
+      formula: =IF(OR(sg_concrete_device[[#This Row],[connection_type]]="vPC", sg_concrete_device[[#This Row],[connection_type]]="Fex_vPC"),_xlfn.XLOOKUP(sg_concrete_device[[#This Row],[left_node_id]],vpc_domain[left_node_id],vpc_domain[right_node_id]),"")
+    pod_id:
+      type: xlookup
+      lookup_field: left_node_id
+      match_field: node_id
+      return_field: pod_id
+      source_table: node_provisioning
+    status: status
+    build_tasks_description: L4_L7 Concrete Device
+  sg_cluster_interfaces:
+    vip_name:
+    device:
+      type: data_validation_from_worksheet
+      source: sg_device
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: device
+      match_field: name
+      return_field: tenant
+      source_table: sg_device
+    devtype:
+      type: xlookup
+      lookup_field: device
+      match_field: name
+      return_field: devtype
+      source_table: sg_device
+    encap_vlan_id:
+    concrete_device:
+      type: data_validation_from_worksheet
+      source: sg_device
+      column: name
+    concrete_interface:
+      type: data_validation_from_worksheet
+      source: sg_device
+      column: intf_name
+    status: status
+    build_tasks_description: L4_L7 Cluster interface
+  sg_router_id_policy:
+    name:
+    tenant:
+      type: data_validation_from_worksheet
+      source: sg_device
+      column: name
+    description:
+    rtrid:
+    status: status
+    build_tasks_description: L4_L7 Router ID Policy
+  sg_pbr_policy:
+    name:
+    tenant:
+      type: data_validation_from_worksheet
+      source: sg_device
+      column: name
+    description:
+    ip:
+    mac:
+    status:
+    build_tasks_description: L4_L7 PBR Policy
+  sg_template:
+    name:
+    description:
+    device:
+      type: data_validation_from_worksheet
+      source: sg_device
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: device
+      match_field: name
+      return_field: tenant
+      source_table: sg_device
+    funcTemplateType:
+      type: data_validation_static_list
+      formula: FW_TRANS,FW_ROUTED,ADC_ONE_ARM,ADC_TWO_ARM,OTHER
+    funcType:
+      type: data_validation_static_list
+      formula: GoTo,GoThrough,None
+    isCopy: yes_no
+    routingMode:
+      type: data_validation_static_list
+      formula: Redirect,unspecified
+    C1_adjType:
+      type: data_validation_static_list
+      formula: L2,L3
+    C1_unicastRoute: yes_no
+    C2_adjType:
+      type: data_validation_static_list
+      formula: L2,L3
+    C2_unicastRoute: yes_no
+    status: status
+    build_tasks_description: L4_L7 Graph Template one node
+  bind_subject_to_sg:
+    subject_name:
+      type: data_validation_from_worksheet
+      source: subject
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: subject_name
+      match_field: name
+      return_field: tenant
+      source_table: subject
+    contract:
+      type: xlookup
+      lookup_field: subject_name
+      match_field: name
+      return_field: contract
+      source_table: subject
+    service_graph:
+      type: data_validation_from_worksheet
+      source: sg_template
+      column: name
+    status: status
+    build_tasks_description: Bind Contract Subject to SG Template
+  tab_color:
+    type: theme
+    theme: 9
+    tint: 0.5999938962981048
+  category: System Settings
+  playbook: 10.service_graph.yml
+data_source:
+  defined_names:
+  - name: spine_access_policy_group
+    formula: access_spine_policy_group[name]
+  - name: spine_fabric_policy_group
+    formula: fabric_spine_policy_group[name]
+  - name: leaf_fabric_policy_group
+    formula: fabric_leaf_policy_group[name]
+  - name: leaf_access_policy_group
+    formula: access_leaf_policy_group[name]
+  - name: access_interface_policy_grp
+    formula: interface_policy_group[name]
+  - name: fabric_interface_policy_grp
+    formula: fabric_interface_policy_group[name]

@@ -298,3 +298,4 @@ cython_debug/
 /ndo/test.yml
 /ndo/fix mso auth
 /ndo/hosts-old.yml
+/aci/scripts/*.log

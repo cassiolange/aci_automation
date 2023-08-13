@@ -101,7 +101,8 @@ def excel_to_yaml():
         for line in excel.index:
             if excel['include'][line] == 'yes':
                 sheets.append(str(excel['input_worksheet'][line]))
-        sheets = numpy.unique(sheets)
+        # sheets = numpy.unique(sheets)
+        sheets = list(dict.fromkeys(sheets))
 
         for sheet in sheets:
             print('Sheet: %s' %sheet)
@@ -133,7 +134,8 @@ def excel_to_yaml():
                     yaml_data[sheet].append(current_line)
 
         file = open(output_dir+'/host_vars/'+host+'.yaml', 'w')
-        yaml.dump(yaml_data, file)
+        yaml.dump(yaml_data, file, sort_keys = False, width = 1000)
+
         file.close()
     for apic in apic_dir:
         file = open(apic + '/' + 'hosts.yml', 'w')

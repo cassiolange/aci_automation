@@ -214,7 +214,7 @@
         state: "{{ item.status }}"
       delegate_to: localhost
       loop: "{{ epg_domain_association }}"
-      when: epg_domain_association is defined and item.domainType == 'physical'
+      when: epg_domain_association is defined and item.domainType == 'phys'
 
     - name: Deploy Static Path binding for given EPG
       cisco.aci.aci_static_binding_to_epg:

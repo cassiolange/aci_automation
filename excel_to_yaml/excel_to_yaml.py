@@ -134,7 +134,8 @@ def excel_to_yaml():
                     yaml_data[sheet].append(current_line)
 
         file = open(output_dir+'/host_vars/'+host+'.yaml', 'w')
-        yaml.dump(yaml_data, file, sort_keys = False, width = 1000)
+        #yaml.dump(yaml_data, file, sort_keys = False, width = 1000)
+        yaml.dump(yaml_data, file)
 
         file.close()
     for apic in apic_dir:

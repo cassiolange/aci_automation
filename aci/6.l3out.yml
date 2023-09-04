@@ -246,7 +246,7 @@
                               {% else %}
                               {% if item['path_type'] == 'vPC' %}
                                       {% set path %}topology/pod-{{item['pod_id'] | int }}/protpaths-{{item['left_node_id'] | int }}-{{item['right_node_id'] | int }}/pathep-{{item['int_pol_group']}}{% endset %}
-                              <l3extRsPathL3OutAtt addr="0.0.0.0" descr="" encap="vlan-{{item['vlan_encap_id'] | int }}" encapScope="local" ifInstT="ext-svi" autostate="{{item['autostate']}}" mode="{{item['trunk_mode']}}" mtu="{{item['mtu'] | int }}" tDn="{{path}}" targetDscp="unspecified" status="{{ status }}">
+                              <l3extRsPathL3OutAtt annotation="orchestrator:ansible" addr="0.0.0.0" descr="{{item['description'] | default("")}}" encap="vlan-{{item['vlan_encap_id'] | int }}" encapScope="local" ifInstT="ext-svi" autostate="{{item['autostate']}}" mode="{{item['trunk_mode']}}" mtu="{{item['mtu'] | int }}" tDn="{{path}}" targetDscp="unspecified" status="{{ status }}">
                                   <l3extMember addr="{{item['ip_addr_side_a']}}" descr=""  name="side_a" side="A" >
                                   {% if item['secondary_ip'] is defined and item['secondary_ip'] != '' %}
                                       <l3extIp addr="{{item['secondary_ip']}}" annotation="" descr="" name="" nameAlias=""/>
@@ -274,7 +274,7 @@
                                               {% set iftype ="l3-port" %}
                                               {% set encap = "unknown" %}
                                       {% endif %}
-                              <l3extRsPathL3OutAtt addr="{{item['ip_addr_side_a']}}" descr="" encap="{{encap}}" encapScope="local" ifInstT="{{iftype}}" autostate="{{item['autostate']}}" mode="{{item['trunk_mode']}}" mtu="{{item['mtu'] | int }}" tDn="{{path}}" targetDscp="unspecified" status="{{ status }}">
+                              <l3extRsPathL3OutAtt annotation="orchestrator:ansible" addr="{{item['ip_addr_side_a']}}" descr="{{item['description'] | default("")}}" encap="{{encap}}" encapScope="local" ifInstT="{{iftype}}" autostate="{{item['autostate']}}" mode="{{item['trunk_mode']}}" mtu="{{item['mtu'] | int }}" tDn="{{path}}" targetDscp="unspecified" status="{{ status }}">
                               {% if item['secondary_ip'] is defined and item['secondary_ip'] != '' %}
                                   <l3extIp addr="{{item['secondary_ip']}}" annotation="" descr="" name="" nameAlias=""/>
                               {% endif %}

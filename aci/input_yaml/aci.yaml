@@ -2005,6 +2005,7 @@ tenant_l3out:
       type: data_validation_from_worksheet
       source: l3out_int_profile
       column: name
+    description:
     l3out_node_profile:
       type: xlookup
       lookup_field: name

@@ -186,19 +186,32 @@
       when: application_profile is defined
 
     - name: Add a new EPG
-      cisco.aci.aci_epg:
+      cisco.aci.aci_rest:
         <<: *aci_login
-        tenant: "{{ item.tenant }}"
-        ap: "{{ item.app_profile }}"
-        epg: "{{ item.name }}"
-        description: "{{ item.description if item.description is defined else omit}}"
-        bd: "{{ item.bridge_domain }}"
-        preferred_group: "{{ item.preferred_group if item.preferred_group is defined and item.preferred_group != '' else omit }}"
-        intra_epg_isolation: "{{ item.intra_epg_isolation if item.intra_epg_isolation is defined and item.intra_epg_isolation != '' else omit }}"
-        name_alias: "{{ item.name_alias if item.name_alias is defined and item.name_alias != '' else omit }}"
-        priority: "{{ item.qos_class if item.qos_class is defined and item.qos_class != '' else omit }}"
-        custom_qos_policy: "{{ item.custom_qos_pol if item.custom_qos_pol is defined and item.custom_qos_pol != '' else omit }}"
-        state: "{{ item.status }}"
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <fvAp name="{{item['app_profile']}}" status="modified">
+                      <fvAEPg annotation="orchestrator:ansible" descr="{{item['description']}}" floodOnEncap="{{item['floodOnEncap'] | default('disabled',true)}}" name="{{item['name']}}" nameAlias="{{item['name_alias']}}" pcEnfPref="{{item['intra_epg_isolation'] | default('unenforced',true)}}" prefGrMemb="{{item['prefGrMemb'] | default('exclude',true)}}" prio="{{item['qos_class'] | default('unspecified',true)}}" shutdown="{{item['shutdown'] | default('no',true)}}" status="{{ status }}">
+                          {% if item['custom_qos_pol'] is defined and item['custom_qos_pol'] != '' %}
+                          <fvRsCustQosPol tnQosCustomPolName="{{item['custom_qos_pol']}}"/>
+                          {% else %}
+                          <fvRsCustQosPol tnQosCustomPolName=""/>
+                          {% endif %}
+                          <fvRsBd tnFvBDName="{{item['bridge_domain']}}"/>
+                          {% if item['dataPlanePolicer'] is defined and item['dataPlanePolicer'] != '' %}
+                          <fvRsDppPol tnQosDppPolName="{{item['dataPlanePolicer']}}"/>
+                          {% else %}
+                          <fvRsDppPol status="deleted"/>
+                          {% endif %}
+                      </fvAEPg>
+                  </fvAp>
+              </fvTenant>
+          </polUni>
       delegate_to: localhost
       loop: "{{ end_point_group }}"
       when: end_point_group is defined

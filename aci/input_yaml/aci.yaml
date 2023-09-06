@@ -1615,7 +1615,7 @@ tenant:
       column: name
     prefGrMemb:
       type: data_validation_static_list
-      formula: enforced,unenforced
+      formula: exclude,include
     floodOnEncap: enabled_disabled
     qos_class:
       type: data_validation_static_list
@@ -1624,6 +1624,7 @@ tenant:
       type: data_validation_from_worksheet
       source: custom_qos_policy
       column: name
+    shutdown: yes_no
     status: status
     build_tasks_description: EPG
   epg_domain_association:

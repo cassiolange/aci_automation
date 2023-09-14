@@ -35,17 +35,36 @@ sites:
     tint: 0.5999938962981048
   category: Sites
   playbook: 1.sites
+infra_config:
+  infra_config:
+    site:
+      type: data_validation_from_worksheet
+      source: site
+      column: name
+    type:
+      type: data_validation_static_list
+      formula: BGP-EVPN Router-ID (EVPN-RID),Overlay Multicast TEP (O-MTEP),Overlay Unicast TEP (O-UTEP),external TEP
+    pod:
+    spine:
+    interface:
+    ip_address:
+    status: status
+  tab_color:
+    type: theme
+    theme: 7
+    tint: 0.5999938962981048
+  category: Multisite Infra configuration
 tenant:
   tenant:
     name:
     description:
     status: status
   tenant_site_association:
-    tenant_name:
+    tenant:
       type: data_validation_from_worksheet
       source: tenant
       column: name
-    site_name:
+    site:
       type: data_validation_from_worksheet
       source: site
       column: name
@@ -56,7 +75,316 @@ tenant:
     tint: 0.5999938962981048
   category: Tenant Base Configuration
   playbook: 2.tenant
-
-
-
-
+schema_template:
+  schema:
+    name:
+    tenant:
+      type: data_validation_from_worksheet
+      source: tenant
+      column: name
+    status: status
+  template:
+    name:
+    schema:
+      type: data_validation_from_worksheet
+      source: schema
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: schema
+      match_field: name
+      return_field: tenant
+      source_table: schema
+    status: status
+  template_site_association:
+    site:
+      type: data_validation_from_worksheet
+      source: site
+      column: name
+    template:
+      type: data_validation_from_worksheet
+      source: template
+      column: name
+    schema:
+      type: xlookup
+      lookup_field: template
+      match_field: name
+      return_field: schema
+      source_table: template
+    status: status
+  tab_color:
+    type: theme
+    theme: 7
+    tint: 0.5999938962981048
+  category: Tenant Base Configuration
+  playbook: 3.schemas
+vrf:
+  vrf:
+    name:
+    description:
+    template:
+      type: data_validation_from_worksheet
+      source: template
+      column: name
+    schema:
+      type: xlookup
+      lookup_field: template
+      match_field: name
+      return_field: schema
+      source_table: template
+    tenant:
+      type: xlookup
+      lookup_field: template
+      match_field: name
+      return_field: tenant
+      source_table: template
+    enable_l3_multicast: yes_no
+    ip_data_plane_learning: enabled_disabled
+    preferred_group: yes_no
+    status: status
+  tab_color:
+    type: theme
+    theme: 7
+    tint: 0.5999938962981048
+  category: VRF Configuration
+  playbook: 4.vrf
+bd:
+  bridge_domain:
+    name:
+    description:
+    template:
+      type: data_validation_from_worksheet
+      source: template
+      column: name
+    schema:
+      type: xlookup
+      lookup_field: template
+      match_field: name
+      return_field: schema
+      source_table: template
+    tenant:
+      type: xlookup
+      lookup_field: template
+      match_field: name
+      return_field: tenant
+      source_table: template
+    l2UnknownUnicast:
+      type: data_validation_static_list
+      formula: flood,proxy
+    ipv6_unknown_multicast_flooding:
+      type: data_validation_static_list
+      formula: flood,proxy
+    l2stretch: yes_no
+    intersiteBumTrafficAllow: yes_no
+    layer3_multicast: yes_no
+    optimizeWanBandwidth: yes_no
+    arp_flooding:
+    multi_destination_flooding:
+      type: data_validation_static_list
+      formula: flood_in_bd,drop,encap-flood
+    unicast_routing: yes_no
+    unknown_multicast_flooding:
+      type: data_validation_static_list
+      formula: flood,optimized_flooding
+    virtual_mac_address:
+    vrf:
+      type: data_validation_from_worksheet
+      source: vrf
+      column: name
+    vrf_template:
+      type: xlookup
+      lookup_field: vrf
+      match_field: name
+      return_field: template
+      source_table: vrf
+    vrf_schema:
+      type: xlookup
+      lookup_field: vrf
+      match_field: name
+      return_field: schema
+      source_table: vrf
+    status: status
+  bridge_domain_subnet:
+    bd_subnet:
+    description:
+    bridge_domain:
+      type: data_validation_from_worksheet
+      source: bridge_domain
+      column: name
+    schema_name:
+      type: xlookup
+      lookup_field: bridge_domain
+      match_field: name
+      return_field: schema
+      source_table: bridge_domain
+    template_name:
+      type: xlookup
+      lookup_field: bridge_domain
+      match_field: name
+      return_field: template
+      source_table: bridge_domain
+    tenant:
+      type: xlookup
+      lookup_field: bridge_domain
+      match_field: name
+      return_field: tenant
+      source_table: bridge_domain
+    subnet_scope:
+      type: data_validation_static_list
+      formula: private,public
+    is_virtual_ip: yes_no
+    is_primary_address: yes_no
+    no_default_gateway: yes_no
+    shared: yes_no
+    querier: yes_no
+    site:
+      type: data_validation_from_worksheet
+      source: site
+      column: name
+    status: status
+    build_tasks_description: Bridge Domain Subnet
+  tab_color:
+    type: theme
+    theme: 7
+    tint: 0.5999938962981048
+  category: VRF Configuration
+  playbook: 5.bds
+ap:
+  application_profile:
+    name:
+    description:
+    template:
+      type: data_validation_from_worksheet
+      source: template
+      column: name
+    schema:
+      type: xlookup
+      lookup_field: template
+      match_field: name
+      return_field: schema
+      source_table: template
+    tenant:
+      type: xlookup
+      lookup_field: template
+      match_field: name
+      return_field: tenant
+      source_table: template
+    status: status
+  tab_color:
+    type: theme
+    theme: 7
+    tint: 0.5999938962981048
+  category: VRF Configuration
+  playbook: 6.anp
+epg:
+  epg:
+    name:
+    description:
+    app_profile_name:
+      type: data_validation_from_worksheet
+      source: application_profile
+      column: name
+    template:
+      type: xlookup
+      lookup_field: app_profile_name
+      match_field: name
+      return_field: template
+      source_table: application_profile
+    schema:
+      type: xlookup
+      lookup_field: app_profile_name
+      match_field: name
+      return_field: schema
+      source_table: application_profile
+    tenant:
+      type: xlookup
+      lookup_field: app_profile_name
+      match_field: name
+      return_field: tenant
+      source_table: application_profile
+    intra_epg_isolation:
+      type: data_validation_static_list
+      formula: enforced,unenforced
+    preferred_group_member: yes_no
+    intersite_multicast_source: yes_no
+    proxy_arp: yes_no
+    qos_level:
+      type: data_validation_static_list
+      formula: level1,level2,level3,level4,level5,level6
+    useg_epg: yes_no
+    bd:
+      type: data_validation_from_worksheet
+      source: bridge_domain
+      column: name
+    bd_template:
+      type: xlookup
+      lookup_field: bd
+      match_field: name
+      return_field: template
+      source_table: bridge_domain
+    bd_schema:
+      type: xlookup
+      lookup_field: bd
+      match_field: name
+      return_field: schema
+      source_table: bridge_domain
+    status: status
+    build_tasks_description: EPG
+  epg_static_binding:
+    epg_name:
+      type: data_validation_from_worksheet
+      source: epg
+      column: name
+    app_profile_name:
+      type: xlookup
+      lookup_field: epg_name
+      match_field: name
+      return_field: app_profile_name
+      source_table: epg
+    template:
+      type: xlookup
+      lookup_field: app_profile_name
+      match_field: name
+      return_field: template
+      source_table: application_profile
+    schema:
+      type: xlookup
+      lookup_field: app_profile_name
+      match_field: name
+      return_field: schema
+      source_table: application_profile
+    tenant:
+      type: xlookup
+      lookup_field: app_profile_name
+      match_field: name
+      return_field: tenant
+      source_table: application_profile
+    site:
+      type: data_validation_from_worksheet
+      source: site
+      column: name
+    type:
+      type: data_validation_static_list
+      formula: vpc,dpc,port
+    mode:
+      type: data_validation_static_list
+      formula: regular,untagged,native
+    port_encap_vlan:
+    pod_id:
+    left_node_id:
+    right_node_id:
+    interface_policy_group:
+    leaf_port:
+    fex:
+    deploy_immediacy:
+      type: data_validation_static_list
+      formula: immediate,lazy
+    primary_micro_segment_vlan:
+    status: status
+    build_tasks_description: EPG Static Binding
+  tab_color:
+    type: theme
+    theme: 7
+    tint: 0.5999938962981048
+  category: EPG
+  playbook: 7.epg

@@ -86,7 +86,7 @@ def create_formula(formula, column_number, worksheet, cell_position):
     column_formula = TableFormula()
     column_formula.attr_text = formula
     worksheet.tables[current_table_name].tableColumns[column_number-1].calculatedColumnFormula = column_formula
-    worksheet.tables[current_table_name].tableColumns[column_number - 1].dataDxfId = 155
+    #worksheet.tables[current_table_name].tableColumns[column_number - 1].dataDxfId = 155
     worksheet[cell_position].fill = PatternFill(patternType='solid', fgColor=Color(rgb='FF00B0F0'), bgColor=Color(indexed=64))
     return worksheet
 

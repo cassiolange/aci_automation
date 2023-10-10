@@ -92,13 +92,13 @@ node_deployement:
     inband_ipv6_gw:
     cimc_ip:
     cimc_gw:
-    status: status
     username:
       type: formula_static
       formula: =IF(ISBLANK(fabric_initial_config!$B$8),"",fabric_initial_config!$B$8)
     password:
       type: formula_static
       formula: =IF(ISBLANK(fabric_initial_config!$B$9),"",fabric_initial_config!$B$9)
+    status: status
     build_tasks_description: APIC Addressing
   firmware_group:
     name:
@@ -2045,7 +2045,7 @@ tenant_l3out:
     int_pol_group:
       type: data_validation_from_worksheet
       source: interface_policy_group
-      column: node_id
+      column: name
     port_id:
     ip_addr_side_a:
     ip_addr_side_b:
@@ -2177,7 +2177,7 @@ tenant_l3out:
     description:
     l3_out:
       type: data_validation_from_worksheet
-      source: l3_out
+      source: l3out
       column: name
     tenant:
       type: xlookup

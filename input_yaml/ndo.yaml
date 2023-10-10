@@ -330,6 +330,54 @@ epg:
       source_table: bridge_domain
     status: status
     build_tasks_description: EPG
+  domain_epg_association:
+    epg_name:
+      type: data_validation_from_worksheet
+      source: epg
+      column: name
+    app_profile_name:
+      type: xlookup
+      lookup_field: epg_name
+      match_field: name
+      return_field: app_profile_name
+      source_table: epg
+    template:
+      type: xlookup
+      lookup_field: app_profile_name
+      match_field: name
+      return_field: template
+      source_table: application_profile
+    schema:
+      type: xlookup
+      lookup_field: app_profile_name
+      match_field: name
+      return_field: schema
+      source_table: application_profile
+    tenant:
+      type: xlookup
+      lookup_field: app_profile_name
+      match_field: name
+      return_field: tenant
+      source_table: application_profile
+    site:
+      type: data_validation_from_worksheet
+      source: site
+      column: name
+    domain_name:
+    domain_type:
+      type: data_validation_static_list
+      formula: vmmDomain,l3ExtDomain,l2ExtDomain,physicalDomain,fibreChannelDomain
+    deploy_immediacy:
+      type: data_validation_static_list
+      formula: immediate,lazy
+    resolution_immediacy:
+      type: data_validation_static_list
+      formula: immediate,lazy,pre-provision
+    allow_micro_segmentation: yes_no
+    enhanced_lagpolicy_dn:
+    enhanced_lagpolicy_name:
+    micro_seg_vlan:
+    status:
   epg_static_binding:
     epg_name:
       type: data_validation_from_worksheet
@@ -388,3 +436,41 @@ epg:
     tint: 0.5999938962981048
   category: EPG
   playbook: 7.epg
+l3out:
+  l3out:
+    name:
+    description:
+    template:
+      type: data_validation_from_worksheet
+      source: template
+      column: name
+    schema:
+      type: xlookup
+      lookup_field: template
+      match_field: name
+      return_field: schema
+      source_table: template
+    tenant:
+      type: xlookup
+      lookup_field: template
+      match_field: name
+      return_field: tenant
+      source_table: template
+    vrf:
+      type: data_validation_from_worksheet
+      source: vrf
+      column: name
+    vrf_template:
+      type: xlookup
+      lookup_field: vrf
+      match_field: name
+      return_field: template
+      source_table: vrf
+    vrf_schema:
+      type: xlookup
+      lookup_field: vrf
+      match_field: name
+      return_field: schema
+      source_table: vrf
+    status: status
+

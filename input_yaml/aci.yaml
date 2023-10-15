@@ -2922,6 +2922,33 @@ service_graph:
     tint: 0.5999938962981048
   category: System Settings
   playbook: 10.service_graph.yml
+interface_disable:
+  interface_disable:
+    name:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: name
+    node_id:
+      type: xlookup
+      lookup_field: node
+      match_field: name
+      return_field: node_id
+      source_table: node_provisioning
+    pod_id:
+      type: xlookup
+      lookup_field: node
+      match_field: name
+      return_field: pod_id
+      source_table: node_provisioning
+    fex:
+    interface:
+    status: status
+  tab_color:
+    type: theme
+    theme: 9
+    tint: 0.5999938962981048
+  category: Interface Enable Disable
+  playbook: enable_disable_interface.yml
 data_source:
   defined_names:
   - name: spine_access_policy_group

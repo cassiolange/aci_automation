@@ -2940,7 +2940,7 @@ interface_disable:
       match_field: name
       return_field: pod_id
       source_table: node_provisioning
-    fex:
+    fex_id:
     interface:
     status: status
   tab_color:

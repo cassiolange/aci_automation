@@ -16,7 +16,8 @@
       cisco.aci.aci_interface_blacklist:
         <<: *aci_login
         pod_id: "{{ item.pod_id | int }}"
-        node_id: "{{ item.node_id | int  }}"
+        node_id: "{{ item.node_id | int }}"
+        fex_id: "{{ item.fex_id | int if item.fex_id is defined and item.fex_id != '' else omit }}"
         interface: "{{ item.interface }}"
         state: "{{ item.status if item.status is defined else 'present' }}"
       delegate_to: localhost

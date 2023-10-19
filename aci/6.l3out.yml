@@ -398,11 +398,11 @@
               {% set ctrl = ctrl_list | join(',') %}
           {% endif %}
           {% if item['path_type'] == 'vPC' %}
-                  {% set path %}topology/pod-{{item['pod_id']}}/protpaths-{{item['left_node_id']}}-{{item['right_node_id']}}/pathep-{{item['int_pol_group']}}{% endset %}
+                  {% set path %}topology/pod-{{item['pod_id'] | int }}/protpaths-{{item['left_node_id'] | int }}-{{item['right_node_id'] | int }}/pathep-{{item['int_pol_group']}}{% endset %}
           {% elif item['path_type'] == 'PC' %}
-                  {% set path %}topology/pod-{{item['pod_id']}}/paths-{{item['left_node_id']}}/pathep-[{{item['int_pol_group']}}]{% endset %}
+                  {% set path %}topology/pod-{{item['pod_id'] | int }}/paths-{{item['left_node_id'] | int }}/pathep-[{{item['int_pol_group']}}]{% endset %}
           {% else %}
-                  {% set path %}topology/pod-{{item['pod_id']}}/paths-{{item['left_node_id']}}/pathep-[eth{{item['port_id']}}]{% endset %}
+                  {% set path %}topology/pod-{{item['pod_id'] | int }}/paths-{{item['left_node_id'] | int }}/pathep-[eth{{item['port_id'] | int }}]{% endset %}
           {% endif %}
           {% if item['private_as_control'] == 'remove_private_as' %}
                   {% set private_as %}remove-exclusive{% endset %}

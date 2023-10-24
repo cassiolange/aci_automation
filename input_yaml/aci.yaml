@@ -1469,6 +1469,7 @@ tenant:
     legacy_bd_vlan:
     route_control_profile:
     l3out_for_route_control:
+    mac:
     status: status
     build_tasks_description: Bridge Domain
   bd_subnet:

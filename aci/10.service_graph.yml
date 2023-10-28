@@ -20,7 +20,7 @@
         content: |
           <polUni>
               <fvTenant name="{{item['tenant']}}" status="modified">
-                  <vnsLDevVip annotation="" contextAware="{{item['contextAware']}}" devtype="{{item['devtype']}}" funcType="{{item['funcType']}}" isCopy="{{item['isCopy']}}" managed="no" name="{{item['name']}}" promMode="{{item['promMode'] | default('no', true)}}" svcType="{{item['svcType']}}" trunking="{{item['trunking'] | default('no', true)}}">
+                  <vnsLDevVip annotation="orchestrator:ansible" contextAware="{{item['contextAware']}}" devtype="{{item['devtype']}}" funcType="{{item['funcType']}}" isCopy="{{item['isCopy']}}" managed="no" name="{{item['name']}}" promMode="{{item['promMode'] | default('no', true)}}" svcType="{{item['svcType']}}" trunking="{{item['trunking'] | default('no', true)}}">
                   {% if (item['phyDomain'] != "" and item['VMMDomain'] == "" and item['devtype'] == "PHYSICAL") %}
                   <vnsRsALDevToPhysDomP annotation="" tDn="uni/phys-{{item['phyDomain']}}"/>
                   {% elif (item['phyDomain'] == "" and item['VMMDomain'] != "" and item['devtype'] == "VIRTUAL") %}
@@ -43,11 +43,11 @@
               <fvTenant name="{{item['tenant']}}" status="modified">
                   <vnsLDevVip name="{{item['device']}}" status="modified">
                       {% if item['devtype'] == "VIRTUAL" %}
-                      <vnsCDev name="{{item['name']}}" vcenterName="{{item['vCenterName']}}" vmName="{{item['VMname']}}">
+                      <vnsCDev annotation="orchestrator:ansible" name="{{item['name']}}" vcenterName="{{item['vCenterName']}}" vmName="{{item['VMname']}}">
                           <vnsCIf  name="{{item['intf_name']}}" vnicName="{{item['vnicName']}}">
                       {% elif item['devtype'] == "PHYSICAL" %}
-                      <vnsCDev name="{{item['name']}}" vcenterName="" vmName="">
-                          <vnsCIf  name="{{item['intf_name']}}" vnicName="">
+                      <vnsCDev annotation="orchestrator:ansible" name="{{item['name']}}" vcenterName="" vmName="">
+                          <vnsCIf annotation="orchestrator:ansible" name="{{item['intf_name']}}" vnicName="">
                       {% endif %}
                               {% if item['connection_type'] == "vPC" %}
                               <vnsRsCIfPathAtt tDn="topology/pod-{{item['pod_id'] | int }}/protpaths-{{item['left_node_id'] | int }}-{{item['right_node_id'] | int }}/pathep-[{{item['interface_policy_group']}}]"/>
@@ -58,7 +58,6 @@
                               {% endif %}
                           </vnsCIf>
                       </vnsCDev>
-          
                   </vnsLDevVip>
               </fvTenant>
           </polUni>
@@ -76,11 +75,11 @@
               <fvTenant name="{{item['tenant']}}" status="modified">
                   <vnsLDevVip name="{{item['device']}}" status="modified">
                       {% if item['devtype'] == "PHYSICAL" %}
-                        <vnsLIf annotation="" encap="vlan-{{item['encap_vlan_id']}}" name="{{item['vip_name']}}">
+                        <vnsLIf annotation="orchestrator:ansible" encap="vlan-{{item['encap_vlan_id']}}" name="{{item['vip_name']}}">
                             <vnsRsCIfAttN annotation="" tDn="uni/tn-{{item['tenant']}}/lDevVip-{{item['device']}}/cDev-{{item['concrete_device']}}/cIf-[{{item['concrete_interface']}}]"/>
                         </vnsLIf>
                       {% elif item['devtype'] == "VIRTUAL" %}
-                        <vnsLIf annotation="" name="{{item['vip_name']}}">
+                        <vnsLIf annotation="orchestrator:ansible"" name="{{item['vip_name']}}">
                             <vnsRsCIfAttN annotation="" tDn="uni/tn-{{item['tenant']}}/lDevVip-{{item['device']}}/cDev-{{item['concrete_device']}}/cIf-[{{item['concrete_interface']}}]"/>
                         </vnsLIf>
                       {% endif %}
@@ -100,7 +99,7 @@
           <polUni>
             <fvTenant name="{{item['tenant']}}" status="modified">
                   <vnsSvcCont >
-                      <vnsSvcRedirectPol descr="{{item['description']}}" name="{{item['name']}}">
+                      <vnsSvcRedirectPol annotation="orchestrator:ansible" descr="{{item['description']}}" name="{{item['name']}}">
                           <vnsRedirectDest ip="{{item['ip']}}" mac="{{item['mac']}}"/>
                       </vnsSvcRedirectPol>
                   </vnsSvcCont>
@@ -118,7 +117,7 @@
         content: |
           <polUni>
               <fvTenant name="{{item['tenant']}}" status="modified">
-                  <vnsAbsGraph annotation="" descr="{{item['description']}}" name="{{item['name']}}" >
+                  <vnsAbsGraph annotation="orchestrator:ansible" descr="{{item['description']}}" name="{{item['name']}}" >
           
                       <vnsAbsTermNodeProv annotation="" descr="" name="T2" nameAlias="" ownerKey="" ownerTag="">
                           <vnsOutTerm annotation="" descr="" name="" nameAlias=""/>
@@ -151,6 +150,46 @@
       delegate_to: localhost
       loop: "{{ sg_template }}"
       when: sg_template is defined
+
+    - name: Create L4-L7 Device Selection Policy
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <vnsLDevCtx annotation="orchestrator:ansible" context="" ctrctNameOrLbl="{{item['contract']}}" descr="" dn="uni/tn-{{item['tenant']}}/ldevCtx-c-{{item['contract']}}-g-{{item['sg_template']}}-n-{{item['node_name']}}" graphNameOrLbl="{{item['sg_template']}}" nodeNameOrLbl="{{item['node_name']}}">
+                      <vnsRsLDevCtxToLDev tDn="uni/tn-{{item['tenant']}}/lDevVip-{{item['device']}}"/>
+                  </vnsLDevCtx>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ sg_device_selection_policy }}"
+      when: sg_device_selection_policy is defined
+
+    - name: Create L4-L7 Logical Device Context
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          <polUni>
+              <fvTenant name="{{item['tenant']}}" status="modified">
+                  <vnsLDevCtx dn="uni/tn-{{item['tenant']}}/ldevCtx-c-{{item['contract']}}-g-{{item['sg_template']}}-n-{{item['node_name']}}" status="modified">
+                      <vnsLIfCtx annotation="orchestrator:ansible" connNameOrLbl="{{item['name']}}" l3Dest="{{item['layer_destination_vip']}}" permitLog="no">
+                          <vnsRsLIfCtxToSvcRedirectPol annotation="" tDn="uni/tn-{{item['tenant']}}/svcCont/svcRedirectPol-{{item['pbr']}}"/>
+                          <vnsRsLIfCtxToLIf annotation="" tDn="uni/tn-{{item['tenant']}}/lDevVip-{{item['device']}}/lIf-{{item['cluster_vip']}}"/>
+                          <vnsRsLIfCtxToCustQosPol annotation="" tnQosCustomPolName=""/>
+                          <vnsRsLIfCtxToBD annotation="" tDn="uni/tn-{{item['tenant']}}/BD-{{item['bridge_domain']}}"/>
+                      </vnsLIfCtx>
+                  </vnsLDevCtx>
+              </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ sg_logical_device_context }}"
+      when: sg_logical_device_context is defined
+
 
     - name: Bind contract subject to service graph
       cisco.aci.aci_contract_subject_to_service_graph:

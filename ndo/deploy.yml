@@ -6,12 +6,12 @@
   tasks:
 
     - name: Deploy a schema template
-      cisco.mso.mso_schema_template_deploy:
+      cisco.mso.ndo_schema_template_deploy:
         schema: "{{ item.schema }}"
-        template: "{{ item.template }}"
+        template: "{{ item.name }}"
         state: deploy
-      loop: "{{ schema_template }}"
-      when: schema_template is defined
+      loop: "{{ template }}"
+      when: template is defined
 
 
 

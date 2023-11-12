@@ -7,9 +7,10 @@
   
     - name: Add a new ANP
       cisco.mso.mso_schema_template_anp:
-        schema: "{{ item.schema_name }}"
-        template: "{{ item.template_name }}"
+        schema: "{{ item.schema }}"
+        template: "{{ item.template }}"
         anp : "{{ item.name }}"
-        state: "{{ item.status if item.status is defined else omit }}"
+        description: "{{ item.description if item.description is defined and item.description != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ application_profile }}"
       when: application_profile is defined

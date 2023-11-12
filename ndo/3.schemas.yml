@@ -9,12 +9,13 @@
       cisco.mso.mso_schema_template:
         schema: "{{ item.schema }}"
         state: "{{ item.status if item.status is defined else omit }}"
-        template: "{{ item.template }}"
+        template: "{{ item.name }}"
         tenant: "{{ item.tenant }}"
+        template_type: "{{ item.template_type }}"
         schema_description: "{{ item.schema_description if item.schema_description is defined else omit }}"
-        template_description : "{{ item.template_description if item.template_description is defined else omit }}"
-      loop: "{{ schema_template }}"
-      when: schema_template is defined
+        template_description: "{{ item.description if item.description is defined else omit }}"
+      loop: "{{ template }}"
+      when: template is defined and item.schema is defined and item.schema != ''
 
     - name: Add a site to a schema
       cisco.mso.mso_schema_site:
@@ -23,4 +24,4 @@
         site: "{{ item.site }}"
         state: "{{ item.status if item.status is defined else omit }}"
       loop: "{{ template_site_association }}"
-      when: template_site_association is defined
+      when: template_site_association is defined and item.schema is defined and item.schema != ''

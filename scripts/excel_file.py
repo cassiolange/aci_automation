@@ -394,10 +394,16 @@ def create_build_tasks(workbook, input_yaml):
                 set_cell_color(worksheet=workbook['build_tasks'], color=yes_no_build_task_color, cell_position='A' + str(current_row))
                 if category_name:
                     workbook['build_tasks']['D' + str(current_row)].value = category_name
+                if playbook:
+                    workbook['build_tasks']['E' + str(current_row)].value = playbook
                 if color:
                     set_cell_color(worksheet=workbook['build_tasks'], color=color, cell_position='B' + str(current_row))
                     set_cell_color(worksheet=workbook['build_tasks'], color=color, cell_position='C' + str(current_row))
                     set_cell_color(worksheet=workbook['build_tasks'], color=color, cell_position='D' + str(current_row))
+                    set_cell_color(worksheet=workbook['build_tasks'], color=color, cell_position='E' + str(current_row))
+
+
+
 
     worksheet = create_table(worksheet=worksheet, table_name='build_tasks', columns=build_tasks_columns, end_row=workbook['build_tasks'].max_row)
     workbook = resize_columns(workbook=workbook, sheet_name='build_tasks')
@@ -458,7 +464,7 @@ def main():
 
     if args.recreate_build_tasks:
         del workbook['build_tasks']
-        input_yaml = open_yaml_file(input_yaml_file=args.input_yaml_file)
+        input_yaml = open_yaml_file(input_yaml_file=args.input_yaml_folder+automation_type+'.yaml')
         if 'data_source' in input_yaml:
             input_yaml.pop('data_source')
         workbook = create_build_tasks(workbook=workbook, input_yaml=input_yaml)

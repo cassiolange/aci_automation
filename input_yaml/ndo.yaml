@@ -4,6 +4,7 @@ build_tasks:
     description:
     input_worksheet:
     Category:
+    Playbook:
     Comments:
   ignore_build_task: yes
   tab_color:
@@ -21,20 +22,41 @@ nd_basic:
     type: theme
     theme: 9
     tint: 0.3999755851924192
+build_nd:
+  nd_static_routes:
+    prefix:
+    interface:
+      type: data_validation_static_list
+      formula: management,data
+    status: status
+  tab_color:
+    type: theme
+    theme: 7
+    tint: 0.5999938962981048
+  category: ND Routing
+  playbook: 1.sites.yml
 sites:
   site:
     name:
     apic_username:
     apic_password:
+    login_domain:
     apic_url:
     apic_site_id:
+    inband_epg:
+    site_type:
+      type: data_validation_static_list
+      formula: aci,dcnm,third_party,cloud_aci,dcnm_ng,ndfc
+    re_register: yes_no
+    latitude:
+    longitude:
     status: status
   tab_color:
     type: theme
     theme: 7
     tint: 0.5999938962981048
   category: Sites
-  playbook: 1.sites
+  playbook: 1.sites.yml
 infra_config:
   infra_config:
     site:
@@ -74,21 +96,83 @@ tenant:
     theme: 7
     tint: 0.5999938962981048
   category: Tenant Base Configuration
-  playbook: 2.tenant
-schema_template:
+  playbook: 2.tenant.yml
+fabric:
+  fabric_policies_template:
+    name:
+    status: status
+    build_tasks_description: Fabric Policies Templates
+  fabric_policies_template_site:
+    name:
+      type: data_validation_from_worksheet
+      source: fabric_policies_template
+      column: name
+    site:
+      type: data_validation_from_worksheet
+      source: site
+      column: name
+    status: status
+    build_tasks_description: Associate Site with Fabric Policies Template
+  vlan_pool:
+    name:
+    description:
+    fabric_policies_template:
+      type: data_validation_from_worksheet
+      source: fabric_policies_template
+      column: name
+    status: status
+    build_tasks_description: Vlan Pool
+  vlan_encap_block:
+    vlan_pool:
+      type: data_validation_from_worksheet
+      source: vlan_pool
+      column: name
+    fabric_policies_template:
+      type: xlookup
+      lookup_field: vlan_pool
+      match_field: name
+      return_field: fabric_policies_template
+      source_table: vlan_pool
+    start_vlan:
+    stop_vlan:
+    status: status
+    build_tasks_description: Vlan Encapsulation Block
+  tab_color:
+    type: theme
+    theme: 7
+    tint: 0.5999938962981048
+  category: Fabric Template Policies
+  playbook: 11.fabric_policy_template.yml
+schema:
   schema:
     name:
+    description:
     tenant:
       type: data_validation_from_worksheet
       source: tenant
       column: name
     status: status
+  tab_color:
+    type: theme
+    theme: 7
+    tint: 0.5999938962981048
+  ignore_build_task: yes
+  category: Schema
+  playbook: 3.schemas.yml
+template:
   template:
     name:
+    description:
+    template_type:
+      type: data_validation_static_list
+      formula: stretched-template,non-stretched-template
     schema:
       type: data_validation_from_worksheet
       source: schema
       column: name
+    schema_description:
+      type: formula_static
+      formula: =IF(ISBLANK(template[[#This Row],[schema]]),"",IF(ISBLANK(_xlfn.XLOOKUP(template[[#This Row],[schema]],schema[name],schema[description])),"",_xlfn.XLOOKUP(template[[#This Row],[schema]],schema[name],schema[description])))
     tenant:
       type: xlookup
       lookup_field: schema
@@ -116,12 +200,11 @@ schema_template:
     type: theme
     theme: 7
     tint: 0.5999938962981048
-  category: Tenant Base Configuration
-  playbook: 3.schemas
+  category: Template
+  playbook: 3.schemas.yml
 vrf:
   vrf:
     name:
-    description:
     template:
       type: data_validation_from_worksheet
       source: template
@@ -178,7 +261,7 @@ bd:
     intersiteBumTrafficAllow: yes_no
     layer3_multicast: yes_no
     optimizeWanBandwidth: yes_no
-    arp_flooding:
+    arp_flooding: yes_no
     multi_destination_flooding:
       type: data_validation_static_list
       formula: flood_in_bd,drop,encap-flood
@@ -211,13 +294,13 @@ bd:
       type: data_validation_from_worksheet
       source: bridge_domain
       column: name
-    schema_name:
+    schema:
       type: xlookup
       lookup_field: bridge_domain
       match_field: name
       return_field: schema
       source_table: bridge_domain
-    template_name:
+    template:
       type: xlookup
       lookup_field: bridge_domain
       match_field: name
@@ -437,40 +520,163 @@ epg:
   category: EPG
   playbook: 7.epg
 l3out:
-  l3out:
+  tenant_l3out_template:
     name:
-    description:
-    template:
-      type: data_validation_from_worksheet
-      source: template
-      column: name
-    schema:
-      type: xlookup
-      lookup_field: template
-      match_field: name
-      return_field: schema
-      source_table: template
     tenant:
-      type: xlookup
-      lookup_field: template
-      match_field: name
-      return_field: tenant
-      source_table: template
-    vrf:
       type: data_validation_from_worksheet
-      source: vrf
+      source: tenant
       column: name
-    vrf_template:
-      type: xlookup
-      lookup_field: vrf
-      match_field: name
-      return_field: template
-      source_table: vrf
-    vrf_schema:
-      type: xlookup
-      lookup_field: vrf
-      match_field: name
-      return_field: schema
-      source_table: vrf
+    site:
+      type: data_validation_from_worksheet
+      source: site
+      column: name
     status: status
-
+#  l3out:
+#    name:
+#    description:
+#    template:
+#      type: data_validation_from_worksheet
+#      source: tenant_l3out_template
+#      column: name
+#    tenant:
+#      type: xlookup
+#      lookup_field: template
+#      match_field: name
+#      return_field: tenant
+#      source_table: tenant_l3out_template
+#    vrf:
+#      type: data_validation_from_worksheet
+#      source: vrf
+#      column: name
+#    vrf_template:
+#      type: xlookup
+#      lookup_field: vrf
+#      match_field: name
+#      return_field: template
+#      source_table: vrf
+#    vrf_schema:
+#      type: xlookup
+#      lookup_field: vrf
+#      match_field: name
+#      return_field: schema
+#      source_table: vrf
+#    status: status
+#  external_epg:
+#      name:
+#      template:
+#        type: data_validation_from_worksheet
+#        source: template
+#        column: name
+#      schema:
+#        type: xlookup
+#        lookup_field: template
+#        match_field: name
+#        return_field: schema
+#        source_table: template
+#      preferred_group_member: yes_no
+#      l3out:
+#        type: data_validation_from_worksheet
+#        source: l3out
+#        column: name
+#      l3out_template:
+#        type: xlookup
+#        lookup_field: l3out
+#        match_field: name
+#        return_field: template
+#        source_table: l3out
+#      l3out_schema:
+#        type: xlookup
+#        lookup_field: l3out
+#        match_field: name
+#        return_field: schema
+#        source_table: l3out
+#      vrf:
+#        type: data_validation_from_worksheet
+#        source: vrf
+#        column: name
+#      vrf_template:
+#        type: xlookup
+#        lookup_field: vrf
+#        match_field: name
+#        return_field: template
+#        source_table: vrf
+#      vrf_schema:
+#        type: xlookup
+#        lookup_field: vrf
+#        match_field: name
+#        return_field: schema
+#        source_table: vrf
+#      site:
+#        type: data_validation_from_worksheet
+#        source: site
+#        column: name
+#      status: status
+#  external_epg_subnet:
+#    name:
+#      type: data_validation_from_worksheet
+#      source: external_epg
+#      column: name
+#    template:
+#      type: xlookup
+#      lookup_field: name
+#      match_field: name
+#      return_field: template
+#      source_table: external_epg
+#    schema:
+#      type: xlookup
+#      lookup_field: name
+#      match_field: name
+#      return_field: schema
+#      source_table: external_epg
+#    subnet:
+#    external_subnet_for_external_epg: yes_no
+#    export_route_control: yes_no
+#    import_route_control: yes_no
+#    shared_route_control: yes_no
+#    shared_security: yes_no
+#    aggregate_shared_routes: yes_no
+#    status: status
+#  bridge_domain_to_l3out:
+#    bridge_domain:
+#      type: data_validation_from_worksheet
+#      source: bridge_domain
+#      column: name
+#    template:
+#      type: xlookup
+#      lookup_field: bridge_domain
+#      match_field: name
+#      return_field: template
+#      source_table: bridge_domain
+#    schema:
+#      type: xlookup
+#      lookup_field: bridge_domain
+#      match_field: name
+#      return_field: schema
+#      source_table: bridge_domain
+#    l3out:
+#      type: data_validation_from_worksheet
+#      source: l3out
+#      column: name
+#    l3out_template:
+#      type: xlookup
+#      lookup_field: l3out
+#      match_field: name
+#      return_field: template
+#      source_table: l3out
+#    l3out_schema:
+#      type: xlookup
+#      lookup_field: l3out
+#      match_field: name
+#      return_field: schema
+#      source_table: l3out
+#    site:
+#      type: data_validation_from_worksheet
+#      source: site
+#      column: name
+#    status: status
+  tab_color:
+    type: theme
+    theme: 7
+    tint: 0.5999938962981048
+  category: L3Out
+  playbook: 8.l3out.yml

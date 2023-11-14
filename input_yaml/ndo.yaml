@@ -137,12 +137,76 @@ fabric:
     stop_vlan:
     status: status
     build_tasks_description: Vlan Encapsulation Block
+  domain:
+    name:
+    description:
+    fabric_policies_template:
+      type: data_validation_from_worksheet
+      source: fabric_policies_template
+      column: name
+    type:
+      type: data_validation_static_list
+      formula: phys,l3dom
+    vlan_pool:
+      type: data_validation_from_worksheet
+      source: vlan_pool
+      column: name
+    status: status
+    build_tasks_description: Domains
+  interface_settings:
+    name:
+    description:
+    fabric_policies_template:
+      type: data_validation_from_worksheet
+      source: fabric_policies_template
+      column: name
+    type:
+      type: data_validation_static_list
+      formula: Physical,PO_VPC
+    speed:
+      type: data_validation_static_list
+      formula: inherit,100M,1G,10G,25G,40G,50G,100G,400G
+    auto_negotiation:
+      type: data_validation_static_list
+      formula: on,off,on-enforce
+    vlan_scope:
+      type: data_validation_static_list
+      formula: global,port_local
+    cdp: enabled_disabled
+    lldp: enabled_disabled
+    lldp_transmit: enabled_disabled
+    lldp_receive: enabled_disabled
+    domain:
+      type: data_validation_from_worksheet
+      source: domain
+      column: name
+    debounce:
+    bring_up_delay:
+    vlan_scope:
+      type: data_validation_static_list
+      formula: inherit,cl74-fc-fec,cl91-rs-fec,cons16-rs-fec,ieee-rs-fec,kp-fec,disable-fec
+    bpdu_filter: enabled_disabled
+    bpdu_guard: enabled_disabled
+    mcp: enabled_disabled
+    mcp_strict_mode: on_off
+    port_channel_mode:
+      type: data_validation_static_list
+      formula: active,passive,mac-pin,mac-pin-nicload,off,explicit-failove
+    fast-sel-hot-stdby: yes_no
+    graceful-conv: yes_no
+    load-defer: yes_no
+    susp-individual: yes_no
+    symmetric-hash: yes_no
+    min_links:
+    max_links:
+    status: status
   tab_color:
     type: theme
     theme: 7
     tint: 0.5999938962981048
   category: Fabric Template Policies
   playbook: 11.fabric_policy_template.yml
+
 schema:
   schema:
     name:

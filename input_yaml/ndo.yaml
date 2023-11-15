@@ -160,9 +160,9 @@ fabric:
       type: data_validation_from_worksheet
       source: fabric_policies_template
       column: name
-    type:
+    interface_type:
       type: data_validation_static_list
-      formula: Physical,PO_VPC
+      formula: physical,po_vpc
     speed:
       type: data_validation_static_list
       formula: inherit,100M,1G,10G,25G,40G,50G,100G,400G
@@ -173,32 +173,58 @@ fabric:
       type: data_validation_static_list
       formula: global,port_local
     cdp: enabled_disabled
-    lldp: enabled_disabled
     lldp_transmit: enabled_disabled
     lldp_receive: enabled_disabled
-    domain:
-      type: data_validation_from_worksheet
-      source: domain
-      column: name
     debounce:
     bring_up_delay:
-    vlan_scope:
+    fec:
       type: data_validation_static_list
       formula: inherit,cl74-fc-fec,cl91-rs-fec,cons16-rs-fec,ieee-rs-fec,kp-fec,disable-fec
     bpdu_filter: enabled_disabled
     bpdu_guard: enabled_disabled
     mcp: enabled_disabled
-    mcp_strict_mode: on_off
+    mcp_strict_mode:
+      type: data_validation_static_list
+      formula: on,off
+    txFreq:
+    txFreqMsec:
+    gracePeriod:
+    gracePeriodMsec:
     port_channel_mode:
       type: data_validation_static_list
-      formula: active,passive,mac-pin,mac-pin-nicload,off,explicit-failove
-    fast-sel-hot-stdby: yes_no
-    graceful-conv: yes_no
-    load-defer: yes_no
-    susp-individual: yes_no
-    symmetric-hash: yes_no
+      formula: active,passive,mac-pin,mac-pin-nicload,off,explicit-failover
+    fast_sel_hot_stdby: yes_no
+    graceful_conv: yes_no
+    load_defer: yes_no
+    susp_individual: yes_no
+    symmetric_hash: yes_no
     min_links:
     max_links:
+    llfc_transmit: enabled_disabled
+    llfc_receive: enabled_disabled
+    pfc:
+      type: data_validation_static_list
+      formula: on,off,auto
+    reflective_relay: enabled_disabled
+    qinq:
+      type: data_validation_static_list
+      formula: disabled,corePort,edgePort,doubleQtagPort
+    status: status
+  interface_settings_domain:
+    interface:
+      type: data_validation_from_worksheet
+      source: interface_settings
+      column: name
+    fabric_policies_template:
+      type: xlookup
+      lookup_field: interface
+      match_field: name
+      return_field: fabric_policies_template
+      source_table: interface_settings
+    domain:
+      type: data_validation_from_worksheet
+      source: domain
+      column: name
     status: status
   tab_color:
     type: theme

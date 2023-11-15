@@ -41,4 +41,47 @@
       loop: "{{ domain }}"
       when: domain is defined
 
+    - name: Interface Configuration
+      cisco.mso.ndo_fabric_policies_interface_settings:
+        name: "{{ item.name }}"
+        template: "{{ item.fabric_policies_template }}"
+        interface_type: "{{ item.interface_type }}"
+        description: "{{ item.description if item.description is defined and item.description != '' else omit}}"
+        speed: "{{ item.speed if item.speed is defined and item.speed != '' else omit}}"
+        auto_negotiation: "{{ item.auto_negotiation if item.auto_negotiation is defined and item.auto_negotiation != '' else omit}}"
+        vlan_scope: "{{ item.vlan_scope if item.vlan_scope is defined and item.vlan_scope != '' else omit}}"
+        cdp: "{{ item.cdp if item.cdp is defined and item.cdp != '' else omit}}"
+        lldp_transmit: "{{ item.lldp_transmit if item.lldp_transmit is defined and item.lldp_transmit != '' else omit }}"
+        lldp_receive: "{{ item.lldp_receive if item.lldp_receive is defined and item.lldp_receive != '' else omit }}"
+        debounce: "{{ item.debounce | int if item.debounce is defined and item.debounce != '' else omit }}"
+        bring_up_delay: "{{ item.bring_up_delay | int if item.bring_up_delay is defined and item.bring_up_delay != '' else omit }}"
+        fec: "{{ item.fec if item.fec is defined and item.fec != '' else omit }}"
+        bpdu_filter: "{{ item.bpdu_filter if item.bpdu_filter is defined and item.bpdu_filter != '' else omit }}"
+        bpdu_guard: "{{ item.bpdu_guard if item.bpdu_guard is defined and item.bpdu_guard != '' else omit }}"
+        mcp: "{{ item.mcp if item.mcp is defined and item.mcp != '' else omit }}"
+        mcp_strict_mode: "{{ item.mcp_strict_mode if item.mcp_strict_mode is defined and item.mcp_strict_mode != '' else omit }}"
+        txFreq: "{{ item.txFreq | int if item.txFreq is defined and item.txFreq != '' else omit }}"
+        txFreqMsec: "{{ item.txFreqMsec | int if item.txFreqMsec is defined and item.txFreqMsec != '' else omit }}"
+        gracePeriod: "{{ item.gracePeriod | int if item.gracePeriod is defined and item.gracePeriod != '' else omit }}"
+        gracePeriodMsec: "{{ item.gracePeriodMsec | int if item.gracePeriodMsec is defined and item.gracePeriodMsec != '' else omit }}"
+        port_channel_mode: "{{ item.port_channel_mode  if item.port_channel_mode is defined and item.port_channel_mode != '' else omit }}"
+        control: "{{ ['fast-sel-hot-stdby' if item.fast_sel_hot_stdby is defined and item.fast_sel_hot_stdby == 'yes', 'graceful-conv' if item.graceful_conv is defined and item.graceful_conv == 'yes', 'load_defer' if item.load_defer is defined and item.load_defer == 'yes', 'susp-individual' if item.susp_individual is defined and item.susp_individual == 'yes', 'symmetric-hash' if item.symmetric_hash is defined and item.symmetric_hash == 'yes'] | reject('undefined') | join(',') | default(omit,true)}}"
+        min_links: "{{ item.min_links | int if item.min_links is defined and item.min_links != '' else omit }}"
+        max_links: "{{ item.max_links | int if item.max_links is defined and item.max_links != '' else omit }}"
+        llfc_transmit: "{{ item.llfc_transmit if item.llfc_transmit is defined and item.llfc_transmit != '' else omit }}"
+        llfc_receive: "{{ item.llfc_receive if item.llfc_receive is defined and item.llfc_receive != '' else omit }}"
+        pfc: "{{ item.pfc if item.pfc is defined and item.pfc != '' else omit }}"
+        reflective_relay: "{{ item.reflective_relay if item.reflective_relay is defined and item.reflective_relay != '' else omit }}"
+        qinq: "{{ item.qinq if item.qinq is defined and item.qinq != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ interface_settings }}"
+      when: interface_settings is defined
 
+    - name: Add a new Domain to an Interface
+      cisco.mso.ndo_fabric_policies_interface_settings_domain_association:
+        interface: "{{ item.interface }}"
+        template: "{{ item.fabric_policies_template }}"
+        domain: "{{ item.domain }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ interface_settings_domain }}"
+      when: interface_settings_domain is defined

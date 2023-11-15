@@ -1,0 +1,15 @@
+---
+- import_playbook: update.yml
+- name : Fabric Template Policies
+  gather_facts: false
+  hosts: all
+  tasks:
+
+    - name: Fabric Policies Template
+      cisco.mso.ndo_fabric_policies_template:
+        template: "{{ item.name }}"
+        template_type: fabricResource
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ fabric_policies_template }}"
+      when: fabric_policies_template is defined
+

@@ -8,6 +8,7 @@
     - name: Fabric Policies Template
       cisco.mso.ndo_fabric_policies_template:
         template: "{{ item.name }}"
+        template_type: fabricPolicy
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ fabric_policies_template }}"
       when: fabric_policies_template is defined
@@ -45,7 +46,7 @@
       cisco.mso.ndo_fabric_policies_interface_settings:
         name: "{{ item.name }}"
         template: "{{ item.fabric_policies_template }}"
-        interface_type: "{{ item.interface_type }}"
+        interface_type: "{{ 'portchannel' if item.interface_type is defined and item.interface_type == 'po_vpc' else item.interface_type }}"
         description: "{{ item.description if item.description is defined and item.description != '' else omit}}"
         speed: "{{ item.speed if item.speed is defined and item.speed != '' else omit}}"
         auto_negotiation: "{{ item.auto_negotiation if item.auto_negotiation is defined and item.auto_negotiation != '' else omit}}"
@@ -85,3 +86,42 @@
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ interface_settings_domain }}"
       when: interface_settings_domain is defined
+
+    - name: NTP Policy
+      cisco.mso.ndo_fabric_policies_domain_ntp_policy:
+        name: "{{ item.name }}"
+        description: "{{ item.description if item.description is defined and item.description != '' else omit }}"
+        template: "{{ item.fabric_policies_template }}"
+        admin_state: "{{ item.admin_state if item.admin_state is defined and item.admin_state != '' else omit }}"
+        server_state: "{{ item.server_state if item.server_state is defined and item.server_state != '' else omit }}"
+        master_mode: "{{ item.master_mode if item.master_mode is defined and item.master_mode != '' else omit }}"
+        authentication_state: "{{ item.authentication_state if item.authentication_state is defined and item.authentication_state != '' else omit }}"
+        stratum_value: "{{ item.stratum_value | int if item.stratum_value is defined and item.stratum_value != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ datetime_pol }}"
+      when: datetime_pol is defined
+
+    - name: NTP Providers
+      cisco.mso.ndo_fabric_policies_domain_ntp_provider:
+        server: "{{ item.server }}"
+        datetime_pol_name: "{{ item.datetime_pol_name }}"
+        template: "{{ item.fabric_policies_template }}"
+        min_poll: "{{ item.min_poll | int if item.min_poll is defined and item.min_poll != '' else omit }}"
+        max_poll: "{{ item.max_poll | int if item.max_poll is defined and item.max_poll != '' else omit }}"
+        is_preferred: "{{ item.is_preferred if item.is_preferred is defined and item.is_preferred != '' else omit }}"
+        key_id: "{{ item.key_id | int if item.key_id is defined and item.key_id != '' else omit }}"
+        management_epg: "{{ item.management_epg }}"
+        management_epg_name: "{{ item.management_epg_name if item.management_epg_name is defined and item.management_epg_name != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ datetime_ntp_prov }}"
+      when: datetime_ntp_prov is defined
+
+    - name: POD Policy Group
+      cisco.mso.ndo_fabric_policies_pod:
+        pod_policy: "{{ item.name }}"
+        template: "{{ item.fabric_policies_template }}"
+        ntp_policy: "{{ item.datetime_pol_name if item.datetime_pol_name is defined and item.datetime_pol_name != '' else omit }}"
+        description: "{{ item.description if item.description is defined and item.description != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ pod_policy_group }}"
+      when: pod_policy_group is defined

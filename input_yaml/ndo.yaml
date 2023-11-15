@@ -226,13 +226,76 @@ fabric:
       source: domain
       column: name
     status: status
+  datetime_pol:
+    name:
+    description:
+    fabric_policies_template:
+      type: data_validation_from_worksheet
+      source: fabric_policies_template
+      column: name
+    admin_state: enabled_disabled
+    server_state: enabled_disabled
+    master_mode: enabled_disabled
+    authentication_state: enabled_disabled
+    stratum_value:
+    status: status
+    build_tasks_description: Datetime Policy
+#  datetime_auth_key:
+#    name:
+#    key_id:
+#    datetime_policy:
+#      type: data_validation_from_worksheet
+#      source: datetime_pol
+#      column: name
+#    auth_key:
+#    auth_key_trusted: yes_no
+#    auth_key_type:
+#      type: data_validation_static_list
+#      formula: md5,sha1
+#    status: status
+#    build_tasks_description: Datetime authentication key
+  datetime_ntp_prov:
+    server:
+    datetime_pol_name:
+      type: data_validation_from_worksheet
+      source: datetime_pol
+      column: name
+    fabric_policies_template:
+      type: xlookup
+      lookup_field: datetime_pol_name
+      match_field: name
+      return_field: fabric_policies_template
+      source_table: datetime_pol
+    min_poll:
+    max_poll:
+    is_preferred: yes_no
+    key_id:
+    management_epg:
+      type: data_validation_static_list
+      formula: inb,oob
+    management_epg_name:
+    status: status
+    build_tasks_description: Datetime NTP Provider
+  pod_policy_group:
+    name:
+    description:
+    fabric_policies_template:
+      type: data_validation_from_worksheet
+      source: fabric_policies_template
+      column: name
+    datetime_pol_name:
+      type: data_validation_from_worksheet
+      source: datetime_pol
+      column: name
+    status: status
+    build_tasks_description: POD Policy Group
+
   tab_color:
     type: theme
     theme: 7
     tint: 0.5999938962981048
   category: Fabric Template Policies
   playbook: 11.fabric_policy_template.yml
-
 schema:
   schema:
     name:

@@ -38,6 +38,30 @@
       loop: "{{ vrf }}"
       when: vrf is defined
 
+    - name: VRF BGP Context Policy
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
+          <polUni>
+          	<fvTenant name="{{item['tenant']}}" status="modified">
+          	    <fvCtx name="{{item['name']}}" status="modified">
+                    {% if item['bgp_context_ipv4'] is defined and item['bgp_context_ipv4'] != '' %}
+                    <fvRsCtxToBgpCtxAfPol annotation="orchestrator:ansible" tnBgpCtxAfPolName="{{item['bgp_context_ipv4']}}" af="ipv4-ucast" status="{{ status }}"/>
+                    {% endif %}
+                    {% if item['bgp_context_ipv6'] is defined and item['bgp_context_ipv6'] != '' %}
+                    <fvRsCtxToBgpCtxAfPol annotation="orchestrator:ansible" tnBgpCtxAfPolName="{{item['bgp_context_ipv6']}}" af="ipv6-ucast" status="{{ status }}"/>
+                    {% endif %}
+                </fvCtx>
+            </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ vrf }}"
+      when: vrf is defined and item.bgp_context_ipv4 is defined and item.bgp_context_ipv4 != '' or item.bgp_context_ipv6 is defined and item.bgp_context_ipv6
+
     - name: VRF BGP Route Target Profiles
       cisco.aci.aci_rest:
         <<: *aci_login

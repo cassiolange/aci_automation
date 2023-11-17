@@ -97,7 +97,7 @@ tenant:
     tint: 0.5999938962981048
   category: Tenant Base Configuration
   playbook: 2.tenant.yml
-fabric:
+fabric_policies:
   fabric_policies_template:
     name:
     status: status
@@ -289,13 +289,34 @@ fabric:
       column: name
     status: status
     build_tasks_description: POD Policy Group
-
   tab_color:
     type: theme
     theme: 7
     tint: 0.5999938962981048
   category: Fabric Template Policies
   playbook: 11.fabric_policy_template.yml
+fabric_resources:
+  fabric_resources_template:
+    name:
+    status: status
+    build_tasks_description: Fabric Resources Policies Templates
+  fabric_resources_template_site:
+    name:
+      type: data_validation_from_worksheet
+      source: fabric_resources_template
+      column: name
+    site:
+      type: data_validation_from_worksheet
+      source: site
+      column: name
+    status: status
+    build_tasks_description: Associate Site with Fabric Resources Policies Templates
+  tab_color:
+    type: theme
+    theme: 7
+    tint: 0.5999938962981048
+  category: Fabric Resources Template Policies
+  playbook: 12.fabric_resources_policy_template.yml
 schema:
   schema:
     name:

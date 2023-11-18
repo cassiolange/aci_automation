@@ -311,6 +311,36 @@ fabric_resources:
       column: name
     status: status
     build_tasks_description: Associate Site with Fabric Resources Policies Templates
+  interfaces:
+    name:
+    description:
+    fabric_resources_template:
+      type: data_validation_from_worksheet
+      source: fabric_resources_template
+      column: name
+    type:
+      type: data_validation_static_list
+      formula: physical,breakout,port-channel,vpc,fex
+    node1:
+    interfaces_node1:
+    node2:
+    interfaces_node2:
+    interface_policy:
+      type: data_validation_from_worksheet
+      source: interface_settings
+      column: name
+    fabric_policies_template:
+      type: xlookup
+      lookup_field: interface_policy
+      match_field: name
+      return_field: fabric_policies_template
+      source_table: interface_settings
+    breakout_interface:
+      type: data_validation_static_list
+      formula: 4x10G,4x25G,4x100G
+    fex_id:
+    build_tasks_description: Interface Configuration
+    status: status
   tab_color:
     type: theme
     theme: 7
@@ -610,20 +640,20 @@ epg:
       match_field: name
       return_field: schema
       source_table: application_profile
-    tenant:
-      type: xlookup
-      lookup_field: app_profile_name
-      match_field: name
-      return_field: tenant
-      source_table: application_profile
     site:
       type: data_validation_from_worksheet
       source: site
       column: name
     domain_name:
+      type: data_validation_from_worksheet
+      source: domain
+      column: name
     domain_type:
-      type: data_validation_static_list
-      formula: vmmDomain,l3ExtDomain,l2ExtDomain,physicalDomain,fibreChannelDomain
+      type: xlookup
+      lookup_field: domain_name
+      match_field: name
+      return_field: type
+      source_table: domain
     deploy_immediacy:
       type: data_validation_static_list
       formula: immediate,lazy
@@ -634,6 +664,9 @@ epg:
     enhanced_lagpolicy_dn:
     enhanced_lagpolicy_name:
     micro_seg_vlan:
+    vmm_vlan_encap_mode:
+      type: data_validation_static_list
+      formula: static,dynamic
     status:
   epg_static_binding:
     epg_name:

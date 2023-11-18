@@ -31,8 +31,8 @@
     - name: Add a new VLAN encap block
       cisco.mso.ndo_fabric_policies_vlan_pool_encap_block:
         pool: "{{ item.vlan_pool }}"
-        block_start: "{{ item.start_vlan | int }}"
-        block_end: "{{ item.stop_vlan | int }}"
+        block_start: "{{ item.start_vlan | int | str }}"
+        block_end: "{{ item.stop_vlan | int | str }}"
         template: "{{ item.fabric_policies_template }}"
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ vlan_encap_block }}"

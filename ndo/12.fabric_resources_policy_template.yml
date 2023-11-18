@@ -1,5 +1,5 @@
 ---
-#- import_playbook: update.yml
+- import_playbook: update.yml
 - name : Fabric Template Policies
   gather_facts: false
   hosts: all
@@ -24,6 +24,27 @@
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ fabric_resources_template_site }}"
       when: fabric_resources_template_site is defined
+      register: result
+      retries: 3
+      until: result is not failed
+
+    - name: Fabric Resources Interfaces
+      cisco.mso.ndo_fabric_resources_interfaces:
+        interface: "{{ item.name }}"
+        description: "{{ item.description if item.description is defined and item.description != '' else omit }}"
+        template: "{{ item.fabric_resources_template }}"
+        interface_type: "{{ item.type }}"
+        node1: "{{ item.node1 | int }}"
+        node2: "{{ item.node2 | int if item.node2 is defined and item.node2 != '' else omit }}"
+        interfaces_node1: "{{ item.interfaces_node1 }}"
+        interfaces_node2: "{{ item.interfaces_node2 if item.interfaces_node2 is defined and item.interfaces_node2 != '' else omit }}"
+        interface_policy: "{{ item.interface_policy if item.interface_policy is defined and item.interface_policy != '' else omit }}"
+        fabric_policy_template: "{{ item.fabric_policies_template if item.fabric_policies_template is defined and item.fabric_policies_template != '' else omit }}"
+        breakout_interface: "{{ item.breakout_interface if item.breakout_interface is defined and item.breakout_interface != '' else omit }}"
+        fex_id: "{{ item.fex_id | int if item.fex_id is defined and item.fex_id != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ interfaces }}"
+      when: interfaces is defined
       register: result
       retries: 3
       until: result is not failed

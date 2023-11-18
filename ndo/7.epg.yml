@@ -25,12 +25,12 @@
 
     - name: Add a new domain to a site EPG
       cisco.mso.mso_schema_site_anp_epg_domain:
-        schema: "{{ item.epg_schema_name }}"
-        template: "{{ item.epg_template_name }}"
+        schema: "{{ item.schema }}"
+        template: "{{ item.template }}"
         anp: "{{ item.app_profile_name }}"
         epg: "{{ item.epg_name }}"
-        site: "{{ item.site_name }}"
-        domain_association_type: "{{ 'physicalDomain' if item.domain_type == 'physical' else 'vmmDomain' if item.domain_type == 'vmm'  }}"
+        site: "{{ item.site }}"
+        domain_association_type: "{{ 'physicalDomain' if item.domain_type == 'phys' else 'l3ExtDomain' if item.domain_type == 'l3dom' }}"
         domain_profile: "{{ item.domain_name }}"
         state: "{{ item.status if item.status is defined else omit }}"
         deployment_immediacy: "{{ item.deploy_immediacy if item.deploy_immediacy is defined and item.deploy_immediacy != '' else 'immediate' }}"
@@ -41,6 +41,8 @@
         port_encap_vlan_type: "{{ 'vlan' if item.vmm_static_vlan is defined and item.vmm_static_vlan != '' else omit }}"
         micro_seg_vlan: "{{ item.micro_seg_vlan | int if item.vmm_vlan_encap_mode == 'static' and item.micro_seg_vlan is defined and item.micro_seg_vlan != '' else omit }}"
         micro_seg_vlan_type: "{{ 'vlan' if item.vmm_static_vlan is defined and item.vmm_static_vlan != '' else omit }}"
+        enhanced_lagpolicy_dn: "{{ item.enhanced_lagpolicy_dn if item.enhanced_lagpolicy_dn is defined and item.enhanced_lagpolicy_dn != '' else omit }}"
+        enhanced_lagpolicy_name: "{{ item.enhanced_lagpolicy_name if item.enhanced_lagpolicy_name is defined and item.enhanced_lagpolicy_name != '' else omit }}"
       loop: "{{ domain_epg_association }}"
       when: domain_epg_association is defined
 

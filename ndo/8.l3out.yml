@@ -7,10 +7,11 @@
 
   tasks:
     - name: Tenant L3Out Template
-      cisco.mso.ndo_tenant_l3out_template:
+      cisco.mso.ndo_tenant_template:
         template: "{{ item.name }}"
         site: "{{ item.site }}"
         tenant: "{{ item.tenant }}"
+        template_type: 'l3out'
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ tenant_l3out_template }}"
       when: tenant_l3out_template is defined

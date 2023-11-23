@@ -691,12 +691,6 @@ epg:
       match_field: name
       return_field: schema
       source_table: application_profile
-    tenant:
-      type: xlookup
-      lookup_field: app_profile_name
-      match_field: name
-      return_field: tenant
-      source_table: application_profile
     site:
       type: data_validation_from_worksheet
       source: site
@@ -709,9 +703,17 @@ epg:
       formula: regular,untagged,native
     port_encap_vlan:
     pod_id:
-    left_node_id:
-    right_node_id:
+    node1:
+      type: data_validation_from_worksheet
+      source: interfaces
+      column: node1
+    node2:
+      type: formula_static
+      formula: =IF(OR(epg_static_binding[[#This Row],[type]]="vpc", epg_static_binding[[#This Row],[type]]="Fex_vPC"),_xlfn.XLOOKUP(epg_static_binding[[#This Row],[interface_policy_group]],interfaces[interface_policy],interfaces[node2]),"")
     interface_policy_group:
+      type: data_validation_from_worksheet
+      source: interfaces
+      column: interface_policy
     leaf_port:
     fex:
     deploy_immediacy:
@@ -726,6 +728,297 @@ epg:
     tint: 0.5999938962981048
   category: EPG
   playbook: 7.epg
+contract:
+  filter:
+    name:
+    description:
+    template:
+      type: data_validation_from_worksheet
+      source: template
+      column: name
+    schema:
+      type: xlookup
+      lookup_field: template
+      match_field: name
+      return_field: schema
+      source_table: template
+    filter_entry_name:
+    filter_entry_description:
+    ethertype:
+      type: data_validation_static_list
+      formula: arp,fcoe,ip,ipv4,ipv6,mac-security,mpls-unicast,trill,unspecified
+    ip_protocol:
+      type: data_validation_static_list
+      formula: eigrp,egp,icmp,icmpv6,igmp,igp,l2tp,ospfigp,pim,tcp,udp,unspecified
+    arp_flag:
+      type: data_validation_static_list
+      formula: reply,request,unspecified
+    destination_from:
+    destination_to:
+    stateful: yes_no
+    tcp_session_rules:
+      type: data_validation_static_list
+      formula: acknowledgement,established,finish,synchronize,reset,unspecified
+    fragments_only: yes_no
+    status: status
+  contract:
+    name:
+    description:
+    template:
+      type: data_validation_from_worksheet
+      source: template
+      column: name
+    schema:
+      type: xlookup
+      lookup_field: template
+      match_field: name
+      return_field: schema
+      source_table: template
+    action:
+      type: data_validation_static_list
+      formula: permit,deny
+    contract_scope:
+      type: data_validation_static_list
+      formula: application-profile,global,tenant,vrf
+    priority:
+      type: data_validation_static_list
+      formula: default,lowest_priority,medium_priority,highest_priority
+    qos_level:
+      type: data_validation_static_list
+      formula: level1,level2,level3,level4,level5,level6,unspecified
+    filter:
+      type: data_validation_from_worksheet
+      source: filter
+      column: name
+    filter_template:
+      type: xlookup
+      lookup_field: filter
+      match_field: name
+      return_field: template
+      source_table: filter
+    filter_schema:
+      type: xlookup
+      lookup_field: filter
+      match_field: name
+      return_field: schema
+      source_table: filter
+    filter_directives:
+    status: status
+  contract_to_epg:
+    epg:
+      type: data_validation_from_worksheet
+      source: epg
+      column: name
+    app_profile_name:
+      type: xlookup
+      lookup_field: epg
+      match_field: name
+      return_field: app_profile_name
+      source_table: epg
+    template:
+      type: xlookup
+      lookup_field: epg
+      match_field: name
+      return_field: template
+      source_table: epg
+    schema:
+      type: xlookup
+      lookup_field: epg
+      match_field: name
+      return_field: schema
+      source_table: epg
+    contract:
+      type: data_validation_from_worksheet
+      source: contract
+      column: name
+    contract_template:
+      type: xlookup
+      lookup_field: contract
+      match_field: name
+      return_field: template
+      source_table: contract
+    contract_schema:
+      type: xlookup
+      lookup_field: contract
+      match_field: name
+      return_field: schema
+      source_table: contract
+    contract_type:
+      type: data_validation_static_list
+      formula: consumer,provider
+    status: status
+    build_tasks_description: Manage EPG contracts in schema templates
+  contract_to_vrf:
+    vrf:
+      type: data_validation_from_worksheet
+      source: vrf
+      column: name
+    template:
+      type: xlookup
+      lookup_field: vrf
+      match_field: name
+      return_field: template
+      source_table: vrf
+    schema:
+      type: xlookup
+      lookup_field: vrf
+      match_field: name
+      return_field: schema
+      source_table: vrf
+    contract:
+      type: data_validation_from_worksheet
+      source: contract
+      column: name
+    contract_template:
+      type: xlookup
+      lookup_field: contract
+      match_field: name
+      return_field: template
+      source_table: contract
+    contract_schema:
+      type: xlookup
+      lookup_field: contract
+      match_field: name
+      return_field: schema
+      source_table: contract
+    contract_type:
+      type: data_validation_static_list
+      formula: consumer,provider
+    status: status
+    build_tasks_description: Manage VRF contracts in schema templates
+  tab_color:
+    type: theme
+    theme: 7
+    tint: 0.5999938962981048
+  category: Contracts
+  playbook: 9.contracts.yml
+tenant_policies:
+  tenant_policy_template:
+    name:
+    tenant:
+      type: data_validation_from_worksheet
+      source: tenant
+      column: name
+    status: status
+  tenant_policy_template_site:
+    name:
+      type: data_validation_from_worksheet
+      source: tenant_policy_template
+      column: name
+    site:
+      type: data_validation_from_worksheet
+      source: site
+      column: name
+    status: status
+    build_tasks_description: Associate Site with Tenant Policies Template
+  route_map:
+    name:
+    description:
+    tenant_policy_template:
+      type: data_validation_from_worksheet
+      source: tenant_policy_template
+      column: name
+    status: status
+    build_tasks_description: Route-Map for Route Control
+  route_map_entry:
+    name:
+    route_map:
+      type: data_validation_from_worksheet
+      source: route_map
+      column: name
+    tenant_policy_template:
+      type: xlookup
+      lookup_field: route_map
+      match_field: name
+      return_field: tenant_policy_template
+      source_table: route_map
+    action:
+      type: data_validation_static_list
+      formula: permit,deny
+    order:
+    status: status
+    build_tasks_description: Route-Map entry for Route Control
+  route_map_entry_set_rules:
+    route_map_entry:
+      type: data_validation_from_worksheet
+      source: route_map_entry
+      column: name
+    route_map:
+      type: xlookup
+      lookup_field: route_map_entry
+      match_field: name
+      return_field: route_map
+      source_table: route_map_entry
+    tenant_policy_template:
+      type: xlookup
+      lookup_field: route_map_entry
+      match_field: name
+      return_field: tenant_policy_template
+      source_table: route_map_entry
+    set_community:
+    set_community_criteria:
+      type: data_validation_static_list
+      formula: append,replace,none
+    set_route_tag:
+    set_dampening: yes_no
+    half_life:
+    re_use_limit:
+    supress_limit:
+    max_suppress_time:
+    set_weight:
+    set_next_hop:
+    set_preference:
+    set_metric:
+    set_next_hop_propagate: yes_no
+    set_multipath: yes_no
+    set_metric_type:
+      type: data_validation_static_list
+      formula: ospf-type1,ospf-type2
+    set_as_path_criteria:
+      type: data_validation_static_list
+      formula: prepend,prepend_last_as
+    set_as:
+    set_as_order:
+    set_as_path_count:
+    set_additional_community:
+    set_additional_community_criteria:
+      type: data_validation_static_list
+      formula: append
+    status: status
+    build_tasks_description: Route-Map entry set rules
+  route_map_entry_match_rules:
+    route_map_entry:
+      type: data_validation_from_worksheet
+      source: route_map_entry
+      column: name
+    route_map:
+      type: xlookup
+      lookup_field: route_map_entry
+      match_field: name
+      return_field: route_map
+      source_table: route_map_entry
+    tenant_policy_template:
+      type: xlookup
+      lookup_field: route_map_entry
+      match_field: name
+      return_field: tenant_policy_template
+      source_table: route_map_entry
+    match_prefix:
+    aggregate: yes_no
+    ge:
+    le:
+    match_community:
+    match_community_scope:
+      type: data_validation_static_list
+      formula: transitive,non-transitive
+    status: status
+    build_tasks_description: Route-Map entry match rules
+  tab_color:
+    type: theme
+    theme: 7
+    tint: 0.5999938962981048
+  category: Tenant Policies Template
+  playbook: 13.tenant_policy_template.yml
 l3out:
   tenant_l3out_template:
     name:
@@ -738,6 +1031,12 @@ l3out:
       source: site
       column: name
     status: status
+  tab_color:
+    type: theme
+    theme: 7
+    tint: 0.5999938962981048
+  category: L3Out
+  playbook: 8.l3out.yml
 #  l3out:
 #    name:
 #    description:
@@ -881,9 +1180,4 @@ l3out:
 #      source: site
 #      column: name
 #    status: status
-  tab_color:
-    type: theme
-    theme: 7
-    tint: 0.5999938962981048
-  category: L3Out
-  playbook: 8.l3out.yml
+

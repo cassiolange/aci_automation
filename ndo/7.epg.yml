@@ -32,7 +32,6 @@
         site: "{{ item.site }}"
         domain_association_type: "{{ 'physicalDomain' if item.domain_type == 'phys' else 'l3ExtDomain' if item.domain_type == 'l3dom' }}"
         domain_profile: "{{ item.domain_name }}"
-        state: "{{ item.status if item.status is defined else omit }}"
         deployment_immediacy: "{{ item.deploy_immediacy if item.deploy_immediacy is defined and item.deploy_immediacy != '' else 'immediate' }}"
         resolution_immediacy: "{{ item.resolution_immediacy if item.resolution_immediacy is defined and item.resolution_immediacy != '' else 'immediate' }}"
         vlan_encap_mode: "{{ item.vmm_vlan_encap_mode if item.vmm_vlan_encap_mode is defined and item.vmm_vlan_encap_mode != '' else omit }}"
@@ -43,24 +42,27 @@
         micro_seg_vlan_type: "{{ 'vlan' if item.vmm_static_vlan is defined and item.vmm_static_vlan != '' else omit }}"
         enhanced_lagpolicy_dn: "{{ item.enhanced_lagpolicy_dn if item.enhanced_lagpolicy_dn is defined and item.enhanced_lagpolicy_dn != '' else omit }}"
         enhanced_lagpolicy_name: "{{ item.enhanced_lagpolicy_name if item.enhanced_lagpolicy_name is defined and item.enhanced_lagpolicy_name != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ domain_epg_association }}"
       when: domain_epg_association is defined
 
     - name: Static Binding
       cisco.mso.mso_schema_site_anp_epg_staticport:
-        schema: "{{ item.epg_schema_name }}"
-        template: "{{ item.epg_template_name }}"
+        schema: "{{ item.schema }}"
+        template: "{{ item.template }}"
         anp: "{{ item.app_profile_name }}"
         epg: "{{ item.epg_name }}"
-        site: "{{ item.site_name }}"
-        state: "{{ item.status if item.status is defined else omit }}"
+        site: "{{ item.site }}"
         deployment_immediacy: "{{ item.deploy_immediacy if item.deploy_immediacy is defined and item.deploy_immediacy != '' else 'immediate' }}"
         type: "{{ item.type }}"
         pod: "{{ 'pod-%s' % item.pod_id | int }}"
         vlan: "{{ item.port_encap_vlan | int  }}"
         mode: "{{ item.mode }}"
         path: "{{ item.interface_policy_group if item.type == 'vpc' else item.interface_policy_group if item.type == 'dpc' else 'eth%s' %item.leaf_port}}"
-        leaf: "{{ '%s-%s' % (item.left_node_id | int, item.right_node_id | int)  if item.type == 'vpc' else item.left_node_id | int}}"
+        leaf: "{{ '%s-%s' % (item.node1 | int, item.node2 | int) if item.type == 'vpc' and item.node1 is defined and item.node1 != '' and item.node2 is defined and item.node2 != '' else item.node1 | int if item.type != 'vpc' and item.node1 is defined and item.node1 != '' else omit }}"
         fex: "{{ item.fex_id | int if item.fex_id is defined and item.fex_id != '' else omit }}"
+        primary_micro_segment_vlan: "{{ item.primary_micro_segment_vlan if item.primary_micro_segment_vlan is defined and item.primary_micro_segment_vlan != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ epg_static_binding }}"
       when: epg_static_binding is defined
+

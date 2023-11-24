@@ -1,5 +1,5 @@
 ---
-- ansible.builtin.import_playbook: update.yml
+#- ansible.builtin.import_playbook: update.yml
 
 - name : L3Outs
   gather_facts: false
@@ -33,7 +33,6 @@
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ route_map }}"
       when: route_map is defined
-
 
     - name: Route-Map Entry for Route Control
       cisco.mso.ndo_tenant_policies_route_map_entry:
@@ -91,6 +90,24 @@
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ route_map_entry_match_rules }}"
       when: route_map_entry_match_rules is defined
+
+
+    - name: L3Out interface Policy
+      cisco.mso.ndo_tenant_policies_l3out_interface_policy:
+        l3out_interface_policy: "{{ item.name }}"
+        description: "{{ item.description if item.description is defined and item.description != '' else omit }}"
+        template: "{{ item.tenant_policy_template }}"
+        bfd: "{{ item.bfd if item.bfd is defined and item.bfd != '' else omit }}"
+        bfd_admin_state: "{{ item.bfd_admin_state if item.bfd_admin_state is defined and item.bfd_admin_state != '' else omit }}"
+        detection_multiplier: "{{ item.detection_multiplier | int if item.detection_multiplier is defined and item.detection_multiplier != '' else omit }}"
+        receive_interval: "{{ item.receive_interval | int if item.receive_interval is defined and item.receive_interval != '' else omit }}"
+        transmit_interval: "{{ item.transmit_interval | int if item.transmit_interval is defined and item.transmit_interval != '' else omit }}"
+        echo_interval: "{{ item.echo_interval | int if item.echo_interval is defined and item.echo_interval != '' else omit }}"
+        echo_admin_state: "{{ item.echo_admin_state if item.echo_admin_state is defined and item.echo_admin_state != '' else omit }}"
+        interface_control: "{{ item.interface_control if item.interface_control is defined and item.interface_control != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ l3out_interface_policy }}"
+      when: l3out_interface_policy is defined
 
 
 

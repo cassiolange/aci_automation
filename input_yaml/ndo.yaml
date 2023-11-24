@@ -1013,6 +1013,23 @@ tenant_policies:
       formula: transitive,non-transitive
     status: status
     build_tasks_description: Route-Map entry match rules
+  l3out_interface_policy:
+    name:
+    description:
+    tenant_policy_template:
+      type: data_validation_from_worksheet
+      source: tenant_policy_template
+      column: name
+    bfd: yes_no
+    bfd_admin_state: enabled_disabled
+    detection_multiplier:
+    receive_interval:
+    transmit_interval:
+    echo_interval:
+    echo_admin_state: enabled_disabled
+    interface_control: yes_no
+    status: status
+    build_tasks_description: L3Out interface Routing Policy
   tab_color:
     type: theme
     theme: 7
@@ -1031,12 +1048,234 @@ l3out:
       source: site
       column: name
     status: status
+  l3out:
+    name:
+    description:
+    tenant_l3out_template:
+      type: data_validation_from_worksheet
+      source: tenant_l3out_template
+      column: name
+    vrf:
+      type: data_validation_from_worksheet
+      source: vrf
+      column: name
+    vrf_template:
+      type: xlookup
+      lookup_field: vrf
+      match_field: name
+      return_field: template
+      source_table: vrf
+    vrf_schema:
+      type: xlookup
+      lookup_field: vrf
+      match_field: name
+      return_field: schema
+      source_table: vrf
+    l3out_domain:
+      type: data_validation_from_worksheet
+      source: domain
+      column: name
+    import_route_control: yes_no
+    enable_bgp: yes_no
+    enable_ospf: yes_no
+    ospf_area_id:
+    ospf_area_type:
+      type: data_validation_static_list
+      formula: regular,stub,nssa
+    ospf_area_cost:
+    inbound_route_map:
+      type: data_validation_from_worksheet
+      source: route_map
+      column: name
+    inbound_route_map_template:
+      type: xlookup
+      lookup_field: inbound_route_map
+      match_field: name
+      return_field: tenant_policy_template
+      source_table: route_map
+    outbound_route_map:
+      type: data_validation_from_worksheet
+      source: route_map
+      column: name
+    outbound_route_map_template:
+      type: xlookup
+      lookup_field: outbound_route_map
+      match_field: name
+      return_field: tenant_policy_template
+      source_table: route_map
+    enable_pim: yes_no
+    enable_pimv6: yes_no
+    originate_default_route: yes_no
+    originate_default_route_type:
+      type: data_validation_static_list
+      formula: default_only,default_in_addition
+    target_dscp:
+      type: data_validation_static_list
+      formula: unspecified,CS0,CS1,AF11,AF12,AF13,CS2,AF21,AF22,AF23,CS3,AF31,AF32,AF33,CS4,AF41,AF42,AF43,VA,CS5,EF,CS6,CS7
+    status: status
+    build_tasks_description: External Routed Networks (L3Out)
+  node_interface_group_policy:
+    name:
+    description:
+    type:
+      type: data_validation_static_list
+      formula: interface
+    l3out:
+      type: data_validation_from_worksheet
+      source: l3out
+      column: name
+    tenant_l3out_template:
+      type: xlookup
+      lookup_field: l3out
+      match_field: name
+      return_field: tenant_l3out_template
+      source_table: l3out
+    interface_routing_policy:
+      type: data_validation_from_worksheet
+      source: l3out_interface_policy
+      column: name
+    tenant_policy_template:
+      type: xlookup
+      lookup_field: interface_routing_policy
+      match_field: name
+      return_field: tenant_policy_template
+      source_table: l3out_interface_policy
+    bfd: yes_no
+    bfd_multi_hop: yes_no
+    qos_class:
+      type: data_validation_static_list
+      formula: unspecified,level1,level2,level3,level4,level5,level6
+    status: status
+    build_tasks_description: Node and Interface Group Policy
+    tab_color:
+      type: theme
+      theme: 7
+      tint: 0.5999938962981048
+    category: L3Out
+    playbook: 8.l3out.yml
+l3out_node:
+  l3out_node_profile:
+    node_id:
+    pod_id:
+    l3out:
+      type: data_validation_from_worksheet
+      source: l3out
+      column: name
+    tenant_l3out_template:
+      type: xlookup
+      lookup_field: l3out
+      match_field: name
+      return_field: tenant_l3out_template
+      source_table: l3out
+    router_id:
+    router_id_as_loopback: yes_no
+    status: status
+    build_tasks_description: L3Out Node Profile
+  tab_color:
+    type: theme
+    theme: 7
+    tint: 0.5999938962981048
+  ignore_build_task: yes
+l3out_interfaces:
+  node_id:
+    type: data_validation_from_worksheet
+    source: l3out_node_profile
+    column: node_id
+  pod_id:
+    type: xlookup
+    lookup_field: node_id
+    match_field: node_id
+    return_field: pod_id
+    source_table: l3out_node_profile
+  l3out:
+    type: data_validation_from_worksheet
+    source: l3out
+    column: name
+
+
+
+  "message": "Invalid configuration in L3Out 'PROD_L3Out': node 1-101 doesn't have an interface configured",
+
+  l3out_interfaces:
+    name:
+#      type: data_validation_from_worksheet
+#      source: l3out_int_profile
+#      column: name
+    description:
+    l3out_node_profile:
+#      type: xlookup
+#      lookup_field: name
+#      source_table: l3out_int_profile
+    l3out:
+#      type: xlookup
+#      lookup_field: name
+#      source_table: l3out_int_profile
+    tenant:
+#      type: xlookup
+#      lookup_field: name
+#      source_table: l3out_int_profile
+    interface_type:
+      type: data_validation_static_list
+      formula: routed,routed_sub,svi,floating_svi
+    path_type:
+      type: data_validation_static_list
+      formula: vPC,PC,Access
+    vlan_encap_id:
+    trunk_mode:
+      type: data_validation_static_list
+      formula: regular,untagged,native
+    left_node_id:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: node_id
+    right_node_id:
+#      type: formula_static
+#      formula: =IF(l3out_interfaces[[#This Row],[path_type]]="vPC",_xlfn.XLOOKUP(l3out_interfaces[[#This Row],[left_node_id]],vpc_domain[left_node_id],vpc_domain[right_node_id]),"")
+    pod_id:
+#      type: xlookup
+#      lookup_field: left_node_id
+#      match_field: node_id
+#      return_field: pod_id
+#      source_table: node_provisioning
+    int_pol_group:
+      type: data_validation_from_worksheet
+      source: interface_policy_group
+      column: name
+    port_id:
+    ip_addr_side_a:
+    ip_addr_side_b:
+    secondary_ip:
+    ospf_interface_policy:
+#      type: data_validation_from_worksheet
+#      source: ospf_int_pol
+#      column: name
+    mtu:
+    autostate: enabled_disabled
+    use_bfd: yes_no
+    bfd_policy:
+#      type: data_validation_from_worksheet
+#      source: bfd_policy
+#      column: name
+    ospf_password:
+    floating_svi_domain:
+#      type: data_validation_from_worksheet
+#      source: domain
+#      column: name
+    floating_primary_ip:
+    status: status
+    build_tasks_description: L3Out Interfaces
   tab_color:
     type: theme
     theme: 7
     tint: 0.5999938962981048
   category: L3Out
   playbook: 8.l3out.yml
+  ignore_build_task: yes
+
+
+
+
+
 #  l3out:
 #    name:
 #    description:

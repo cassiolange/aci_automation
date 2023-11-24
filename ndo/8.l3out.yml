@@ -16,6 +16,36 @@
       loop: "{{ tenant_l3out_template }}"
       when: tenant_l3out_template is defined
 
+    - name: L3out
+      cisco.mso.ndo_tenant_l3out:
+        l3out: "{{ item.name }}"
+        template: "{{ item.tenant_l3out_template }}"
+        description: "{{ item.description if item.description is defined and item.description != '' else omit }}"
+        vrf:
+          name: "{{ item.vrf }}"
+          schema: "{{ item.vrf_schema }}"
+          template: "{{ item.vrf_template }}"
+        l3out_domain: "{{ item.l3out_domain if item.l3out_domain is defined and item.l3out_domain != '' else omit }}"
+        import_route_control: "{{ item.import_route_control if item.import_route_control is defined and item.import_route_control != '' else omit }}"
+        enable_bgp: "{{ item.enable_bgp if item.enable_bgp is defined and item.enable_bgp != '' else omit }}"
+        enable_ospf: "{{ item.enable_ospf if item.enable_ospf is defined and item.enable_ospf != '' else omit }}"
+        ospf_area_id: "{{ item.ospf_area_id | int  if item.ospf_area_id is defined and item.ospf_area_id != '' else omit }}"
+        ospf_area_type: "{{ item.ospf_area_type if item.ospf_area_type is defined and item.ospf_area_type != '' else omit }}"
+        ospf_area_cost: "{{ item.ospf_area_cost | int if item.ospf_area_cost is defined and item.ospf_area_cost != '' else omit }}"
+        inbound_route_map: "{{ item.inbound_route_map if item.inbound_route_map is defined and item.inbound_route_map != '' else omit }}"
+        inbound_route_map_template: "{{ item.inbound_route_map_template if item.inbound_route_map_template is defined and item.inbound_route_map_template != '' else omit }}"
+        outbound_route_map: "{{ item.outbound_route_map if item.outbound_route_map is defined and item.outbound_route_map != '' else omit }}"
+        outbound_route_map_template: "{{ item.outbound_route_map_template if item.outbound_route_map_template is defined and item.outbound_route_map_template != '' else omit }}"
+        enable_pim: "{{ item.enable_pim if item.enable_pim is defined and item.enable_pim != '' else omit }}"
+        enable_pimv6: "{{ item.enable_pimv6 if item.enable_pimv6 is defined and item.enable_pimv6 != '' else omit }}"
+        originate_default_route: "{{ item.originate_default_route if item.originate_default_route is defined and item.originate_default_route != '' else omit }}"
+        originate_default_route_type: "{{ item.originate_default_route_type if item.originate_default_route_type is defined and item.originate_default_route_type != '' else omit }}"
+        target_dscp: "{{ item.target_dscp if item.target_dscp is defined and item.target_dscp != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ l3out }}"
+      when: l3out is defined
+
+
 
 #    - name: Add a new L3out
 #      cisco.mso.mso_schema_template_l3out:

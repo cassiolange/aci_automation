@@ -17,9 +17,9 @@
       cisco.aci.aci_fabric_node:
         <<: *aci_login
         serial: "{{ item.serial_number }}"
-        node_id: "{{ item.node_id }}"
+        node_id: "{{ item.node_id | int }}"
         switch: "{{ item.name }}"
-        pod_id: "{{ item.pod_id}}"
+        pod_id: "{{ item.pod_id | int }}"
         role: "{{ item.role }}"
         state: "{{ item.status if item.status is defined else omit }}"
       delegate_to: localhost
@@ -30,9 +30,9 @@
       cisco.aci.aci_static_node_mgmt_address:
         <<: *aci_login
         epg: default
-        pod_id: "{{ item.pod_id }}"
+        pod_id: "{{ item.pod_id | int }}"
         type: out_of_band
-        node_id: "{{ item.node_id }}"
+        node_id: "{{ item.node_id | int }}"
         ipv4_address: "{{ item.oob_ip }}"
         ipv4_gw: "{{ item.oob_gw }}"
         ipv6_address: "{{ item.oob_ipv6 if item.oob_ipv6 is defined else omit }}"
@@ -46,9 +46,9 @@
       cisco.aci.aci_static_node_mgmt_address:
         <<: *aci_login
         epg: default
-        pod_id: "{{ item.pod_id }}"
+        pod_id: "{{ item.pod_id | int }}"
         type: out_of_band
-        node_id: "{{ item.apic_id }}"
+        node_id: "{{ item.apic_id | int }}"
         ipv4_address: "{{ item.oob_ipv4 }}"
         ipv4_gw: "{{ item.oob_ipv4_gw }}"
         ipv6_address: "{{ item.oob_ipv6 if item.oob_ipv6 is defined else omit }}"
@@ -63,7 +63,7 @@
         <<: *aci_login
         epg: "{{ item.name }}"
         type: in_band
-        encap: "vlan-{{ item.encap_vlan_id }}"
+        encap: "vlan-{{ item.encap_vlan_id | int }}"
         bd: "{{ item.bridge_domain }}"
         state: "{{ item.status if item.status is defined else omit }}"
       delegate_to: localhost
@@ -74,9 +74,9 @@
       cisco.aci.aci_static_node_mgmt_address:
         <<: *aci_login
         epg: default
-        pod_id: "{{ item.pod_id }}"
+        pod_id: "{{ item.pod_id | int }}"
         type: in_band
-        node_id: "{{ item.apic_id }}"
+        node_id: "{{ item.apic_id | int }}"
         ipv4_address: "{{ item.inband_ipv4 }}"
         ipv4_gw: "{{ item.inband_ipv4_gw }}"
         ipv6_address: "{{ item.inband_ipv6 if item.inband_ipv6 else omit }}"
@@ -90,9 +90,9 @@
       cisco.aci.aci_static_node_mgmt_address:
         <<: *aci_login
         epg: default
-        pod_id: "{{ item.pod_id }}"
+        pod_id: "{{ item.pod_id | int }}"
         type: in_band
-        node_id: "{{ item.node_id }}"
+        node_id: "{{ item.node_id | int }}"
         ipv4_address: "{{ item.inband_ip }}"
         ipv4_gw: "{{ item.inband_gw }}"
         ipv6_address: "{{ item.inband_ipv6 if item.inband_ipv6 is defined else omit }}"
@@ -207,8 +207,8 @@
         leaf_profile: "{{ item.name }}"
         leaf: "{{ item.switch_selector }}"
         leaf_node_blk: "{{'node-%s-%s' % (item.from_node_id, item.to_node_id) }}"
-        from: "{{ item.from_node_id }}"
-        to: "{{ item.to_node_id }}"
+        from: "{{ item.from_node_id | int }}"
+        to: "{{ item.to_node_id | int  }}"
         policy_group: "{{ item.switch_policy_group }}"
         state: "{{ item.status if item.status is defined else omit }}"
       delegate_to: localhost
@@ -220,8 +220,8 @@
         <<: *aci_login
         protection_group: "{{ item.name }}"
         protection_group_id: "{{ item.logical_pair_id }}"
-        switch_1_id: "{{ item.left_node_id }}"
-        switch_2_id: "{{ item.right_node_id }}"
+        switch_1_id: "{{ item.left_node_id | int }}"
+        switch_2_id: "{{ item.right_node_id | int }}"
         state: "{{ item.status if item.status is defined else omit }}"
       delegate_to: localhost
       loop: "{{ vpc_domain }}"
@@ -236,7 +236,7 @@
           <polUni>
           	<infraInfra>
           		<infraPortDirecPol>
-          			<infraRsPortDirection tDn="topology/pod-{{item['pod_id']}}/paths-{{item['node_id']}}/pathep-[eth{{item['interface_slot_port']}}]" direc="{{item['direction']}}" />
+          			<infraRsPortDirection tDn="topology/pod-{{item['pod_id' | int ]}}/paths-{{item['node_id' | int ]}}/pathep-[eth{{item['interface_slot_port']}}]" direc="{{item['direction']}}" />
           		</infraPortDirecPol>
           	</infraInfra>
           </polUni>

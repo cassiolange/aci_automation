@@ -1147,12 +1147,12 @@ l3out:
       formula: unspecified,level1,level2,level3,level4,level5,level6
     status: status
     build_tasks_description: Node and Interface Group Policy
-    tab_color:
-      type: theme
-      theme: 7
-      tint: 0.5999938962981048
-    category: L3Out
-    playbook: 8.l3out.yml
+  tab_color:
+    type: theme
+    theme: 7
+    tint: 0.5999938962981048
+  category: L3Out
+  playbook: 8.l3out.yml
 l3out_node:
   l3out_node_profile:
     node_id:
@@ -1177,210 +1177,263 @@ l3out_node:
     tint: 0.5999938962981048
   ignore_build_task: yes
 l3out_interfaces:
-  node_id:
-    type: data_validation_from_worksheet
-    source: l3out_node_profile
-    column: node_id
-  pod_id:
-    type: xlookup
-    lookup_field: node_id
-    match_field: node_id
-    return_field: pod_id
-    source_table: l3out_node_profile
-  l3out:
-    type: data_validation_from_worksheet
-    source: l3out
-    column: name
-
-
-
-  "message": "Invalid configuration in L3Out 'PROD_L3Out': node 1-101 doesn't have an interface configured",
-
   l3out_interfaces:
     name:
-#      type: data_validation_from_worksheet
-#      source: l3out_int_profile
-#      column: name
-    description:
-    l3out_node_profile:
-#      type: xlookup
-#      lookup_field: name
-#      source_table: l3out_int_profile
     l3out:
-#      type: xlookup
-#      lookup_field: name
-#      source_table: l3out_int_profile
-    tenant:
-#      type: xlookup
-#      lookup_field: name
-#      source_table: l3out_int_profile
+      type: data_validation_from_worksheet
+      source: l3out
+      column: name
+    tenant_l3out_template:
+      type: xlookup
+      lookup_field: l3out
+      match_field: name
+      return_field: tenant_l3out_template
+      source_table: l3out
     interface_type:
       type: data_validation_static_list
       formula: routed,routed_sub,svi,floating_svi
     path_type:
       type: data_validation_static_list
-      formula: vPC,PC,Access
+      formula: vpc,pc,port
+    node1:
+      type: data_validation_from_worksheet
+      source: l3out_node_profile
+      column: node_id
+    node1_router_id:
+      type: formula_static
+      formula: =IF(OR(ISBLANK(l3out_interfaces[[#This Row],[l3out]]),ISBLANK(l3out_interfaces[[#This Row],[node1]])),"",_xlfn.XLOOKUP((l3out_interfaces[[#This Row],[node1]])&(l3out_interfaces[[#This Row],[l3out]]),(l3out_node_profile[node_id])&(l3out_node_profile[l3out]),l3out_node_profile[router_id]))
+    node1_router_id_as_loopback:
+      type: formula_static
+      formula: =IF(OR(ISBLANK(l3out_interfaces[[#This Row],[l3out]]),ISBLANK(l3out_interfaces[[#This Row],[node1]])),"",_xlfn.XLOOKUP((l3out_interfaces[[#This Row],[node1]])&(l3out_interfaces[[#This Row],[l3out]]),(l3out_node_profile[node_id])&(l3out_node_profile[l3out]),l3out_node_profile[router_id_as_loopback]))
+    node2:
+      type: formula_static
+      formula: =IF(l3out_interfaces[[#This Row],[path_type]]="vpc",_xlfn.XLOOKUP((l3out_interfaces[[#This Row],[node1]])&(l3out_interfaces[[#This Row],[int_pol_group]]),(interfaces[node1])&(interfaces[name]),interfaces[node2]),"")
+    node2_router_id:
+      type: formula_static
+      formula: =IF(l3out_interfaces[[#This Row],[path_type]]="vpc",_xlfn.XLOOKUP((l3out_interfaces[[#This Row],[node2]])&(l3out_interfaces[[#This Row],[l3out]]),(l3out_node_profile[node_id])&(l3out_node_profile[l3out]),l3out_node_profile[router_id]),"")
+    node2_router_id_as_loopback:
+      type: formula_static
+      formula: =IF(l3out_interfaces[[#This Row],[path_type]]="vpc",_xlfn.XLOOKUP((l3out_interfaces[[#This Row],[node2]])&(l3out_interfaces[[#This Row],[l3out]]),(l3out_node_profile[node_id])&(l3out_node_profile[l3out]),l3out_node_profile[router_id_as_loopback]),"")
+    pod_id:
+      type: xlookup
+      lookup_field: node1
+      match_field: node_id
+      return_field: pod_iD
+      source_table: l3out_node_profile
+    int_pol_group:
+      type: data_validation_from_worksheet
+      source: interfaces
+      column: name
+    port_id:
     vlan_encap_id:
+    encap_scope:
+      type: data_validation_static_list
+      formula: local,vrf
     trunk_mode:
       type: data_validation_static_list
       formula: regular,untagged,native
-    left_node_id:
-      type: data_validation_from_worksheet
-      source: node_provisioning
-      column: node_id
-    right_node_id:
-#      type: formula_static
-#      formula: =IF(l3out_interfaces[[#This Row],[path_type]]="vPC",_xlfn.XLOOKUP(l3out_interfaces[[#This Row],[left_node_id]],vpc_domain[left_node_id],vpc_domain[right_node_id]),"")
-    pod_id:
-#      type: xlookup
-#      lookup_field: left_node_id
-#      match_field: node_id
-#      return_field: pod_id
-#      source_table: node_provisioning
-    int_pol_group:
-      type: data_validation_from_worksheet
-      source: interface_policy_group
-      column: name
-    port_id:
-    ip_addr_side_a:
-    ip_addr_side_b:
-    secondary_ip:
-    ospf_interface_policy:
-#      type: data_validation_from_worksheet
-#      source: ospf_int_pol
-#      column: name
+    ipv4_addr_node1:
+    ipv4_addr_node2:
+    ipv4_secondary_ip:
+    ipv6_addr_node1:
+    ipv6_addr_node2:
+    ipv6_secondary_ip:
+    ipv6_link_local_node1:
+    ipv6_link_local_node2:
     mtu:
+    mac:
+    secondary_nd_ra_prefix: yes_no
+    secondary_ipv6_dad:  enabled_disabled
     autostate: enabled_disabled
-    use_bfd: yes_no
-    bfd_policy:
-#      type: data_validation_from_worksheet
-#      source: bfd_policy
-#      column: name
-    ospf_password:
-    floating_svi_domain:
-#      type: data_validation_from_worksheet
-#      source: domain
-#      column: name
-    floating_primary_ip:
+    interface_group_policy:
+      type: data_validation_from_worksheet
+      source: node_interface_group_policy
+      column: name
+    ipv6_dad: enabled_disabled
+    target_dscp:
+      type: data_validation_static_list
+      formula: unspecified,CS0,CS1,AF11,AF12,AF13,CS2,AF21,AF22,AF23,CS3,AF31,AF32,AF33,CS4,AF41,AF42,AF43,VA,CS5,EF,CS6,CS7
     status: status
     build_tasks_description: L3Out Interfaces
+  interface_bgp_peer:
+    name:
+      type: data_validation_from_worksheet
+      source: l3out_interfaces
+      column: name
+    l3out:
+      type: xlookup
+      lookup_field: name
+      source_table: l3out_interfaces
+    tenant_l3out_template:
+      type: xlookup
+      lookup_field: name
+      source_table: l3out_interfaces
+    interface_type:
+      type: xlookup
+      lookup_field: name
+      source_table: l3out_interfaces
+    path_type:
+      type: xlookup
+      lookup_field: name
+      source_table: l3out_interfaces
+    node1:
+      type: xlookup
+      lookup_field: name
+      source_table: l3out_interfaces
+    node2:
+      type: formula_static
+      formula: =IF(interface_bgp_peer[[#This Row],[path_type]]="vpc",_xlfn.XLOOKUP(interface_bgp_peer[[#This Row],[name]],l3out_interfaces[name],l3out_interfaces[node2]),"")
+    pod_id:
+      type: xlookup
+      lookup_field: name
+      source_table: l3out_interfaces
+    int_pol_group:
+      type: formula_static
+      formula: =IF(ISBLANK(_xlfn.XLOOKUP(interface_bgp_peer[[#This Row],[name]],l3out_interfaces[name],l3out_interfaces[int_pol_group])),"",_xlfn.XLOOKUP(interface_bgp_peer[[#This Row],[name]],l3out_interfaces[name],l3out_interfaces[int_pol_group]))
+    port_id:
+      type: formula_static
+      formula: =IF(ISBLANK(_xlfn.XLOOKUP(interface_bgp_peer[[#This Row],[name]],l3out_interfaces[name],l3out_interfaces[port_id])),"",_xlfn.XLOOKUP(interface_bgp_peer[[#This Row],[name]],l3out_interfaces[name],l3out_interfaces[port_id]))
+    vlan_encap_id:
+      type: formula_static
+      formula: =IF(ISBLANK(_xlfn.XLOOKUP(interface_bgp_peer[[#This Row],[name]],l3out_interfaces[name],l3out_interfaces[vlan_encap_id])),"",_xlfn.XLOOKUP(interface_bgp_peer[[#This Row],[name]],l3out_interfaces[name],l3out_interfaces[vlan_encap_id]))
+    bgp_peer_ipv4:
+    bgp_peer_ipv6:
+    bgp_peer_as:
+    use_bfd: yes_no
+    password:
+    update_password: yes_no
+    inbound_route_map:
+      type: data_validation_from_worksheet
+      source: route_map
+      column: name
+    inbound_route_map_template:
+      type: xlookup
+      lookup_field: inbound_route_map
+      match_field: name
+      return_field: tenant_policy_template
+      source_table: route_map
+    outbound_route_map:
+      type: data_validation_from_worksheet
+      source: route_map
+      column: name
+    outbound_route_map_template:
+      type: xlookup
+      lookup_field: outbound_route_map
+      match_field: name
+      return_field: tenant_policy_template
+      source_table: route_map
+    local_as:
+    local_as_options:
+      type: data_validation_static_list
+      formula: no_prepend+replace_as+dual_as,no_prepend,no_options,no_prepend+dual_as
+    allow_self_as: yes_no
+    allow_self_as_count:
+    private_as_control:
+      type: data_validation_static_list
+      formula: remove_private_as,remove_all_private_as,replace_private_as_with_local_as
+    address_type_controls:
+      type: data_validation_static_list
+      formula: af-ucast,af-mcast,af-ucast;af-mcast
+    disable_connected_check: yes_no
+    as_override: yes_no
+    disable_peer_as_check: yes_no
+    next_hop_self: yes_no
+    send_community: yes_no
+    send_extended_community: yes_no
+    send_domain_path: yes_no
+    admin_status: enabled_disabled
+    ebgp_multihop_ttl:
+    weight:
+    site_of_origin:
+    bgp_peer_prefix_policy:
+      type: data_validation_from_worksheet
+      source: bgp_peer_prefix_policy
+      column: name
+    status: status
+    build_tasks_description: BGP Peer at interface Profile
+  external_epg:
+      name:
+      description:
+      template:
+        type: data_validation_from_worksheet
+        source: template
+        column: name
+      schema:
+        type: xlookup
+        lookup_field: template
+        match_field: name
+        return_field: schema
+        source_table: template
+      preferred_group_member: yes_no
+      l3out:
+        type: data_validation_from_worksheet
+        source: l3out
+        column: name
+      l3out_template:
+        type: xlookup
+        lookup_field: l3out
+        match_field: name
+        return_field: tenant_l3out_template
+        source_table: l3out
+      vrf:
+        type: data_validation_from_worksheet
+        source: vrf
+        column: name
+      vrf_template:
+        type: xlookup
+        lookup_field: vrf
+        match_field: name
+        return_field: template
+        source_table: vrf
+      vrf_schema:
+        type: xlookup
+        lookup_field: vrf
+        match_field: name
+        return_field: schema
+        source_table: vrf
+      site:
+        type: data_validation_from_worksheet
+        source: site
+        column: name
+      qos_level:
+        type: data_validation_static_list
+        formula: level1,level2,level3,level4,level5,level6,unspecified
+      status: status
+      build_tasks_description: External EPG
+  external_epg_subnet:
+    name:
+      type: data_validation_from_worksheet
+      source: external_epg
+      column: name
+    template:
+      type: xlookup
+      lookup_field: name
+      match_field: name
+      return_field: template
+      source_table: external_epg
+    schema:
+      type: xlookup
+      lookup_field: name
+      match_field: name
+      return_field: schema
+      source_table: external_epg
+    subnet:
+    external_subnet_for_external_epg: yes_no
+    export_route_control: yes_no
+    import_route_control: yes_no
+    shared_route_control: yes_no
+    shared_security: yes_no
+    aggregate_shared_routes: yes_no
+    status: status
   tab_color:
     type: theme
     theme: 7
     tint: 0.5999938962981048
   category: L3Out
   playbook: 8.l3out.yml
-  ignore_build_task: yes
 
 
 
-
-
-#  l3out:
-#    name:
-#    description:
-#    template:
-#      type: data_validation_from_worksheet
-#      source: tenant_l3out_template
-#      column: name
-#    tenant:
-#      type: xlookup
-#      lookup_field: template
-#      match_field: name
-#      return_field: tenant
-#      source_table: tenant_l3out_template
-#    vrf:
-#      type: data_validation_from_worksheet
-#      source: vrf
-#      column: name
-#    vrf_template:
-#      type: xlookup
-#      lookup_field: vrf
-#      match_field: name
-#      return_field: template
-#      source_table: vrf
-#    vrf_schema:
-#      type: xlookup
-#      lookup_field: vrf
-#      match_field: name
-#      return_field: schema
-#      source_table: vrf
-#    status: status
-#  external_epg:
-#      name:
-#      template:
-#        type: data_validation_from_worksheet
-#        source: template
-#        column: name
-#      schema:
-#        type: xlookup
-#        lookup_field: template
-#        match_field: name
-#        return_field: schema
-#        source_table: template
-#      preferred_group_member: yes_no
-#      l3out:
-#        type: data_validation_from_worksheet
-#        source: l3out
-#        column: name
-#      l3out_template:
-#        type: xlookup
-#        lookup_field: l3out
-#        match_field: name
-#        return_field: template
-#        source_table: l3out
-#      l3out_schema:
-#        type: xlookup
-#        lookup_field: l3out
-#        match_field: name
-#        return_field: schema
-#        source_table: l3out
-#      vrf:
-#        type: data_validation_from_worksheet
-#        source: vrf
-#        column: name
-#      vrf_template:
-#        type: xlookup
-#        lookup_field: vrf
-#        match_field: name
-#        return_field: template
-#        source_table: vrf
-#      vrf_schema:
-#        type: xlookup
-#        lookup_field: vrf
-#        match_field: name
-#        return_field: schema
-#        source_table: vrf
-#      site:
-#        type: data_validation_from_worksheet
-#        source: site
-#        column: name
-#      status: status
-#  external_epg_subnet:
-#    name:
-#      type: data_validation_from_worksheet
-#      source: external_epg
-#      column: name
-#    template:
-#      type: xlookup
-#      lookup_field: name
-#      match_field: name
-#      return_field: template
-#      source_table: external_epg
-#    schema:
-#      type: xlookup
-#      lookup_field: name
-#      match_field: name
-#      return_field: schema
-#      source_table: external_epg
-#    subnet:
-#    external_subnet_for_external_epg: yes_no
-#    export_route_control: yes_no
-#    import_route_control: yes_no
-#    shared_route_control: yes_no
-#    shared_security: yes_no
-#    aggregate_shared_routes: yes_no
-#    status: status
 #  bridge_domain_to_l3out:
 #    bridge_domain:
 #      type: data_validation_from_worksheet

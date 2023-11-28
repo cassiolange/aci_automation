@@ -158,7 +158,7 @@
         preferred_group: "{{ item.preferred_group_member if item.preferred_group_member is defined and item.preferred_group_member != '' else omit }}"
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ external_epg }}"
-      when: external_epg
+      when: external_epg is defined
 
     - name: Subnet to an External EPG
       cisco.mso.mso_schema_template_external_epg_subnet:
@@ -172,19 +172,17 @@
       loop: "{{ external_epg_subnet }}"
       when: external_epg_subnet is defined
 
-
-#    - name: Bind BD to l3out
-#      cisco.mso.mso_schema_site_bd_l3out:
-#        schema: "{{ item.schema }}"
-#        template: "{{ item.template }}"
-#        site: "{{ item.site }}"
-#        bd: "{{ item.bridge_domain }}"
-#        l3out:
-#          name: "{{ item.l3out }}"
-#          schema: "{{ item.l3out_schema }}"
-#          template: "{{ item.template }}"
-#        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
-#      loop: "{{ bridge_domain_to_l3out }}"
-#      when: bridge_domain_to_l3out is defined
+    - name: Bind BD to l3out
+      cisco.mso.ndo_schema_site_bd_l3out:
+        bd: "{{ item.bridge_domain }}"
+        template: "{{ item.template }}"
+        schema: "{{ item.schema }}"
+        site: "{{ item.site }}"
+        l3out:
+          name: "{{ item.l3out }}"
+          template: "{{ item.l3out_template }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ bridge_domain_to_l3out }}"
+      when: bridge_domain_to_l3out is defined
 
 

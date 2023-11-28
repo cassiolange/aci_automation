@@ -76,6 +76,7 @@ infra_config:
     theme: 7
     tint: 0.5999938962981048
   category: Multisite Infra configuration
+  ignore_build_task: yes
 tenant:
   tenant:
     name:
@@ -1425,6 +1426,38 @@ l3out_interfaces:
     shared_security: yes_no
     aggregate_shared_routes: yes_no
     status: status
+  bridge_domain_to_l3out:
+    bridge_domain:
+      type: data_validation_from_worksheet
+      source: bridge_domain
+      column: name
+    template:
+      type: xlookup
+      lookup_field: bridge_domain
+      match_field: name
+      return_field: template
+      source_table: bridge_domain
+    schema:
+      type: xlookup
+      lookup_field: bridge_domain
+      match_field: name
+      return_field: schema
+      source_table: bridge_domain
+    l3out:
+      type: data_validation_from_worksheet
+      source: l3out
+      column: name
+    l3out_template:
+      type: xlookup
+      lookup_field: l3out
+      match_field: name
+      return_field: tenant_l3out_template
+      source_table: l3out
+    site:
+      type: data_validation_from_worksheet
+      source: site
+      column: name
+    status: status
   tab_color:
     type: theme
     theme: 7
@@ -1434,42 +1467,5 @@ l3out_interfaces:
 
 
 
-#  bridge_domain_to_l3out:
-#    bridge_domain:
-#      type: data_validation_from_worksheet
-#      source: bridge_domain
-#      column: name
-#    template:
-#      type: xlookup
-#      lookup_field: bridge_domain
-#      match_field: name
-#      return_field: template
-#      source_table: bridge_domain
-#    schema:
-#      type: xlookup
-#      lookup_field: bridge_domain
-#      match_field: name
-#      return_field: schema
-#      source_table: bridge_domain
-#    l3out:
-#      type: data_validation_from_worksheet
-#      source: l3out
-#      column: name
-#    l3out_template:
-#      type: xlookup
-#      lookup_field: l3out
-#      match_field: name
-#      return_field: template
-#      source_table: l3out
-#    l3out_schema:
-#      type: xlookup
-#      lookup_field: l3out
-#      match_field: name
-#      return_field: schema
-#      source_table: l3out
-#    site:
-#      type: data_validation_from_worksheet
-#      source: site
-#      column: name
-#    status: status
+
 

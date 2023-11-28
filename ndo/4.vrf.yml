@@ -8,10 +8,12 @@
 
     - name: Add a new VRF
       cisco.mso.mso_schema_template_vrf:
-        schema: "{{ item.schema_name }}"
-        template: "{{ item.template_name }}"
+        schema: "{{ item.schema }}"
+        template: "{{ item.template }}"
         vrf: "{{ item.name }}"
+        preferred_group: "{{ item.preferred_group if item.preferred_group is defined and item.preferred_group != '' else omit }}"
+        layer3_multicast: "{{ item.enable_l3_multicast if item.enable_l3_multicast is defined and item.enable_l3_multicast != '' else omit }}"
+        ip_data_plane_learning: "{{ item.ip_data_plane_learning if item.ip_data_plane_learning is defined and item.ip_data_plane_learning != '' else omit  }}"
         state: "{{ item.status if item.status is defined else omit }}"
-        layer3_multicast : "{{ item.enable_l3_multicast }}"
       loop: "{{ vrf }}"
       when: vrf is defined

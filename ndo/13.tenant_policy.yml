@@ -1,0 +1,113 @@
+---
+#- ansible.builtin.import_playbook: update.yml
+
+- name : L3Outs
+  gather_facts: false
+  hosts: all
+
+  tasks:
+    - name: Tenant L3Out Template
+      cisco.mso.ndo_tenant_template:
+        template: "{{ item.name }}"
+        tenant: "{{ item.tenant }}"
+        template_type: 'tenantPolicy'
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ tenant_policy_template }}"
+      when: tenant_policy_template is defined
+
+
+    - name: Add a site to Tenant Policies Template
+      cisco.mso.ndo_fabric_policies_template_site:
+        template: "{{ item.name }}"
+        site: "{{ item.site }}"
+        template_type: 'tenantPolicy'
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ tenant_policy_template_site }}"
+      when: tenant_policy_template_site is defined
+
+    - name: Route-Map for Route Control
+      cisco.mso.ndo_tenant_policies_route_map:
+        route_map: "{{ item.name }}"
+        description: "{{ item.description if item.description is defined and item.description != '' else omit }}"
+        template: "{{ item.tenant_policy_template }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ route_map }}"
+      when: route_map is defined
+
+    - name: Route-Map Entry for Route Control
+      cisco.mso.ndo_tenant_policies_route_map_entry:
+        route_map: "{{ item.route_map }}"
+        template: "{{ item.tenant_policy_template }}"
+        context_name: "{{ item.name }}"
+        action: "{{ item.action if item.action is defined and item.action != '' else omit }}"
+        order: "{{ item.order | int if item.order is defined and item.order != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ route_map_entry }}"
+      when: route_map_entry is defined
+
+    - name: Route-Map Entry for Route Control - Set Rules
+      cisco.mso.ndo_tenant_policies_route_map_entry_set:
+        route_map: "{{ item.route_map }}"
+        template: "{{ item.tenant_policy_template }}"
+        context_name: "{{ item.route_map_entry  }}"
+        set_community: "{{ item.set_community if item.set_community is defined and item.set_community != '' else omit }}"
+        set_community_criteria: "{{ item.set_community_criteria if item.set_community_criteria is defined and item.set_community_criteria != '' else omit }}"
+        set_route_tag: "{{ item.set_route_tag | int if item.set_route_tag is defined and item.set_route_tag != '' else omit }}"
+        set_dampening: "{{ item.set_dampening if item.set_dampening is defined and item.set_dampening != '' else omit }}"
+        half_life: "{{ item.half_life | int if item.half_life is defined and item.half_life != '' else omit }}"
+        re_use_limit: "{{ item.re_use_limit | int if item.re_use_limit is defined and item.re_use_limit != '' else omit }}"
+        supress_limit: "{{ item.supress_limit | int if item.supress_limit is defined and item.supress_limit != '' else omit }}"
+        max_suppress_time: "{{ item.max_suppress_time | int  if item.max_suppress_time is defined and item.max_suppress_time != '' else omit }}"
+        set_weight: "{{ item.set_weight | int if item.set_weight is defined and item.set_weight != '' else omit }}"
+        set_next_hop: "{{ item.set_next_hop if item.set_next_hop is defined and item.set_next_hop != '' else omit }}"
+        set_preference: "{{ item.set_preference | int if item.set_preference is defined and item.set_preference != '' else omit }}"
+        set_metric: "{{ item.set_metric | int if item.set_metric is defined and item.set_metric != '' else omit }}"
+        set_next_hop_propagate: "{{ item.set_next_hop_propagate if item.set_next_hop_propagate is defined and item.set_next_hop_propagate != '' else omit }}"
+        set_multipath: "{{ item.set_multipath if item.set_multipath is defined and item.set_multipath != '' else omit }}"
+        set_metric_type: "{{ item.set_metric_type if item.set_metric_type is defined and item.set_metric_type != '' else omit }}"
+        set_as_path_criteria: "{{ item.set_as_path_criteria if item.set_as_path_criteria is defined and item.set_as_path_criteria != '' else omit }}"
+        set_as: "{{ item.set_as | int if item.set_as is defined and item.set_as != '' else omit }}"
+        set_as_order: "{{ item.set_as_order | int if item.set_as_order is defined and item.set_as_order != '' else omit }}"
+        set_as_path_count: "{{ item.set_as_path_count | int  if item.set_as_path_count is defined and item.set_as_path_count != '' else omit }}"
+        set_additional_community: "{{ item.set_additional_community if item.set_additional_community is defined and item.set_additional_community != '' else omit }}"
+        set_additional_community_criteria: "{{ item.set_additional_community_criteria if item.set_additional_community_criteria is defined and item.set_additional_community_criteria != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ route_map_entry_set_rules }}"
+      when: route_map_entry_set_rules is defined
+
+
+    - name: Route-Map Entry for Route Control - Match Rules
+      cisco.mso.ndo_tenant_policies_route_map_entry_match:
+        route_map: "{{ item.route_map }}"
+        template: "{{ item.tenant_policy_template }}"
+        context_name: "{{ item.route_map_entry if item.route_map_entry is defined and item.route_map_entry != '' else omit }}"
+        match_prefix: "{{ item.match_prefix if item.match_prefix is defined and item.match_prefix != '' else omit }}"
+        aggregate: "{{ item.aggregate if item.aggregate is defined and item.aggregate != '' else omit }}"
+        ge: "{{ item.ge | int if item.ge is defined and item.ge != '' else omit }}"
+        le: "{{ item.le | int if item.le is defined and item.le != '' else omit }}"
+        match_community: "{{ item.match_community if item.match_community is defined and item.match_community != '' else omit }}"
+        match_community_scope: "{{ item.match_community_scope if item.match_community_scope is defined and item.match_community_scope != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ route_map_entry_match_rules }}"
+      when: route_map_entry_match_rules is defined
+
+
+    - name: L3Out interface Policy
+      cisco.mso.ndo_tenant_policies_l3out_interface_policy:
+        l3out_interface_policy: "{{ item.name }}"
+        description: "{{ item.description if item.description is defined and item.description != '' else omit }}"
+        template: "{{ item.tenant_policy_template }}"
+        bfd: "{{ item.bfd if item.bfd is defined and item.bfd != '' else omit }}"
+        bfd_admin_state: "{{ item.bfd_admin_state if item.bfd_admin_state is defined and item.bfd_admin_state != '' else omit }}"
+        detection_multiplier: "{{ item.detection_multiplier | int if item.detection_multiplier is defined and item.detection_multiplier != '' else omit }}"
+        receive_interval: "{{ item.receive_interval | int if item.receive_interval is defined and item.receive_interval != '' else omit }}"
+        transmit_interval: "{{ item.transmit_interval | int if item.transmit_interval is defined and item.transmit_interval != '' else omit }}"
+        echo_interval: "{{ item.echo_interval | int if item.echo_interval is defined and item.echo_interval != '' else omit }}"
+        echo_admin_state: "{{ item.echo_admin_state if item.echo_admin_state is defined and item.echo_admin_state != '' else omit }}"
+        interface_control: "{{ item.interface_control if item.interface_control is defined and item.interface_control != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ l3out_interface_policy }}"
+      when: l3out_interface_policy is defined
+
+
+

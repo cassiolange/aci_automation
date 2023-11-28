@@ -6,35 +6,39 @@
   hosts: all
 
   tasks:
-    - name: Add a new sites
-      cisco.mso.mso_rest:
-        path: "/api/config/v2/addsite/"
-        method: post
-        content:
-          {
-            "url": "{{ item.apic_url }}",
-            "siteType": "ACI",
-            "name": "{{ item.name }}",
-            "aci": {
-              "userName": "{{ item.apic_username }}",
-              "password": "{{ item.apic_password }}",
-              "inbandEpgDN": "",
-              "loginDomain": ""
-            },
-            "latitude": "",
-            "longitude": ""
-          }
+    -
+    - name: Create a Static route
+      cisco.nd.nd_cluster_config_route:
+        destination_ip: "{{ item.prefix }}"
+        target_network: "{{ item.interface }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ nd_static_routes }}"
+      when: nd_static_routes is defined
+
+    - name: Add a new site
+      cisco.nd.nd_site:
+        url: "{{ item.apic_url }}"
+        site_username: "{{ item.apic_username }}"
+        site_password: "{{ item.apic_password }}"
+        site_type: "{{ item.site_type }}"
+        site_name: "{{ item.name }}"
+#        location:
+#          latitude: 50.887318
+#          longitude: 4.447084
+        login_domain: "{{ item.login_domain if item.login_domain is defined and item.login_domain != '' else 'DefaultAuth' }}"
+        inband_epg: "{{ item.inband_epg if item.inband_epg is defined and item.inband_epg != '' else omit }}"
+        re_register:  "{{ item.re_register if item.re_register is defined and item.re_register != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ site }}"
       when: site is defined
-      loop_control:
-        pause: 2
+
 
     - name: Configure site as Managed by MSO
       cisco.mso.mso_site:
         site: "{{ item.name }}"
         apic_username: "{{ item.apic_username }}"
         apic_password: "{{ item.apic_password }}"
-        apic_site_id: "{{ item.site_id | int }}"
+        apic_site_id: "{{ item.apic_site_id | int }}"
         urls:
           - "{{ item.apic_url }}"
         state:  "{{ item.status if item.status is defined else omit }}"
@@ -43,9 +47,5 @@
       retries: 30
       delay: 3
       register: add_site_mso
-#      ignore_errors: yes
       until: add_site_mso['failed'] == false
 
-#    - name: debug
-#      debug:
-#        var: add_site_mso

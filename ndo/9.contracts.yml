@@ -7,85 +7,98 @@
 
     - name: Add a new filter and filter entry
       cisco.mso.mso_schema_template_filter_entry:
-        schema: "{{ item.schema_name }}"
-        template: "{{ item.template_name }}"
-        state: "{{ item.status if item.status is defined else omit }}"
-        description: "{{ item.description if item.description is defined else omit }}"
-        entry: "{{ item.filter_entry_name }}"
         filter: "{{ item.name }}"
-        ethertype: "{{ item.etherType if item.etherType is defined and item.etherType !='' else omit }}"
-        ip_protocol: "{{ item.ipProtocol if item.ipProtocol is defined and item.ipProtocol !='' else omit }}"
-        arp_flag: "{{ item.arpFlag if item.arpFlag is defined and item.arpFlag !='' else omit }}"
-        destination_from: "{{ item.destinationFrom | int if item.destinationFrom is defined and item.destinationFrom !='' else omit }}"
-        destination_to: "{{ item.destinationTo | int if item.destinationTo is defined and item.destinationTo !='' else omit }}"
-        icmp_msg_type: "{{ item.icmp_message if item.icmp_message is defined and item.icmp_message !='' else omit }}"
-        icmp6_msg_type: "{{ item.icmpv6_message if item.icmpv6_message is defined and item.icmpv6_message !='' else omit }}"
+        filter_description: "{{ item.description if item.description is defined else omit }}"
+        schema: "{{ item.schema }}"
+        template: "{{ item.template }}"
+        entry: "{{ item.filter_entry_name }}"
+        filter_entry_description: "{{ item.filter_entry_description if item.filter_entry_description is defined and item.filter_entry_description !='' else omit }}"
+        ethertype: "{{ item.ethertype if item.ethertype is defined and item.ethertype !='' else omit }}"
+        ip_protocol: "{{ item.ip_protocol if item.ip_protocol is defined and item.ip_protocol !='' else omit }}"
+        arp_flag: "{{ item.arp_flag if item.arp_flag is defined and item.arp_flag !='' else omit }}"
+        destination_from: "{{ item.destination_from | int if item.destination_to is defined and item.destination_to !='' else omit }}"
+        destination_to: "{{ item.destination_to | int if item.destinationTo is defined and item.destinationTo !='' else omit }}"
         stateful: "{{ item.stateful if item.stateful is defined and item.stateful !='' else omit }}"
+        tcp_session_rules: "{{ item.tcp_session_rules if item.tcp_session_rules is defined and item.tcp_session_rules !='' else omit }}"
+        fragments_only: "{{ item.fragments_only if item.fragments_only is defined and item.fragments_only !='' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ filter }}"
       when: filter is defined
 
     - name: Add a new contract
       cisco.mso.mso_schema_template_contract_filter:
-        schema: "{{ item.schema_name }}"
-        template: "{{ item.template_name }}"
-        filter_directives: "{{ item.filter_directives }}"
         contract: "{{ item.name }}"
-        contract_scope: "{{ 'vrf' if item.contract_scope == 'context' else item.contract_scope}}"
-        filter: "{{ item.filter_name }}"
-        filter_schema: "{{ item.filter_schema_name }}"
-        filter_template: "{{ item.filter_template_name }}"
-        state: "{{ item.status if item.status is defined else omit }}"
+        schema: "{{ item.schema}}"
+        template: "{{ item.template }}"
+        action: "{{ item.action if item.action is defined and item.action != '' else omit }}"
+        contract_scope: "{{ item.contract_scope if item.contract_scope is defined and item.contract_scope != '' else omit }}"
+        priority: "{{ item.priority if item.priority is defined and item.priority != '' else omit }}"
+        qos_level: "{{ item.qos_level if item.qos_level is defined and item.qos_level != '' else omit }}"
+        filter: "{{ item.filter }}"
+        filter_schema: "{{ item.filter_schema }}"
+        filter_template: "{{ item.filter_template}}"
+        filter_directives: "{{ item.filter_directives if item.filter_directives is defined and item.filter_directives != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ contract }}"
       when: contract is defined
 
     - name: Bind contract to an EPG
       cisco.mso.mso_schema_template_anp_epg_contract:
-        schema: "{{ item.epg_schema_name }}"
-        template: "{{ item.epg_template_name }}"
-        state: "{{ item.status if item.status is defined else omit }}"
+        epg: "{{ item.epg}}"
+        schema: "{{ item.schema }}"
+        template: "{{ item.template }}"
         anp: "{{ item.app_profile_name }}"
-        epg: "{{ item.epg_name }}"
         contract:
-          name: "{{ item.contract_name }}"
-          type: "{{ item.contract_relationship }}"
-          template: "{{ item.contract_template_name }}"
-          schema: "{{ item.contract_schema_name }}"
-      loop: "{{ contract_epg_association }}"
-      when: contract_epg_association is defined
+          name: "{{ item.contract }}"
+          type: "{{ item.contract_type }}"
+          template: "{{ item.contract_template }}"
+          schema: "{{ item.contract_schema }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ contract_to_epg }}"
+      when: contract_to_epg is defined
 
-    - name: Bind contract to an External EPG
-      cisco.mso.mso_schema_template_external_epg_contract:
-        schema: "{{ item.external_epg_schema_name }}"
-        template: "{{ item.external_epg_template_name }}"
-        state: "{{ item.status if item.status is defined else omit }}"
-        external_epg: "{{ item.name }}"
-        contract:
-          name: "{{ item.contract_name }}"
-          type: "{{ item.relationship_type }}"
-          schema: "{{ item.contract_schema_name }}"
-          template: "{{ item.contract_template_name }}"
-      loop: "{{ external_epg_contract  }}"
-      when: external_epg_contract is defined
+#    - name: Bind contract to an External EPG
+#      cisco.mso.mso_schema_template_external_epg_contract:
+#        schema: "{{ item.external_epg_schema_name }}"
+#        template: "{{ item.external_epg_template_name }}"
+#        state: "{{ item.status if item.status is defined else omit }}"
+#        external_epg: "{{ item.name }}"
+#        contract:
+#          name: "{{ item.contract_name }}"
+#          type: "{{ item.relationship_type }}"
+#          schema: "{{ item.contract_schema_name }}"
+#          template: "{{ item.contract_template_name }}"
+#      loop: "{{ external_epg_contract  }}"
+#      when: external_epg_contract is defined
 
     - name: Enable vzAny attribute on VRF
       cisco.mso.mso_schema_template_vrf:
-        schema: "{{ item.vrf_schema_name }}"
-        template: "{{ item.vrf_template_name }}"
+        schema: "{{ item.schema }}"
+        template: "{{ item.template }}"
         vrf: "{{ item.vrf }}"
-        vzany: 'yes'
-      loop: "{{ vrf_contract }}"
-      when: vrf_contract is defined
+        vzany: "{{ 'false' if item.status == 'absent' else 'true' }}"
+      loop: "{{ contract_to_vrf }}"
+      when: contract_to_vrf is defined and item.status == 'present'
 
     - name: Add a contract to a VRF
       cisco.mso.mso_schema_template_vrf_contract:
-        schema: "{{ item.vrf_schema_name }}"
-        template: "{{ item.vrf_template_name }}"
-        state: "{{ item.status if item.status is defined else omit }}"
+        schema: "{{ item.schema}}"
+        template: "{{ item.template }}"
         vrf: "{{ item.vrf }}"
         contract:
-          name: "{{ item.contract_name }}"
-          type: "{{ item.contract_relationship }}"
-          schema: "{{ item.contract_schema_name }}"
-          template: "{{ item.contract_template_name }}"
-      loop: "{{ vrf_contract }}"
-      when: vrf_contract is defined
+          name: "{{ item.contract }}"
+          type: "{{ item.contract_type }}"
+          schema: "{{ item.contract_schema }}"
+          template: "{{ item.contract_template }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ contract_to_vrf }}"
+      when: contract_to_vrf is defined
+
+    - name: Enable vzAny attribute on VRF
+      cisco.mso.mso_schema_template_vrf:
+        schema: "{{ item.schema }}"
+        template: "{{ item.template }}"
+        vrf: "{{ item.vrf }}"
+        vzany: "{{ 'false' if item.status == 'absent' else 'true' }}"
+      loop: "{{ contract_to_vrf }}"
+      when: contract_to_vrf is defined and item.status == 'absent'

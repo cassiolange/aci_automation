@@ -1,106 +1,187 @@
 ---
-- ansible.builtin.import_playbook: update.yml
+#- ansible.builtin.import_playbook: update.yml
 
 - name : L3Outs
   gather_facts: false
   hosts: all
 
   tasks:
+    - name: Tenant L3Out Template
+      cisco.mso.ndo_tenant_template:
+        template: "{{ item.name }}"
+        site: "{{ item.site }}"
+        tenant: "{{ item.tenant }}"
+        template_type: 'l3out'
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ tenant_l3out_template }}"
+      when: tenant_l3out_template is defined
 
-    - name: Add a new L3out
-      cisco.mso.mso_schema_template_l3out:
-        schema: "{{ item.schema_name }}"
-        template: "{{ item.template_name }}"
+    - name: L3out
+      cisco.mso.ndo_tenant_l3out:
         l3out: "{{ item.name }}"
-        state: "{{ item.status if item.status is defined else omit }}"
+        template: "{{ item.tenant_l3out_template }}"
+        description: "{{ item.description if item.description is defined and item.description != '' else omit }}"
         vrf:
-          name: "{{ item.vrf_name }}"
-          template: "{{ item.vrf_template }}"
+          name: "{{ item.vrf }}"
           schema: "{{ item.vrf_schema }}"
+          template: "{{ item.vrf_template }}"
+        l3out_domain: "{{ item.l3out_domain if item.l3out_domain is defined and item.l3out_domain != '' else omit }}"
+        import_route_control: "{{ item.import_route_control if item.import_route_control is defined and item.import_route_control != '' else omit }}"
+        enable_bgp: "{{ item.enable_bgp if item.enable_bgp is defined and item.enable_bgp != '' else omit }}"
+        enable_ospf: "{{ item.enable_ospf if item.enable_ospf is defined and item.enable_ospf != '' else omit }}"
+        ospf_area_id: "{{ item.ospf_area_id | int  if item.ospf_area_id is defined and item.ospf_area_id != '' else omit }}"
+        ospf_area_type: "{{ item.ospf_area_type if item.ospf_area_type is defined and item.ospf_area_type != '' else omit }}"
+        ospf_area_cost: "{{ item.ospf_area_cost | int if item.ospf_area_cost is defined and item.ospf_area_cost != '' else omit }}"
+        inbound_route_map: "{{ item.inbound_route_map if item.inbound_route_map is defined and item.inbound_route_map != '' else omit }}"
+        inbound_route_map_template: "{{ item.inbound_route_map_template if item.inbound_route_map_template is defined and item.inbound_route_map_template != '' else omit }}"
+        outbound_route_map: "{{ item.outbound_route_map if item.outbound_route_map is defined and item.outbound_route_map != '' else omit }}"
+        outbound_route_map_template: "{{ item.outbound_route_map_template if item.outbound_route_map_template is defined and item.outbound_route_map_template != '' else omit }}"
+        enable_pim: "{{ item.enable_pim if item.enable_pim is defined and item.enable_pim != '' else omit }}"
+        enable_pimv6: "{{ item.enable_pimv6 if item.enable_pimv6 is defined and item.enable_pimv6 != '' else omit }}"
+        originate_default_route: "{{ item.originate_default_route if item.originate_default_route is defined and item.originate_default_route != '' else omit }}"
+        originate_default_route_type: "{{ item.originate_default_route_type if item.originate_default_route_type is defined and item.originate_default_route_type != '' else omit }}"
+        target_dscp: "{{ item.target_dscp if item.target_dscp is defined and item.target_dscp != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ l3out }}"
       when: l3out is defined
 
-    - name: Add a new external EPG (Non Stretched)
-      cisco.mso.mso_schema_template_external_epg:
+    - name: L3out Node and Interface Group Policy
+      cisco.mso.ndo_tenant_l3out_group_policy:
+        group_policy: "{{ item.name }}"
+        l3out: "{{ item.l3out }}"
+        template: "{{ item.tenant_l3out_template }}"
+        description: "{{ item.description if item.description is defined and item.description != '' else omit }}"
+        group_policy_type: "{{ item.type if item.type is defined and item.type != '' else omit }}"
+        interface_routing_policy: "{{ item.interface_routing_policy if item.interface_routing_policy is defined and item.interface_routing_policy != '' else omit }}"
+        interface_routing_policy_template: "{{ item.tenant_policy_template if item.tenant_policy_template is defined and item.tenant_policy_template != '' else omit }}"
+        bfd: "{{ item.bfd if item.bfd is defined and item.bfd != '' else omit }}"
+        bfd_multi_hop: "{{ item.bfd_multi_hop if item.bfd_multi_hop is defined and item.bfd_multi_hop != '' else omit }}"
+        qos_class: "{{ item.qos_class if item.qos_class is defined and item.qos_class != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ node_interface_group_policy }}"
+      when: node_interface_group_policy is defined
+
+    - name: L3out Interfaces
+      cisco.mso.ndo_tenant_l3out_interfaces:
+        l3out: "{{ item.l3out }}"
+        template: "{{ item.tenant_l3out_template }}"
+        interface_type: "{{ item.interface_type if item.interface_type is defined and item.interface_type != '' else omit }}"
+        path_type: "{{ item.path_type if item.path_type is defined and item.path_type != '' else omit }}"
+        node1: "{{ item.node1 | int | string if item.node1 is defined and item.node1 != '' else omit }}"
+        node1_router_id: "{{ item.node1_router_id if item.node1_router_id is defined and item.node1_router_id != '' else omit }}"
+        node1_router_id_as_loopback: "{{ item.node1_router_id_as_loopback if item.node1_router_id_as_loopback is defined and item.node1_router_id_as_loopback != '' else omit }}"
+        node2: "{{ item.node2 | int | string if item.node2 is defined and item.node2 != '' else omit }}"
+        node2_router_id: "{{ item.node2_router_id if item.node2_router_id is defined and item.node2_router_id != '' else omit }}"
+        node2_router_id_as_loopback: "{{ item.node2_router_id_as_loopback if item.node2_router_id_as_loopback is defined and item.node2_router_id_as_loopback != '' else omit }}"
+        pod_id: "{{ item.pod_id | int | string if item.pod_id is defined and item.pod_id != '' else omit }}"
+        path: "{{ 'eth%s' % item.port_id if item.port_id is defined and item.port_id != '' and item.path_type is defined and item.path_type == 'port' else item.int_pol_group if item.path_type is defined and item.path_type != 'port' and item.int_pol_group is defined and item.int_pol_group != '' else omit }}"
+        vlan_encap_id: "{{ item.vlan_encap_id | int if item.vlan_encap_id is defined and item.vlan_encap_id != '' else omit }}"
+        trunk_mode: "{{ 'trunk' if item.trunk_mode is defined and item.trunk_mode == 'regular' else 'access8021p' if item.trunk_mode is defined and item.trunk_mode == 'native' else 'access' if item.trunk_mode is defined and item.trunk_mode == 'untagged' else omit }}"
+        ipv4_addr_node1: "{{ item.ipv4_addr_node1 if item.ipv4_addr_node1 is defined and item.ipv4_addr_node1 != '' else omit }}"
+        ipv4_addr_node2: "{{ item.ipv4_addr_node2 if item.ipv4_addr_node2 is defined and item.ipv4_addr_node2 != '' else omit }}"
+        ipv4_secondary_ip: "{{ item.ipv4_secondary_ip if item.ipv4_secondary_ip is defined and item.ipv4_secondary_ip != '' else omit }}"
+        ipv6_addr_node1: "{{ item.ipv6_addr_node1 if item.ipv6_addr_node1 is defined and item.ipv6_addr_node1 != '' else omit }}"
+        ipv6_addr_node2: "{{ item.ipv6_addr_node2 if item.ipv6_addr_node2 is defined and item.ipv6_addr_node2 != '' else omit }}"
+        ipv6_secondary_ip: "{{ item.ipv6_secondary_ip if item.ipv6_secondary_ip is defined and item.ipv6_secondary_ip != '' else omit }}"
+        ipv6_link_local_node1: "{{ item.ipv6_link_local_node1 if item.ipv6_link_local_node1 is defined and item.ipv6_link_local_node1 != '' else omit }}"
+        ipv6_link_local_node2: "{{ item.ipv6_link_local_node2 if item.ipv6_link_local_node2 is defined and item.ipv6_link_local_node2 != '' else omit }}"
+        mtu: "{{ item.mtu | int | string if item.mtu is defined and item.mtu != '' else omit }}"
+        mac: "{{ item.mac if item.mac is defined and item.mac != '' else omit }}"
+        autostate: "{{ item.autostate if item.autostate is defined and item.autostate != '' else omit }}"
+        interface_group_policy: "{{ item.interface_group_policy if item.interface_group_policy is defined and item.interface_group_policy != '' else omit }}"
+        target_dscp: "{{ item.target_dscp if item.target_dscp is defined and item.target_dscp != '' else omit }}"
+        ipv6_dad: "{{ item.ipv6_dad if item.ipv6_dad is defined and item.ipv6_dad != '' else omit }}"
+        secondary_nd_ra_prefix: "{{ item.secondary_nd_ra_prefix if item.secondary_nd_ra_prefix is defined and item.secondary_nd_ra_prefix != '' else omit }}"
+        secondary_ipv6_dad: "{{ item.secondary_ipv6_dad if item.secondary_ipv6_dad is defined and item.secondary_ipv6_dad != '' else omit }}"
+        encap_scope: "{{ item.encap_scope if item.encap_scope is defined and item.encap_scope != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ l3out_interfaces }}"
+      when: l3out_interfaces is defined
+
+    - name: L3out BGP Peer
+      cisco.mso.ndo_tenant_l3out_interfaces_bgp_peer:
+        l3out: "{{ item.l3out }}"
+        template: "{{ item.tenant_l3out_template }}"
+        interface_type: "{{ item.interface_type if item.interface_type is defined and item.interface_type != '' else omit }}"
+        path_type: "{{ item.path_type if item.path_type is defined and item.path_type != '' else omit }}"
+        node1: "{{ item.node1 | int | string if item.node1 is defined and item.node1 != '' else omit }}"
+        node2: "{{ item.node2 | int | string if item.node2 is defined and item.node2 != '' else omit }}"
+        pod_id: "{{ item.pod_id | int | string if item.pod_id is defined and item.pod_id != '' else omit }}"
+        path: "{{ 'eth%s' % item.port_id if item.port_id is defined and item.port_id != '' and item.path_type is defined and item.path_type == 'port' else item.int_pol_group if item.path_type is defined and item.path_type != 'port' and item.int_pol_group is defined and item.int_pol_group != '' else omit }}"
+        vlan_encap_id: "{{ item.vlan_encap_id | int if item.vlan_encap_id is defined and item.vlan_encap_id != '' else omit }}"
+        bgp_peer_ipv4: "{{ item.bgp_peer_ipv4 if item.bgp_peer_ipv4 is defined and item.bgp_peer_ipv4 != '' else omit }}"
+        bgp_peer_ipv6: "{{ item.bgp_peer_ipv6 if item.bgp_peer_ipv6 is defined and item.bgp_peer_ipv6 != '' else omit }}"
+        bgp_peer_as: "{{ item.bgp_peer_as | int if item.bgp_peer_as is defined and item.bgp_peer_as != '' else omit }}"
+        use_bfd: "{{ item.use_bfd if item.use_bfd is defined and item.use_bfd != '' else omit }}"
+        bgp_password: "{{ item.password if item.password is defined and item.password != '' else omit }}"
+        inbound_route_map: "{{ item.inbound_route_map if item.inbound_route_map is defined and item.inbound_route_map != '' else omit }}"
+        inbound_route_map_template: "{{ item.inbound_route_map_template if item.inbound_route_map_template is defined and item.inbound_route_map_template != '' else omit }}"
+        outbound_route_map: "{{ item.outbound_route_map if item.outbound_route_map is defined and item.outbound_route_map != '' else omit }}"
+        outbound_route_map_template: "{{ item.outbound_route_map_template if item.outbound_route_map_template is defined and item.outbound_route_map_template != '' else omit }}"
+        local_as: "{{ item.local_as if item.local_as is defined and item.local_as != '' else omit }}"
+        local_as_options: "{{ 'none' if item.local_as_options is defined and item.local_as_options == 'no_option' else 'no-prepend' if item.local_as_options is defined and item.local_as_options == 'no-prepend' else 'dual-as' if item.local_as_options is defined and item.local_as_options == 'no_prepend+dual_as' else 'replace-as' if item.local_as_options is defined and item.local_as_options == 'no_prepend+replace_as+dual_as' else omit }}"
+        allow_self_as: "{{ item.allow_self_as if item.allow_self_as is defined and item.allow_self_as != '' else omit }}"
+        allow_self_as_count: "{{ item.allow_self_as_count if item.allow_self_as_count is defined and item.allow_self_as_count != '' else omit }}"
+        private_as_control: "{{ item.private_as_control if item.private_as_control is defined and item.private_as_control != '' else omit }}"
+        address_type_controls: "{{ item.address_type_controls.split(';') if item.address_type_controls is defined and item.address_type_controls != '' else omit }}"
+        disable_connected_check: "{{ item.disable_connected_check if item.disable_connected_check is defined and item.disable_connected_check != '' else omit }}"
+        as_override: "{{ item.as_override if item.as_override is defined and item.as_override != '' else omit }}"
+        disable_peer_as_check: "{{ item.disable_peer_as_check if item.disable_peer_as_check is defined and item.disable_peer_as_check != '' else omit }}"
+        next_hop_self: "{{ item.next_hop_self if item.next_hop_self is defined and item.next_hop_self != '' else omit }}"
+        send_community: "{{ item.send_community if item.send_community is defined and item.send_community != '' else omit }}"
+        send_extended_community: "{{ item.send_extended_community if item.send_extended_community is defined and item.send_extended_community != '' else omit }}"
+        send_domain_path: "{{ item.send_domain_path if item.send_domain_path is defined and item.send_domain_path != '' else omit }}"
+        admin_state: "{{ item.admin_state if item.admin_state is defined and item.admin_state != '' else omit }}"
+        ebgp_multihop_ttl: "{{ item.ebgp_multihop_ttl if item.ebgp_multihop_ttl is defined and item.ebgp_multihop_ttl != '' else omit }}"
+        weight: "{{ item.weight if item.weight is defined and item.weight != '' else omit }}"
+        site_of_origin: "{{ item.site_of_origin if item.site_of_origin is defined and item.site_of_origin != '' else omit }}"
+        bgp_peer_prefix_policy: "{{ item.bgp_peer_prefix_policy if item.bgp_peer_prefix_policy is defined and item.bgp_peer_prefix_policy != '' else omit }}"
+        update_password: "{{ item.update_password if item.update_password is defined and item.update_password != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ interface_bgp_peer }}"
+      when: interface_bgp_peer is defined
+
+    - name: External EPG
+      cisco.mso.ndo_schema_template_external_epg:
         external_epg: "{{ item.name }}"
-        schema: "{{ item.schema_name }}"
-        template: "{{ item.template_name }}"
+        schema: "{{ item.schema }}"
+        template: "{{ item.template }}"
+        description: "{{ item.description if item.description is defined and item.description != '' else omit }}"
         l3out:
-          name: "{{ item.l3out_name }}"
-          schema: "{{ item.l3out_schema_name }}"
-          template: "{{ item.l3out_template_name }}"
+          name: "{{ item.l3out }}"
+          template: "{{ item.l3out_template }}"
         vrf:
-          name: "{{ item.vrf_name }}"
-          schema: "{{ item.vrf_schema_name}}"
-          template: "{{ item.vrf_template_name }}"
-        state: "{{ item.status if item.status is defined else omit }}"
+          name: "{{ item.vrf }}"
+          schema: "{{ item.vrf_schema }}"
+          template: "{{ item.vrf_template }}"
+        site: "{{ item.site }}"
+        preferred_group: "{{ item.preferred_group_member if item.preferred_group_member is defined and item.preferred_group_member != '' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ external_epg }}"
-      when: external_epg is defined and item.site_name is defined and item.site_name !=""
+      when: external_epg is defined
 
-    - name: Add a new external EPG (Stretched)
-      cisco.mso.mso_schema_template_external_epg:
-        external_epg: "{{ item.name }}"
-        schema: "{{ item.schema_name }}"
-        template: "{{ item.template_name }}"
-        vrf:
-          name: "{{ item.vrf_name }}"
-          schema: "{{ item.vrf_schema_name}}"
-          template: "{{ item.vrf_template_name }}"
-        state: "{{ item.status if item.status is defined else omit }}"
-      loop: "{{ external_epg }}"
-      when: external_epg is defined and item.site_name is defined and item.site_name ==""
-
-####
-#need to fix mso_schema_site_external_epg
-#L3outRef need be blank for Stretched External
-#            l3outRef=""
-#            # l3outRef=dict(
-#            #     schemaId=schema_id,
-#            #     templateName=template,
-#            #     l3outName=l3out,
-#            # ),
-####
-
-    - name: "*********Warning*********"
-      debug:
-        msg: "mso_schema_site_external_epg needs to be fixed. Please, check the comments on the playbook."
-
-
-    - name: Bind Stretched External EPG to a Site L3Out
-      cisco.mso.mso_schema_site_external_epg:
-        schema: "{{ item.schema_name }}"
-        template: "{{ item.template_name }}"
-        external_epg: "{{ item.name }}"
-        l3out: "{{ item.l3out_name }}"
-#          name:
-#          template: "{{ item.l3out_template_name }}"
-#          schema: "{{ item.l3out_schema_name }}"
-        site: "{{ item.site_name }}"
-        state: "{{ item.status if item.status is defined else omit }}"
-      loop: "{{ external_epg_to_l3out }}"
-      when: external_epg_to_l3out is defined
-
-
-
-    - name: Add a new subnet to an External EPG
+    - name: Subnet to an External EPG
       cisco.mso.mso_schema_template_external_epg_subnet:
-        schema: "{{ item.schema_name }}"
-        template: "{{ item.template_name }}"
+        schema: "{{ item.schema }}"
+        template: "{{ item.template }}"
         external_epg: "{{ item.name }}"
         subnet: "{{ item.subnet }}"
-        state: "{{ item.status if item.status is defined else omit }}"
-        scope: "{{ 'import-security' if item.external_subnet_for_external_epg is defined and item.external_subnet_for_external_epg == 'yes' else omit}}"
+        scope: "{{ ['import-security' if item.external_subnet_for_external_epg is defined and item.external_subnet_for_external_epg == 'yes', 'export-rtctrl' if item.export_route_control is defined and item.export_route_control == 'yes', 'shared-rtctrl' if item.shared_route_control is defined and item.shared_route_control == 'yes', 'import-rtctrl' if item.import_route_control is defined and item.import_route_control == 'yes', 'shared-security' if item.shared_security is defined and item.shared_security == 'yes'] | reject('undefined') | join(',') | default('import-security',true)}}"
+        aggregate: "{{ 'shared-rtctrl' if item.aggregate_shared_routes is defined and item.aggregate_shared_routes == 'yes' else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ external_epg_subnet }}"
       when: external_epg_subnet is defined
 
     - name: Bind BD to l3out
-      cisco.mso.mso_schema_site_bd_l3out:
-        schema: "{{ item.schema_name }}"
-        template: "{{ item.template_name }}"
-        site: "{{ item.site_name }}"
-        bd: "{{ item.name }}"
-        l3out: "{{ item.l3out_name }}"
-        state: "{{ item.status if item.status is defined else omit }}"
+      cisco.mso.ndo_schema_site_bd_l3out:
+        bd: "{{ item.bridge_domain }}"
+        template: "{{ item.template }}"
+        schema: "{{ item.schema }}"
+        site: "{{ item.site }}"
+        l3out:
+          name: "{{ item.l3out }}"
+          template: "{{ item.l3out_template }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ bridge_domain_to_l3out }}"
       when: bridge_domain_to_l3out is defined
 

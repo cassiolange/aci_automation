@@ -92,13 +92,13 @@ node_deployement:
     inband_ipv6_gw:
     cimc_ip:
     cimc_gw:
-    status: status
     username:
       type: formula_static
       formula: =IF(ISBLANK(fabric_initial_config!$B$8),"",fabric_initial_config!$B$8)
     password:
       type: formula_static
       formula: =IF(ISBLANK(fabric_initial_config!$B$9),"",fabric_initial_config!$B$9)
+    status: status
     build_tasks_description: APIC Addressing
   firmware_group:
     name:
@@ -1469,6 +1469,7 @@ tenant:
     legacy_bd_vlan:
     route_control_profile:
     l3out_for_route_control:
+    mac:
     status: status
     build_tasks_description: Bridge Domain
   bd_subnet:
@@ -2045,7 +2046,7 @@ tenant_l3out:
     int_pol_group:
       type: data_validation_from_worksheet
       source: interface_policy_group
-      column: node_id
+      column: name
     port_id:
     ip_addr_side_a:
     ip_addr_side_b:
@@ -2177,7 +2178,7 @@ tenant_l3out:
     description:
     l3_out:
       type: data_validation_from_worksheet
-      source: l3_out
+      source: l3out
       column: name
     tenant:
       type: xlookup
@@ -2922,6 +2923,33 @@ service_graph:
     tint: 0.5999938962981048
   category: System Settings
   playbook: 10.service_graph.yml
+interface_disable:
+  interface_disable:
+    name:
+      type: data_validation_from_worksheet
+      source: node_provisioning
+      column: name
+    node_id:
+      type: xlookup
+      lookup_field: node
+      match_field: name
+      return_field: node_id
+      source_table: node_provisioning
+    pod_id:
+      type: xlookup
+      lookup_field: node
+      match_field: name
+      return_field: pod_id
+      source_table: node_provisioning
+    fex_id:
+    interface:
+    status: status
+  tab_color:
+    type: theme
+    theme: 9
+    tint: 0.5999938962981048
+  category: Interface Enable Disable
+  playbook: enable_disable_interface.yml
 data_source:
   defined_names:
   - name: spine_access_policy_group

@@ -86,7 +86,7 @@ def create_formula(formula, column_number, worksheet, cell_position):
     column_formula = TableFormula()
     column_formula.attr_text = formula
     worksheet.tables[current_table_name].tableColumns[column_number-1].calculatedColumnFormula = column_formula
-    worksheet.tables[current_table_name].tableColumns[column_number - 1].dataDxfId = 155
+    #worksheet.tables[current_table_name].tableColumns[column_number - 1].dataDxfId = 155
     worksheet[cell_position].fill = PatternFill(patternType='solid', fgColor=Color(rgb='FF00B0F0'), bgColor=Color(indexed=64))
     return worksheet
 
@@ -311,7 +311,7 @@ def create_table_style():
     table_style = TableStyleInfo(name='TableStyleMedium2', showFirstColumn=False, showLastColumn=False, showRowStripes=True, showColumnStripes=False)
     return table_style
 
-def create_backup(file, backup_dir='../../spreadsheets/backup'):
+def create_backup(file, backup_dir='../spreadsheets/backup'):
     if not os.path.isdir(backup_dir):
         logging.info(f'Creating backup folder {backup_dir}')
         os.mkdir(backup_dir)
@@ -394,10 +394,16 @@ def create_build_tasks(workbook, input_yaml):
                 set_cell_color(worksheet=workbook['build_tasks'], color=yes_no_build_task_color, cell_position='A' + str(current_row))
                 if category_name:
                     workbook['build_tasks']['D' + str(current_row)].value = category_name
+                if playbook:
+                    workbook['build_tasks']['E' + str(current_row)].value = playbook
                 if color:
                     set_cell_color(worksheet=workbook['build_tasks'], color=color, cell_position='B' + str(current_row))
                     set_cell_color(worksheet=workbook['build_tasks'], color=color, cell_position='C' + str(current_row))
                     set_cell_color(worksheet=workbook['build_tasks'], color=color, cell_position='D' + str(current_row))
+                    set_cell_color(worksheet=workbook['build_tasks'], color=color, cell_position='E' + str(current_row))
+
+
+
 
     worksheet = create_table(worksheet=worksheet, table_name='build_tasks', columns=build_tasks_columns, end_row=workbook['build_tasks'].max_row)
     workbook = resize_columns(workbook=workbook, sheet_name='build_tasks')
@@ -416,24 +422,41 @@ def reorder_tabs(sheet):
         sheet_tab_position += len(sheets)
     return sheet_tab_position
 
+def type_and_version(workbook):
+    logging.info('Trying to determine the automation type and Excel version')
+    if 'data_source' in workbook and 'version' in workbook['data_source'].tables:
+        table_size = str(workbook['data_source'].tables['version'].ref).split(':')
+        automation_type = workbook['data_source'][table_size[0].replace('1', '2')].value
+        excel_version = workbook['data_source'][table_size[1]].value
+        logging.info(f'Automation Type is {automation_type}')
+        logging.info(f'Excel Version {excel_version}')
+        return automation_type, excel_version
+    else:
+        logging.info('Unable to determine the Automation Type, exiting.')
+        exit(0)
+
 def main():
-    parser = argparse.ArgumentParser(description="Script to Update and Fix the ACI Excel File.")
-    parser.add_argument("aci_excel_file_location", type=str, help="Location of the ACI Excel File EX:../spreedsheets/aci_build.xlsx")
+    parser = argparse.ArgumentParser(description="Script to Update and Fix the Excel File.")
+    parser.add_argument("excel_file_location", type=str, help="Location of the ACI Excel File EX:../spreedsheets/aci_build.xlsx")
     parser.add_argument("--rearrange_tabs", default=False, action="store_true", help="Rearrange the tabs in the Excel Sheet.")
     parser.add_argument("--recreate_build_tasks", default=False, action="store_true", help="Recreate the Build Tasks sheet")
-    parser.add_argument("--create_backup", default=True, action="store_true", help="Make a copy of the ACI Excel File")
-    parser.add_argument("--input_yaml_file", type=str, default='../input_yaml/aci.yaml', help=argparse.SUPPRESS)
+    parser.add_argument("--create_backup", default=True, action="store_true", help="Make a copy of the Excel File")
+    parser.add_argument("--input_yaml_folder", type=str, default='../input_yaml/', help=argparse.SUPPRESS)
     parser.add_argument("--fix_tab_color", default=False, action="store_true", help="Correct the color of the Excel tabs")
     parser.add_argument("--update_all", default=False, action="store_true", help="Update all sheets in the Excel File")
     parser.add_argument("--output_file_location", type=str, default='', help="Output file, if left blank, equals the input file.")
 
+
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s', handlers=[logging.FileHandler('aci_excel_file.log'),logging.StreamHandler()])
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s', handlers=[logging.FileHandler('excel_file.log'), logging.StreamHandler()])
     if args.create_backup:
-        create_backup(file=args.aci_excel_file_location)
-    workbook = open_excel_file(args.aci_excel_file_location)
-    input_yaml = open_yaml_file(input_yaml_file=args.input_yaml_file)
+        create_backup(file=args.excel_file_location)
+    workbook = open_excel_file(args.excel_file_location)
+    automation_type, excel_version = type_and_version(workbook=workbook)
+
+
+    input_yaml = open_yaml_file(input_yaml_file=args.input_yaml_folder+automation_type+'.yaml')
     if 'data_source' in input_yaml:
         workbook = create_data_source_sheet(input_yaml=input_yaml, workbook=workbook)
         input_yaml.pop('data_source')
@@ -441,7 +464,7 @@ def main():
 
     if args.recreate_build_tasks:
         del workbook['build_tasks']
-        input_yaml = open_yaml_file(input_yaml_file=args.input_yaml_file)
+        input_yaml = open_yaml_file(input_yaml_file=args.input_yaml_folder+automation_type+'.yaml')
         if 'data_source' in input_yaml:
             input_yaml.pop('data_source')
         workbook = create_build_tasks(workbook=workbook, input_yaml=input_yaml)
@@ -452,7 +475,7 @@ def main():
     if args.output_file_location:
         workbook.save(args.output_file_location)
     else:
-        workbook.save(args.aci_excel_file_location)
+        workbook.save(args.excel_file_location)
 
 
 

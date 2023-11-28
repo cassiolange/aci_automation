@@ -8,19 +8,26 @@
 
     - name: Add a new BD
       cisco.mso.mso_schema_template_bd:
-        schema: "{{ item.schema_name }}"
-        template: "{{ item.template_name }}"
-        layer2_stretch: "{{ item.l2stretch }}"
+        bd: "{{ item.name }}"
+        schema: "{{ item.schema }}"
+        template: "{{ item.template }}"
+        description: "{{ item.description if item.description is defined and item.description != '' else omit }}"
+        layer2_unknown_unicast: "{{ item.l2UnknownUnicast if item.l2UnknownUnicast is defined and item.l2UnknownUnicast != '' else omit }}"
+        ipv6_unknown_multicast_flooding: "{{ item.ipv6_unknown_multicast_flooding if item.ipv6_unknown_multicast_flooding is defined and item.ipv6_unknown_multicast_flooding != '' else omit }}"
+        layer2_stretch: "{{ item.l2stretch if item.l2stretch is defined and item.l2stretch != '' else omit }}"
         intersite_bum_traffic: "{{ item.intersiteBumTrafficAllow if item.intersiteBumTrafficAllow is defined and item.intersiteBumTrafficAllow != '' else omit }}"
-        layer2_unknown_unicast: "{{ item.l2_unknown_unicast  if item.l2_unknown_unicast is defined and item.l2_unknown_unicast != '' else omit }}"
-        vrf:
-          name : "{{ item.vrf_name  }}"
-          schema: "{{ item.vrf_schema_name }}"
-          template: "{{ item.vrf_template_name }}"
-        state: "{{ item.status if item.status is defined else omit }}"
-        bd : "{{ item.name }}"
+        layer3_multicast: "{{ item.layer3_multicast if item.layer3_multicast is defined and item.layer3_multicast != '' else omit }}"
+        optimize_wan_bandwidth:  "{{ item.optimizeWanBandwidth if item.optimizeWanBandwidth is defined and item.optimizeWanBandwidth != '' else omit }}"
         arp_flooding: "{{ item.arp_flooding if item.arp_flooding is defined and item.arp_flooding != '' else omit }}"
+        multi_destination_flooding: "{{ item.multi_destination_flooding if item.multi_destination_flooding is defined and item.multi_destination_flooding != '' else omit }}"
         unicast_routing: "{{ item.unicast_routing if item.unicast_routing is defined and item.unicast_routing != '' else omit }}"
+        unknown_multicast_flooding: "{{ item.unknown_multicast_flooding if item.unknown_multicast_flooding is defined and item.unknown_multicast_flooding != '' else omit }}"
+        virtual_mac_address: "{{ item.virtual_mac_address if item.virtual_mac_address is defined and item.virtual_mac_address != '' else omit }}"
+        vrf:
+          name : "{{ item.vrf  }}"
+          schema: "{{ item.vrf_schema }}"
+          template: "{{ item.vrf_template }}"
+        state: "{{ item.status if item.status is defined else omit }}"
       loop: "{{ bridge_domain  }}"
       when: bridge_domain is defined
 
@@ -34,30 +41,31 @@
         subnet: "{{ item.gateway_ip }}"
         scope: "{{ item.subnet_scope }}"
         shared: "{{ item.shared if item.shared is defined and item.shared != '' else omit }}"
-        state: "{{ item.status if item.status is defined else omit }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ bridge_domain_subnet }}"
-      when: bridge_domain_subnet is defined and item.site_name == ''
+      when: bridge_domain_subnet is defined and item.site == ''
 
     - name: Add Non Streched BD to the Site
       cisco.mso.mso_schema_site_bd:
-        site: "{{ item.site_name }}"
-        schema: "{{ item.schema_name }}"
-        template: "{{ item.template_name }}"
-        bd: "{{ item.bd_name }}"
-        state: "{{ item.status if item.status is defined else omit }}"
+        site: "{{ item.site }}"
+        schema: "{{ item.schema }}"
+        template: "{{ item.template }}"
+        bd: "{{ item.bridge_domain }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ bridge_domain_subnet  }}"
-      when: bridge_domain_subnet is defined and item.site_name != ''
+      when: bridge_domain_subnet is defined and item.site != ''
 
     - name: Add a new subnet to a Non Stretched BD
       cisco.mso.mso_schema_site_bd_subnet:
-        schema: "{{ item.schema_name }}"
-        template: "{{ item.template_name }}"
+        schema: "{{ item.schema }}"
+        template: "{{ item.template}}"
         description: "{{ item.description if item.status is defined else omit }}"
-        bd: "{{ item.bd_name }}"
-        subnet: "{{ item.gateway_ip }}"
+        bd: "{{ item.bridge_domain }}"
+        subnet: "{{ item.bd_subnet }}"
         scope: "{{ item.subnet_scope }}"
         shared: "{{ item.shared if item.shared is defined and item.shared != '' else omit }}"
-        state: "{{ item.status if item.status is defined else omit }}"
-        site: "{{ item.site_name }}"
+        site: "{{ item.site }}"
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+
       loop: "{{ bridge_domain_subnet }}"
-      when: bridge_domain_subnet is defined and item.site_name != ''
+      when: bridge_domain_subnet is defined and item.site != ''

@@ -74,23 +74,23 @@ def excel_to_yaml():
                         }
                     )
 
-        elif 'mso_controller' in sheets_hosts:
-            excel = pandas.read_excel(excel_file, 'mso_controller', engine='openpyxl')
+        elif 'nd' in sheets_hosts:
+            excel = pandas.read_excel(excel_file, 'nd', engine='openpyxl')
             ndo_dir.append(excel_to_yaml_config.ndo_output_dir)
-            host = excel['mso_hostname'][0]
+            host = excel['nexus_dashboard'][0]
             output_dir = excel_to_yaml_config.ndo_output_dir
-            if excel['mso_hostname'].isnull()[0] == False:
-                nd_hosts['all']['children']['nd']['hosts'][excel['mso_hostname'][0]] = {
+            if excel['nexus_dashboard'].isnull()[0] == False:
+                nd_hosts['all']['children']['nd']['hosts'][excel['nexus_dashboard'][0]] = {
                     'ansible_host': str(excel['oob_ipv4'][0]).split('/')[0]
                 }
                 if excel['username'].isnull()[0] == False:
-                    nd_hosts['all']['children']['nd']['hosts'][excel['mso_hostname'][0]].update(
+                    nd_hosts['all']['children']['nd']['hosts'][excel['nexus_dashboard'][0]].update(
                         {
                             'ansible_user': excel['username'][0]
                         }
                     )
                 if excel['password'].isnull()[0] == False:
-                    nd_hosts['all']['children']['nd']['hosts'][excel['mso_hostname'][0]].update(
+                    nd_hosts['all']['children']['nd']['hosts'][excel['nexus_dashboard'][0]].update(
                         {
                             'ansible_password': excel['password'][0]
                         }

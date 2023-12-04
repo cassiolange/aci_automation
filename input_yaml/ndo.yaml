@@ -710,11 +710,11 @@ epg:
       column: node1
     node2:
       type: formula_static
-      formula: =IF(OR(epg_static_binding[[#This Row],[type]]="vpc", epg_static_binding[[#This Row],[type]]="Fex_vPC"),_xlfn.XLOOKUP(epg_static_binding[[#This Row],[interface_policy_group]],interfaces[interface_policy],interfaces[node2]),"")
+      formula: =IF(OR(epg_static_binding[[#This Row],[type]]="vpc", epg_static_binding[[#This Row],[type]]="Fex_vPC"),_xlfn.XLOOKUP(epg_static_binding[[#This Row],[interface_policy_group]],interfaces[name],interfaces[node2]),"")
     interface_policy_group:
       type: data_validation_from_worksheet
       source: interfaces
-      column: interface_policy
+      column: name
     leaf_port:
     fex:
     deploy_immediacy:

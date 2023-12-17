@@ -2931,13 +2931,13 @@ interface_disable:
       column: name
     node_id:
       type: xlookup
-      lookup_field: node
+      lookup_field: name
       match_field: name
       return_field: node_id
       source_table: node_provisioning
     pod_id:
       type: xlookup
-      lookup_field: node
+      lookup_field: name
       match_field: name
       return_field: pod_id
       source_table: node_provisioning

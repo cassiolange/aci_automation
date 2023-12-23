@@ -1464,6 +1464,10 @@ l3out_interfaces:
     tint: 0.5999938962981048
   category: L3Out
   playbook: 8.l3out.yml
+data_source:
+  version:
+    name: aci
+    version: 1.0
 
 
 

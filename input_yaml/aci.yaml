@@ -2964,3 +2964,6 @@ data_source:
     formula: interface_policy_group[name]
   - name: fabric_interface_policy_grp
     formula: fabric_interface_policy_group[name]
+  version:
+    name: aci
+    version: 1.0

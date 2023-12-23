@@ -1,0 +1,196 @@
+equipment_types:
+- equipment_type: N9K-C9364C
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C93108TC-EX
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C93108TC-FX
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C93120TX
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C93128TX
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C93180LC-EX
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C93180YC-EX
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C93180YC-FX
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C93240YC-FX2
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C9332C
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C9332PQ
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C9336C-FX2
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C9336PQ
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C9348GC-FXP
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C9396PX
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C9396TX
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C9316D-GX
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C93600CD-GX
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C9364C-GX
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C9504-B3
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C9504-B3-E
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C9508-B3
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C9508-B3-E
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: N9K-C95016-B3-E
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: APIC-SERVER-M3
+  installation_guide: https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/server/M3-L3-server/APIC-M3-L3-Server.html
+- equipment_type: APIC-SERVER-L3
+  installation_guide: https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/server/M3-L3-server/APIC-M3-L3-Server.html
+- equipment_type: APIC-SERVER-M2
+  installation_guide: https://www.cisco.com/c/en/us/support/cloud-systems-management/application-policy-infrastructure-controller-apic/tsd-products-support-series-home.html#Install_and_Upgrade_Guides
+- equipment_type: APIC-SERVER-L2
+  installation_guide: https://www.cisco.com/c/en/us/support/cloud-systems-management/application-policy-infrastructure-controller-apic/tsd-products-support-series-home.html#Install_and_Upgrade_Guides
+- equipment_type: N9372PX-E
+  installation_guide: https://www.cisco.com/c/en/us/support/switches/nexus-9000-series-switches/products-installation-guides-list.html
+- equipment_type: UCS C-Serie
+  installation_guide: https://www.cisco.com/c/en/us/support/servers-unified-computing/ucs-c-series-rack-servers/products-installation-guides-list.html
+- equipment_type: UCS 6400 FI
+  installation_guide: https://www.cisco.com/c/en/us/support/servers-unified-computing/ucs-6400-series-fabric-interconnects/products-installation-guides-list.html
+- equipment_type: UCS 6300 FI
+  installation_guide: https://www.cisco.com/c/en/us/support/servers-unified-computing/ucs-6300-series-fabric-interconnects/tsd-products-support-series-home.html
+- equipment_type: UCS 6200 FI
+  installation_guide: https://www.cisco.com/c/en/us/support/servers-unified-computing/ucs-6200-series-fabric-interconnects/tsd-products-support-series-home.html
+- equipment_type: UCS 6100 FI
+  installation_guide: https://www.cisco.com/c/en/us/support/servers-unified-computing/ucs-6100-series-fabric-interconnects/tsd-products-support-eol-series-home.html
+- equipment_type: ASR9K
+  installation_guide: https://www.cisco.com/c/en/us/support/routers/asr-9000-series-aggregation-services-routers/products-installation-guides-list.html
+- equipment_type: ASR1K
+  installation_guide: https://www.cisco.com/c/en/us/support/routers/asr-1000-series-aggregation-services-routers/products-installation-guides-list.html\
+- equipment_type: C9200-48T-E
+  installation_guide: https://www.cisco.com/c/en/us/products/collateral/switches/catalyst-9200-series-switches/nb-06-cat9200-ser-data-sheet-cte-en.html
+- equipment_type: FW
+  installation_guide: ''
+- equipment_type: LB
+  installation_guide: ''
+- equipment_type: Compute
+  installation_guide: ''
+- equipment_type: Nexus Dashboard
+  installation_guide: ''
+access_spine_policy_group:
+- bfd_ipv4_policy: default
+  bfd_ipv6_policy: default
+  copp_pre_filter: default
+  copp_spine_policy: default
+  name: ACCESS_SPINE_PolGrp
+access_leaf_policy_group:
+- bfd_ipv4_policy: default
+  bfd_ipv6_policy: default
+  copp_pre_filter_policy: default
+  do1x_node_auth_policy: default
+  fast_link_failover_policy: default
+  fibre_channel_node_policy: default
+  fibre_channel_san_policy: default
+  forward_scale_profile: default
+  leaf_copp_policy: default
+  monitoring_policy: default
+  name: ACCESS_LEAF_PolGrp
+  netflow_node_policy: default
+  spanning_tree_policy: default
+power_supply_policy:
+- description: Combined power supply redundancy
+  name: POWER_COMBINED
+  power_state: comb
+- description: N + 1 power supply redundancy
+  name: POWER_N_PLUS_1
+  power_state: ps-rdn
+- description: N+N power supply redundancy
+  name: POWER_N_PLUS_N
+  power_state: rdn
+node_control:
+- description:
+  enable_dom: 'yes'
+  feature_selection: telemetry
+  name: FAB_NODE_Cntrl
+  status: present
+fabric_spine_policy_group:
+- callhome_policy: default
+  core_export_policy: default
+  monitoring_policy: default
+  name: FAB_SPINE_PolGrp
+  node_control_policy: FAB_NODE_Cntrl
+  power_supply_policy: POWER_N_PLUS_N
+  status: present
+  techsupport_export_policy: default
+fabric_leaf_policy_group:
+- callhome_policy: default
+  core_export_policy: default
+  description: Leaf node fabric policy group
+  monitoring_policy: default
+  name: FAB_LEAF_PolGrp
+  node_control_policy: FAB_NODE_Cntrl
+  power_supply_policy: POWER_N_PLUS_N
+  status: present
+  techsupport_export_policy: default
+pod_policy_group:
+- coop_pol: default
+  date_time_pol: default
+  description: Default Pod Policy Group
+  isis_pol: default
+  macsec_pol: default
+  name: POD_PolGrp
+  snmp_pol: default
+pod_profile:
+- description: Default Pod Policy Profile
+  name: default
+inb_mgmt_epg:
+- bridge_domain: inb
+  name: default
+apic_con_pref:
+- apic_connectivity_preference: ooband
+dscp_cos_translation:
+- translation_policy_state: disabled
+  level1: CS1
+  level2: CS2
+  level3: CS3
+  level4: AF11
+  level5: AF21
+  level6: AF31
+  policy_plane: CS4
+  span: CS5
+  traceroute: CS6
+  control_plane: CS0
+tenant:
+- name: mgmt
+  description: Built-in Tenant
+  status: ignored
+- name: infra
+  description: Built-in Tenant
+  status: ignored
+- name: common
+  description: Built-in Tenant
+  status: ignored
+vrf:
+- name: inb
+  tenant: mgmt
+  description: Built-in VRF
+  status: ignored
+- name: default
+  tenant: common
+  description: Built-in VRF
+  status: ignored
+- name: overlay-1
+  tenant: infra
+  description: Built-in VRF
+  status: ignored
+- name: oob
+  tenant: mgmt
+  description: Built-in VRF
+  status: ignored
+bridge_domain:
+  - name: inb
+    status: ignored

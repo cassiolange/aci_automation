@@ -9,7 +9,7 @@ from openpyxl.worksheet.table import TableStyleInfo, Table, TableFormula
 from openpyxl.styles import Color, PatternFill
 from openpyxl.workbook.defined_name import DefinedName
 from openpyxl.styles.borders import Border, Side
-from openpyxl import load_workbook
+from openpyxl import load_workbook, Workbook
 from openpyxl.worksheet.dimensions import ColumnDimension
 
 import yaml
@@ -339,6 +339,12 @@ def build_columns_dict(workbook, worksheet, table=None):
         columns_name.update({column.name: len(columns_name)})
     return columns_name
 
+def create_simple_table(worksheet, table_name, size):
+    table_style = create_table_style()
+    table = Table(displayName=table_name, ref=size)
+    table.tableStyleInfo = table_style
+    worksheet.add_table(table)
+    return worksheet
 
 def create_data_source_sheet(input_yaml, workbook, sheet_name='data_source'):
     for value in input_yaml[sheet_name]:
@@ -346,6 +352,18 @@ def create_data_source_sheet(input_yaml, workbook, sheet_name='data_source'):
             case 'defined_names':
                 for defined_name in input_yaml[sheet_name]['defined_names']:
                     workbook = create_defined_names(workbook=workbook, name=defined_name['name'] , formula=defined_name['formula'])
+            case 'version':
+                if not sheet_name in workbook:
+                    workbook.create_sheet(title=sheet_name)
+                ws = workbook[sheet_name]
+                col = ws.max_column + 1
+                ws.cell(column=col, row=1, value='version')
+                ws.cell(column=col, row=2, value=input_yaml[sheet_name]['version']['name'])
+                ws.cell(column=col, row=3, value=input_yaml[sheet_name]['version']['version'])
+
+                table_size = get_column_letter(col) + '1:' + get_column_letter(col) + '3'
+                ws = create_simple_table(worksheet=ws, table_name='version', size=table_size)
+
 
     return workbook
 
@@ -366,6 +384,8 @@ def create_build_tasks(workbook, input_yaml):
         'theme': 0,
         'tint': -0.1499984740745262
     }
+    if 'build_tasks' in workbook:
+        del workbook['build_tasks']
     worksheet = workbook.create_sheet(title='build_tasks', index=0)
     build_tasks_columns, build_tasks_description = sanitize_columns(input_yaml['build_tasks']['build_tasks'])
     worksheet = set_tab_color(worksheet=worksheet, color=input_yaml['build_tasks']['tab_color'])
@@ -435,6 +455,96 @@ def type_and_version(workbook):
         logging.info('Unable to determine the Automation Type, exiting.')
         exit(0)
 
+def load_default_data(automation_type, auxiliar_folder, workbook):
+    aux_file = auxiliar_folder + automation_type + '.yaml'
+    if os.path.exists(aux_file):
+        logging.info(f'Opening auxiliary input file {aux_file}')
+    else:
+        logging.info(f'Auxiliary input file not exist {aux_file}')
+        return workbook
+
+
+    colums_to_resize = {}
+    file = open(aux_file)
+    file_yaml = yaml.safe_load(file)
+    for sheet in file_yaml:
+        if sheet in workbook:
+            row = 2
+            worksheet = workbook[sheet]
+            colums_to_resize.update({sheet: []})
+            for entry in file_yaml[sheet]:
+                for column in entry:
+                    if column not in colums_to_resize[sheet]:
+                        colums_to_resize[sheet].append(column)
+                    column_letter = get_column_letter(worksheet.tables[sheet].column_names.index(column) + 1)
+                    worksheet[column_letter+str(row)] = entry[column]
+                row = row + 1
+            current_table_size = worksheet.tables[sheet].ref
+            new_table_size = current_table_size.split(':')[0] + ':' + current_table_size.split(':')[1][0] + str(row - 1)
+            worksheet.tables[sheet].ref = new_table_size
+
+        else:
+            sys.exit('Worksheet %s doesn\'t exist in the workbook' % sheet_name)
+
+    for sheet in colums_to_resize:
+        worksheet = workbook[sheet]
+        for column_name in colums_to_resize[sheet]:
+            column_width = 0
+            column_letter = get_column_letter(worksheet.tables[sheet].column_names.index(column_name)+1)
+            for row in range(1, worksheet.max_row + 1):
+                if worksheet[column_letter+str(row)].value:
+                    if len(worksheet[column_letter+str(row)].value) > column_width:
+                        column_width = len(worksheet[column_letter+str(row)].value)
+                if worksheet.column_dimensions[column_letter].width < column_width+4:
+                    worksheet.column_dimensions[column_letter].width = column_width+4
+            for dv in worksheet.data_validations.dataValidation:
+                if column_letter + '2' in dv.sqref:
+                    dv.sqref.remove(column_letter + '2')
+                    dv.sqref.add(column_letter +'2:'+column_letter + str(worksheet.max_row))
+    return workbook
+def create_excel_file(input_file, input_folder, output, overwrite=False):
+    build_tasks = {}
+
+    input_yaml = open_yaml_file(input_yaml_file=input_folder + input_file + '.yaml')
+
+
+    if os.path.isfile(output) and overwrite == True:
+        logging.info(f'Excel file {output} already exist, but overwrite is set to True, replacing the file.')
+    elif os.path.isfile(output) and overwrite == False:
+        logging.info(f'Excel file {output} already exist and overwrite is set to False. Exiting...')
+        sys.exit(-1)
+
+
+    wb = Workbook()
+    wb.remove(wb.active)
+
+    if 'build_task' in input_yaml:
+        input_yaml.pop('build_task')
+    if 'data_source' in input_yaml:
+        input_yaml.pop('data_source')
+
+    for category in input_yaml:
+        sheets, ignore_build_tasks, color, category_name, playbook = sanitize_category(input_yaml[category])
+
+        for sheet_name in sheets:
+            columns, build_tasks_description = sanitize_columns(sheets[sheet_name])
+            ws = wb.create_sheet(title=sheet_name)
+
+            match sheet_name:
+                case other:
+                    if not ignore_build_tasks:
+                        build_tasks.update({sheet_name: ''})
+                        if color:
+                            ws = set_tab_color(worksheet=ws, color=color)
+                            build_tasks[sheet_name] = color
+                    create_table(worksheet=ws, table_name=sheet_name, columns=columns)
+
+                    process_sheet_fields(ws=wb[sheet_name], sheet_name=sheet_name, input_yaml=sheets)
+
+    return wb
+
+
+
 def main():
     parser = argparse.ArgumentParser(description="Script to Update and Fix the Excel File.")
     parser.add_argument("excel_file_location", type=str, help="Location of the ACI Excel File EX:../spreedsheets/aci_build.xlsx")
@@ -442,40 +552,56 @@ def main():
     parser.add_argument("--recreate_build_tasks", default=False, action="store_true", help="Recreate the Build Tasks sheet")
     parser.add_argument("--create_backup", default=True, action="store_true", help="Make a copy of the Excel File")
     parser.add_argument("--input_yaml_folder", type=str, default='../input_yaml/', help=argparse.SUPPRESS)
+    parser.add_argument("--input_auxiliary_yaml_folder", type=str, default='../auxiliary_files/', help=argparse.SUPPRESS)
     parser.add_argument("--fix_tab_color", default=False, action="store_true", help="Correct the color of the Excel tabs")
     parser.add_argument("--update_all", default=False, action="store_true", help="Update all sheets in the Excel File")
     parser.add_argument("--output_file_location", type=str, default='', help="Output file, if left blank, equals the input file.")
+    parser.add_argument("--create_excel_file", required=False, choices=['ndo','aci'], help="Create new excel file")
 
 
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s', handlers=[logging.FileHandler('excel_file.log'), logging.StreamHandler()])
-    if args.create_backup:
-        create_backup(file=args.excel_file_location)
-    workbook = open_excel_file(args.excel_file_location)
-    automation_type, excel_version = type_and_version(workbook=workbook)
-
-
-    input_yaml = open_yaml_file(input_yaml_file=args.input_yaml_folder+automation_type+'.yaml')
-    if 'data_source' in input_yaml:
-        workbook = create_data_source_sheet(input_yaml=input_yaml, workbook=workbook)
-        input_yaml.pop('data_source')
-    workbook = fix_tables_yaml_based(workbook=workbook, input_yaml=input_yaml, fix_tab_color=args.fix_tab_color, update_all_fields=args.update_all)
-
-    if args.recreate_build_tasks:
-        del workbook['build_tasks']
-        input_yaml = open_yaml_file(input_yaml_file=args.input_yaml_folder+automation_type+'.yaml')
+    if args.create_excel_file:
+        workbook = create_excel_file(input_file=args.create_excel_file, input_folder=args.input_yaml_folder, output=args.excel_file_location)
+        # ####process auxiliar file
+        workbook = load_default_data(workbook=workbook, automation_type=args.create_excel_file, auxiliar_folder=args.input_auxiliary_yaml_folder)
+        # #create_build_tasks
+        input_yaml = open_yaml_file(input_yaml_file=args.input_yaml_folder + args.create_excel_file + '.yaml')
         if 'data_source' in input_yaml:
+            workbook = create_data_source_sheet(input_yaml=input_yaml, workbook=workbook)
             input_yaml.pop('data_source')
         workbook = create_build_tasks(workbook=workbook, input_yaml=input_yaml)
-
-    if args.rearrange_tabs:
-        workbook._sheets.sort(key=reorder_tabs)
-
-    if args.output_file_location:
-        workbook.save(args.output_file_location)
-    else:
         workbook.save(args.excel_file_location)
+
+    else:
+        if args.create_backup:
+            create_backup(file=args.excel_file_location)
+        workbook = open_excel_file(args.excel_file_location)
+        automation_type, excel_version = type_and_version(workbook=workbook)
+
+
+        input_yaml = open_yaml_file(input_yaml_file=args.input_yaml_folder+automation_type+'.yaml')
+        if 'data_source' in input_yaml:
+            del workbook['data_source']
+            workbook = create_data_source_sheet(input_yaml=input_yaml, workbook=workbook)
+            input_yaml.pop('data_source')
+        workbook = fix_tables_yaml_based(workbook=workbook, input_yaml=input_yaml, fix_tab_color=args.fix_tab_color, update_all_fields=args.update_all)
+
+        if args.recreate_build_tasks:
+            del workbook['build_tasks']
+            input_yaml = open_yaml_file(input_yaml_file=args.input_yaml_folder+automation_type+'.yaml')
+            if 'data_source' in input_yaml:
+                input_yaml.pop('data_source')
+            workbook = create_build_tasks(workbook=workbook, input_yaml=input_yaml)
+
+        if args.rearrange_tabs:
+            workbook._sheets.sort(key=reorder_tabs)
+
+        if args.output_file_location:
+            workbook.save(args.output_file_location)
+        else:
+            workbook.save(args.excel_file_location)
 
 
 

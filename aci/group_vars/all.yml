@@ -1,2 +1,3 @@
 validate_certs: false
-diff_mode_enabled: false
+diff_mode_enabled: true
+automation_type: aci

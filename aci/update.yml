@@ -11,7 +11,7 @@
       when: diff_mode_enabled == false
 
     - name: Update host vars - Diff mode
-      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode diff_mode
       delegate_to: localhost
       when: diff_mode_enabled == true
 

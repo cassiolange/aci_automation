@@ -23,6 +23,11 @@
       loop: "{{ vlan_pool }}"
       when: vlan_pool is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets vlan_pool --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: vlan_pool is defined and diff_mode_enabled == true
+
     - name: Add a new VLAN encap block
       cisco.aci.aci_vlan_pool_encap_block:
         <<: *aci_login
@@ -36,6 +41,11 @@
       delegate_to: localhost
       loop: "{{ vlan_encap_block }}"
       when: vlan_encap_block is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets vlan_encap_block --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: vlan_encap_block is defined and diff_mode_enabled == true
 
     - name: Add a new Domain (physical and external routed)
       cisco.aci.aci_domain:
@@ -61,6 +71,11 @@
       loop: "{{ domain }}"
       when: domain is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets domain --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: domain is defined and diff_mode_enabled == true
+
     - name: Add a new AEP
       cisco.aci.aci_aep:
         <<: *aci_login
@@ -71,6 +86,11 @@
       delegate_to: localhost
       loop: "{{ aaep }}"
       when: aaep is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets aaep --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: aaep is defined and diff_mode_enabled == true
 
     - name: Add AEP to domain binding (physical and external routed)
       cisco.aci.aci_aep_to_domain:
@@ -84,6 +104,11 @@
       loop: "{{ aaep_domain_association }}"
       when: aaep_domain_association is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets aaep_domain_association --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: aaep_domain_association is defined and diff_mode_enabled == true
+
     - name: Create CDP Interface Policy to enable CDP
       cisco.aci.aci_interface_policy_cdp:
         <<: *aci_login
@@ -94,6 +119,11 @@
       delegate_to: localhost
       loop: "{{ intpol_cdp }}"
       when: intpol_cdp is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets intpol_cdp --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: intpol_cdp is defined and diff_mode_enabled == true
 
     - name: Add a Layer 2 interface policy
       cisco.aci.aci_interface_policy_l2:
@@ -106,6 +136,11 @@
       delegate_to: localhost
       loop: "{{ intpol_l2 }}"
       when: intpol_l2 is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets intpol_l2 --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: intpol_l2 is defined and diff_mode_enabled == true
 
     - name: Add a Link Level Policy
       cisco.aci.aci_rest:
@@ -122,6 +157,11 @@
       loop: "{{ intpol_link }}"
       when: intpol_link is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets intpol_link --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: intpol_link is defined and diff_mode_enabled == true
+
     - name: Add a LLDP interface policy
       cisco.aci.aci_interface_policy_lldp:
         <<: *aci_login
@@ -134,6 +174,11 @@
       loop: "{{ intpol_lldp }}"
       when: intpol_lldp is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets intpol_lldp --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: intpol_lldp is defined and diff_mode_enabled == true
+
     - name: Add a MCP interface policy
       cisco.aci.aci_interface_policy_mcp:
         <<: *aci_login
@@ -144,6 +189,11 @@
       delegate_to: localhost
       loop: "{{ intpol_mcp }}"
       when: intpol_mcp is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets intpol_mcp --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: intpol_mcp is defined and diff_mode_enabled == true
 
     - name: Add a port channel interface policy
       cisco.aci.aci_interface_policy_port_channel:
@@ -161,6 +211,11 @@
       delegate_to: localhost
       loop: "{{ intpol_port_channel }}"
       when: intpol_port_channel is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets intpol_port_channel --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: intpol_port_channel is defined and diff_mode_enabled == true
 
     - name: Add Storm Control interface policy
       cisco.aci.aci_rest:
@@ -182,6 +237,11 @@
       with_items: "{{ intpol_storm }}"
       when: intpol_storm is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets intpol_storm --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: intpol_storm is defined and diff_mode_enabled == true
+
     - name: Add Spanning Tree interface policy
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -196,6 +256,11 @@
       delegate_to: localhost
       with_items: "{{ intpol_stp }}"
       when: intpol_stp is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets intpol_stp --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: intpol_stp is defined and diff_mode_enabled == true
 
     - name: Create a Leaf Interface Policy Group
       cisco.aci.aci_interface_policy_leaf_policy_group:
@@ -240,6 +305,11 @@
       with_items: "{{ interface_policy_group }}"
       when: interface_policy_group is defined and item.switch_type == 'spine'
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets interface_policy_group --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: interface_policy_group is defined and diff_mode_enabled == true
+
     - name: Add a new Leaf interface profile
       cisco.aci.aci_interface_policy_leaf_profile:
         <<: *aci_login
@@ -265,6 +335,11 @@
       delegate_to: localhost
       with_items: "{{ interface_profile }}"
       when: interface_profile is defined and item.profile_type == 'spine'
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets interface_profile --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: interface_profile is defined and diff_mode_enabled == true
 
     - name: Associating an Leaf interface selector profile to a switch policy leaf profile
       cisco.aci.aci_interface_selector_to_switch_policy_leaf_profile:
@@ -292,6 +367,11 @@
       delegate_to: localhost
       with_items: "{{ associate_switchprof_intprof }}"
       when: associate_switchprof_intprof is defined and item.switch_profile_type == 'spine'
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets associate_switchprof_intprof --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: associate_switchprof_intprof is defined and diff_mode_enabled == true
 
     - name: Create an Interface Access Port Selector to an Interface Policy Leaf Profile with a Policy Group
       cisco.aci.aci_access_port_to_interface_policy_leaf_profile:
@@ -346,6 +426,11 @@
       loop: "{{ interface_selector }}"
       when: interface_selector is defined and item.interface_profile_type == 'spine'
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets interface_selector --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: interface_selector is defined and diff_mode_enabled == true
+
     - name: Error Disabled Recovery Policy
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -365,6 +450,11 @@
       with_items: "{{ err_disabled_recovery_policy }}"
       when: err_disabled_recovery_policy is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets err_disabled_recovery_policy --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: err_disabled_recovery_policy is defined and diff_mode_enabled == true
+
     - name: MCP Instance Policy
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -379,6 +469,11 @@
       delegate_to: localhost
       with_items: "{{ mcp_instance_policy }}"
       when: mcp_instance_policy is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets mcp_instance_policy --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: mcp_instance_policy is defined and diff_mode_enabled == true
 
     - name: Interface Description
       cisco.aci.aci_interface_description:
@@ -412,6 +507,11 @@
       loop: "{{ interface_description }}"
       when: interface_description is defined and item.interface.lower() == "mgmt0"
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets interface_description --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: interface_description is defined and diff_mode_enabled == true
+
     - name: Add a new Fex interface profile
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -430,6 +530,11 @@
       delegate_to: localhost
       with_items: "{{ fex_interface_profile }}"
       when: fex_interface_profile is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets fex_interface_profile --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: fex_interface_profile is defined and diff_mode_enabled == true
 
     - name: Associate an access port block (single port) to an FEX interface profile
       cisco.aci.aci_rest:
@@ -451,6 +556,11 @@
       with_items: "{{ fex_uplinks }}"
       when: fex_uplinks is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets fex_uplinks --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: fex_uplinks is defined and diff_mode_enabled == true
+
     - name: Preserve 802.1P Class of Service
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -469,6 +579,11 @@
       delegate_to: localhost
       with_items: "{{ dot1p_preserve }}"
       when: dot1p_preserve is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets dot1p_preserve --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: dot1p_preserve is defined and diff_mode_enabled == true
 
     - name: Configure QoS Classes
       cisco.aci.aci_rest:
@@ -500,6 +615,11 @@
       with_items: "{{ qos_classes }}"
       when: qos_classes is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets qos_classes --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: qos_classes is defined and diff_mode_enabled == true
+
     - name: Add Access Data Plane Policing policy
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -524,6 +644,11 @@
       delegate_to: localhost
       with_items: "{{ access_dpp_policy }}"
       when: access_dpp_policy is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets access_dpp_policy --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: access_dpp_policy is defined and diff_mode_enabled == true
 
     - name: Add Access SPAN Destination Group
       cisco.aci.aci_rest:
@@ -556,6 +681,11 @@
       delegate_to: localhost
       with_items: "{{ access_span_destination }}"
       when: access_span_destination is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets access_span_destination --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: access_span_destination is defined and diff_mode_enabled == true
 
     - name: Add Access SPAN Source Group
       cisco.aci.aci_rest:
@@ -592,6 +722,11 @@
       delegate_to: localhost
       with_items: "{{ access_span_source_group }}"
       when: access_span_source_group is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets access_span_source_group --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: access_span_source_group is defined and diff_mode_enabled == true
 
     - name: Configure interfaces using per-port configuration
       cisco.aci.aci_rest:
@@ -646,6 +781,11 @@
       loop: "{{ interface_configuration }}"
       when: interface_configuration is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets interface_configuration --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: interface_configuration is defined and diff_mode_enabled == true
+
     - name: Switch Configuration
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -695,6 +835,11 @@
       with_items: "{{ switch_configuration }}"
       when: switch_configuration is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets switch_configuration --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: switch_configuration is defined and diff_mode_enabled == true
+
     - name: Create an Fex Interface Access Port Selector to an Interface Policy Leaf Profile with a Policy Group
       cisco.aci.aci_access_port_to_interface_policy_leaf_profile:
         <<: *aci_login
@@ -724,3 +869,8 @@
       delegate_to: localhost
       loop: "{{ interface_selector_fex }}"
       when: interface_selector_fex is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets interface_selector_fex --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: interface_selector_fex is defined and diff_mode_enabled == true

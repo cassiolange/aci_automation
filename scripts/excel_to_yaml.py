@@ -7,6 +7,8 @@ import glob
 import argparse
 import logging
 import sys
+import re
+from deepdiff import DeepDiff
 
 
 def list_all_excel_files():
@@ -226,35 +228,161 @@ def create_ansible_hosts_data(data):
                 logging.error(msg='Unable to Create the host data file for ACI, aborting')
                 sys.exit('Unable to Create the host data file for NDO, aborting')
 
+def create_ansible_hosts_data_full(data):
+    folder = {
+        'aci': excel_to_yaml_config.aci_output_dir,
+        'ndo': excel_to_yaml_config.ndo_output_dir
+    }
+    if 'aci' in data:
+        output_dir = folder['aci'] + '/host_vars/diff_mode/'
+        if not os.path.exists(output_dir):
+            os.mkdir(folder['aci']+'/host_vars/diff_mode/')
+        for hostname in data['aci']:
+            try:
+                file = open(output_dir+hostname+'_full.yaml', 'w')
+                yaml.dump(data['aci'][hostname], file)
+            except:
+                logging.error(msg='Unable to Create the host data file for ACI, aborting')
+                sys.exit('Unable to Create the host data file for ACI, aborting')
+
+    if 'ndo' in data:
+        output_dir = folder['ndo'] + '/host_vars/diff_mode/'
+        if not os.path.exists(output_dir):
+            os.mkdir(folder['ndo']+'/host_vars/diff_mode/')
+        for hostname in data['ndo']:
+            try:
+                file = open(output_dir+hostname+'_full.yaml', 'w')
+                yaml.dump(data['ndo'][hostname], file)
+            except:
+                logging.error(msg='Unable to Create the host data file for ACI, aborting')
+                sys.exit('Unable to Create the host data file for NDO, aborting')
+
 def normal_mode():
     yaml_data = excel_to_yaml()
     yaml_data = create_ansible_hosts(data=yaml_data)
     create_ansible_hosts_data(data=yaml_data)
 
 
-def update_status_file(hostname, sheets):
-    print(hostname)
+def update_status_file(hostname, sheets, automation_type):
+    folder = {
+        'aci': excel_to_yaml_config.aci_output_dir,
+        'ndo': excel_to_yaml_config.ndo_output_dir
+    }
+    pattern_values_changed = r"root\[(\d+)\]\['(\w+)'\]"
 
-def diff_input():
-    print('diff')
+    ###load full data vars:
+    try:
+        file = open(folder[automation_type]+'/host_vars/diff_mode/'+hostname+'_full.yaml')
+        current_yaml_data = yaml.safe_load(file)
+    except:
+        sys.exit("Failed to load current yaml data, aborting")
+    ####check if the current status file exist
+    if os.path.exists(folder[automation_type]+'/host_vars/diff_mode/'+hostname+'.yaml'):
+        file = open(folder[automation_type]+'/host_vars/diff_mode/'+ hostname+'.yaml')
+        status_yaml = yaml.safe_load(file)
+        file.close()
+        for sheet in sheets:
+            if status_yaml and sheet in status_yaml:
+                diff = DeepDiff(status_yaml[sheet], current_yaml_data[sheet], ignore_order=True)
+                if diff:
+                    if 'iterable_item_added' in diff:
+                        for item in diff['iterable_item_added']:
+                            status_yaml[sheet].append(diff['iterable_item_added'][item])
+                    if 'values_changed' in diff:
+                        for item in diff['values_changed']:
+                            re_result = re.search(pattern_values_changed, item)
+                            index = int(re_result.group(1))
+                            field = re_result.group(2)
+                            status_yaml[sheet][index][field] = diff['values_changed'][item]['new_value']
+            else:
+                status_yaml[sheet] = current_yaml_data[sheet]
+        file = open(folder[automation_type] + '/host_vars/diff_mode/' + hostname + '.yaml', 'w')
+        yaml.dump(status_yaml, file)
+        file.close()
+
+    else:
+        diff_yaml = {}
+        ###check if the folder diff mode folder exist, if not exist create
+        if not os.path.exists(folder[automation_type]+'/host_vars/diff_mode/'):
+            os.mkdir(folder[automation_type]+'/host_vars/diff_mode/')
+        for sheet in sheets:
+            diff_yaml[sheet] = current_yaml_data[sheet]
+        #write diff file
+        file = open(folder[automation_type]+'/host_vars/diff_mode/'+hostname+'.yaml','w')
+        yaml.dump(diff_yaml, file)
+        file.close()
+
+def diff_mode():
+    pattern = r"root\['(.*?)'\]"
+    pattern_values_changed = r"root\['(\w+)'\]\[(\d+)\]"
+
+    yaml_data = excel_to_yaml(only_yes=False)
+    yaml_data = create_ansible_hosts(data=yaml_data)
+    diff_dict = {}
+    folder = {
+        'aci': excel_to_yaml_config.aci_output_dir,
+        'ndo': excel_to_yaml_config.ndo_output_dir
+    }
+    if 'aci' in yaml_data:
+        diff_dict.update({'aci': {}})
+        for hostname in yaml_data['aci']:
+            diff_dict['aci'].update({hostname: {}})
+            if os.path.exists(folder['aci']+'/host_vars/diff_mode/'+hostname+'.yaml'):
+                file = open(folder['aci']+'/host_vars/diff_mode/'+hostname+'.yaml')
+                previous_data = yaml.safe_load(file)
+                diff = DeepDiff(previous_data, yaml_data['aci'][hostname], ignore_order=True)
+                if 'dictionary_item_added' in diff:
+                    for item in diff['dictionary_item_added']:
+                        key = re.search(pattern, item)[1]
+                        diff_dict['aci'][hostname][key] = yaml_data['aci'][hostname][key]
+                if 'values_changed' in diff:
+                    for item in diff['values_changed']:
+                        re_result = re.search(pattern_values_changed, item)
+                        key = re_result.group(1)
+                        index = int(re_result.group(2))
+                        if key not in diff_dict['aci'][hostname]:
+                            diff_dict['aci'][hostname][key] = []
+                        diff_dict['aci'][hostname][key].append(yaml_data['aci'][hostname][key][index])
+                if 'iterable_item_added' in diff:
+                    for item in diff['iterable_item_added']:
+                        key = re.search(pattern, item)[1]
+                        if key not in diff_dict['aci'][hostname]:
+                            diff_dict['aci'][hostname][key] = []
+                        diff_dict['aci'][hostname][key].append(diff['iterable_item_added'][item])
+            else:
+                logging.error(msg=f'Diff mode for {hostname} failed. No previous configuration found. Running in full mode')
+                diff_dict['aci'][hostname] = yaml_data['aci'][hostname]
+                # file = open(folder+hostname+'.yaml', 'w')
+                # # yaml.dump(yaml_data['aci'][hostname], file)
+                # # file.close()
+
+
+    create_ansible_hosts_data(data=diff_dict)
+    create_ansible_hosts_data_full(data=yaml_data)
+
 
 def main():
     start = time.time()
     logging.basicConfig(filename='excel_to_yaml.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
     parser = argparse.ArgumentParser(description="Script to Update and Fix the Excel File.")
-    parser.add_argument("--mode", required=False, choices=['normal', 'diff_input','update_status_file'], default='normal', help="Operation mode")
+    parser.add_argument("--mode", required=False, choices=['normal', 'diff_mode','update_status_file'], default='normal', help="Operation mode")
     parser.add_argument("--hostname", type=str, required=False, help="current_hostname")
     parser.add_argument("--sheets", required=False, type=str, nargs='+', help="list of sheets")
+    parser.add_argument("--automation_type", required=False, choices=['aci', 'ndo'], help="Automation Type")
 
     args = parser.parse_args()
     if args.mode == 'normal':
         logging.info(msg='Running in normal mode')
         normal_mode()
         logging.info(msg='Normal mode completed')
-    elif args.mode == 'diff_input':
-        diff_input()
+    elif args.mode == 'diff_mode':
+        logging.info(msg='Running in diff mode')
+        diff_mode()
+        logging.info(msg='Diff mode completed')
     else:
-        update_status_file(hostname=args.hostname, sheets=args.sheets)
+        logging.info(msg='Running in update status file mode')
+        update_status_file(hostname=args.hostname, sheets=args.sheets, automation_type=args.automation_type)
+        logging.info(msg='Update status file mode completed')
 
     logging.info(msg="Elapsed time %s" % str(time.time()-start))
 

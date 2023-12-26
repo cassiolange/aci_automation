@@ -13,7 +13,6 @@
     sheets:
       - tenant
       - vrf
-      - vrf
       - vrf_bgp_route_target
       - vrf_bgp_route_sum
       - vrf_bgp_route_sum_nodes
@@ -33,8 +32,6 @@
       - custom_qos_dot1p_to_priority
       - static_route_on_bd
 
-
-
   tasks:
 
     - name: Add a new tenant
@@ -46,6 +43,11 @@
       delegate_to: localhost
       loop: "{{ tenant }}"
       when: tenant is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets tenant --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: tenant is defined and diff_mode_enabled == true
 
     - name: Add a new VRF to a tenant
       cisco.aci.aci_vrf:
@@ -84,6 +86,11 @@
       loop: "{{ vrf }}"
       when: vrf is defined and item.bgp_context_ipv4 is defined and item.bgp_context_ipv4 != '' or item.bgp_context_ipv6 is defined and item.bgp_context_ipv6
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets vrf --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: vrf is defined and diff_mode_enabled == true
+
     - name: VRF BGP Route Target Profiles
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -105,6 +112,11 @@
       loop: "{{ vrf_bgp_route_target }}"
       when: vrf_bgp_route_target is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets vrf_bgp_route_target --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: vrf_bgp_route_target is defined and diff_mode_enabled == true
+
     - name: VRF BGP Route Summarization Policy
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -123,6 +135,11 @@
       delegate_to: localhost
       loop: "{{ vrf_bgp_route_sum }}"
       when: vrf_bgp_route_sum is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets vrf_bgp_route_sum --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: vrf_bgp_route_sum is defined and diff_mode_enabled == true
 
     - name: VRF BGP Route Summarization Policy - Nodes
       cisco.aci.aci_rest:
@@ -144,6 +161,11 @@
       delegate_to: localhost
       loop: "{{ vrf_bgp_route_sum_nodes }}"
       when: vrf_bgp_route_sum_nodes is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets vrf_bgp_route_sum_nodes --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: vrf_bgp_route_sum_nodes is defined and diff_mode_enabled == true
 
     - name: VRF BGP Route Summarization Policy - Subnet
       cisco.aci.aci_rest:
@@ -167,6 +189,11 @@
       delegate_to: localhost
       loop: "{{ vrf_bgp_route_sum_subnet }}"
       when: vrf_bgp_route_sum_subnet is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets vrf_bgp_route_sum_subnet --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: vrf_bgp_route_sum_subnet is defined and diff_mode_enabled == true
 
     - name: Add Bridge Domain
       cisco.aci.aci_bd:
@@ -192,6 +219,11 @@
       loop: "{{ bridge_domain }}"
       when: bridge_domain is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets bridge_domain --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: bridge_domain is defined and diff_mode_enabled == true
+
     - name: Create a subnet
       cisco.aci.aci_bd_subnet:
         <<: *aci_login
@@ -209,6 +241,11 @@
       loop: "{{ bd_subnet }}"
       when: bd_subnet is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets bd_subnet --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: bd_subnet is defined and diff_mode_enabled == true
+
     - name: Bind Bridge Domain to L3Out
       cisco.aci.aci_bd_to_l3out:
         <<: *aci_login
@@ -220,6 +257,11 @@
       loop: "{{ bd_l3out }}"
       when: bd_l3out is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets bd_l3out --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: bd_l3out is defined and diff_mode_enabled == true
+
     - name: Add a new AP
       cisco.aci.aci_ap:
         <<: *aci_login
@@ -230,6 +272,11 @@
       delegate_to: localhost
       loop: "{{ application_profile }}"
       when: application_profile is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets application_profile --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: application_profile is defined and diff_mode_enabled == true
 
     - name: Add a new EPG
       cisco.aci.aci_rest:
@@ -262,6 +309,11 @@
       loop: "{{ end_point_group }}"
       when: end_point_group is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets end_point_group --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: end_point_group is defined and diff_mode_enabled == true
+
     - name: Add a new physical domain to EPG binding
       cisco.aci.aci_epg_to_domain:
         <<: *aci_login
@@ -274,6 +326,11 @@
       delegate_to: localhost
       loop: "{{ epg_domain_association }}"
       when: epg_domain_association is defined and item.domainType == 'phys'
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets epg_domain_association --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: epg_domain_association is defined and diff_mode_enabled == true
 
     - name: Deploy Static Path binding for given EPG
       cisco.aci.aci_static_binding_to_epg:
@@ -296,6 +353,11 @@
       loop: "{{ epg_static_binding }}"
       when: epg_static_binding is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets epg_static_binding --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: epg_static_binding is defined and diff_mode_enabled == true
+
     - name: Add a new DHCP Relay Policy
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -310,6 +372,11 @@
       delegate_to: localhost
       loop: "{{ dhcp_relay_policy }}"
       when: dhcp_relay_policy is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets dhcp_relay_policy --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: dhcp_relay_policy is defined and diff_mode_enabled == true
 
     - name: Add a new provider to a DHCP Relay Policy
       cisco.aci.aci_rest:
@@ -332,6 +399,11 @@
       loop: "{{ dhcp_relay_policy_provider }}"
       when: dhcp_relay_policy_provider is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets dhcp_relay_policy_provider --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: dhcp_relay_policy_provider is defined and diff_mode_enabled == true
+
     - name: Create a new DHCP Relay Label to a Bridge Domain
       cisco.aci.aci_bd_dhcp_label:
         <<: *aci_login
@@ -343,6 +415,11 @@
       delegate_to: localhost
       loop: "{{ bd_dhcp }}"
       when: bd_dhcp is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets bd_dhcp --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: bd_dhcp is defined and diff_mode_enabled == true
 
     - name: Add a new Custom QoS Policy
       cisco.aci.aci_rest:
@@ -358,6 +435,11 @@
       delegate_to: localhost
       loop: "{{ custom_qos_policy }}"
       when: custom_qos_policy is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets custom_qos_policy --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: custom_qos_policy is defined and diff_mode_enabled == true
 
       # | int always return 0, not possible used default
       # item['target_cos'] | int | default("unspecified", true)
@@ -388,6 +470,11 @@
       loop: "{{ custom_qos_dscp_to_priority }}"
       when: custom_qos_dscp_to_priority is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets custom_qos_dscp_to_priority --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: custom_qos_dscp_to_priority is defined and diff_mode_enabled == true
+
     - name: Add a new Custom QoS Policy - DOT1P to Priority
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -415,6 +502,11 @@
       loop: "{{ custom_qos_dot1p_to_priority }}"
       when: custom_qos_dot1p_to_priority is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets custom_qos_dot1p_to_priority --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: custom_qos_dot1p_to_priority is defined and diff_mode_enabled == true
+
     - name: Add Tenant Data Plane Policing policy
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -440,6 +532,11 @@
       with_items: "{{ tenant_dpp_policy }}"
       when: tenant_dpp_policy is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets tenant_dpp_policy --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: tenant_dpp_policy is defined and diff_mode_enabled == true
+
     - name: Add a new Static Route on a Bridge Domain
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -462,3 +559,8 @@
       delegate_to: localhost
       loop: "{{ static_route_on_bd }}"
       when: static_route_on_bd is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets static_route_on_bd --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: static_route_on_bd is defined and diff_mode_enabled == true

@@ -39,6 +39,11 @@
       loop: "{{ bgp_address_family_context }}"
       when: bgp_address_family_context is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets bgp_address_family_context --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: bgp_address_family_context is defined and diff_mode_enabled == true
+
     - name: BGP Route Summarization Policy
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -68,6 +73,11 @@
       loop: "{{ bgp_route_summarization }}"
       when: bgp_route_summarization is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets bgp_route_summarization --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: bgp_route_summarization is defined and diff_mode_enabled == true
+
     - name: Add ospf interface policy
       cisco.aci.aci_interface_policy_ospf:
         <<: *aci_login
@@ -87,6 +97,11 @@
       loop: "{{ ospf_int_pol }}"
       when: ospf_int_pol is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets ospf_int_pol --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: ospf_int_pol is defined and diff_mode_enabled == true
+
     - name: BFD Policy
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -101,6 +116,11 @@
       delegate_to: localhost
       loop: "{{ bfd_policy }}"
       when: bfd_policy is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets bfd_policy --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: bfd_policy is defined and diff_mode_enabled == true
 
     - name: Add a new L3Out
       cisco.aci.aci_rest:
@@ -135,6 +155,11 @@
       loop: "{{ l3out }}"
       when: l3out is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets l3out --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: l3out is defined and diff_mode_enabled == true
+
     - name: L3Out Route Profile for Redistribution
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -153,6 +178,11 @@
       delegate_to: localhost
       loop: "{{ l3out_route_prof_redistribution }}"
       when: l3out_route_prof_redistribution is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets l3out_route_prof_redistribution --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: l3out_route_prof_redistribution is defined and diff_mode_enabled == true
 
     - name: Add a new L3Out Node profile
       cisco.aci.aci_rest:
@@ -183,6 +213,11 @@
       loop: "{{ l3out_node_profile }}"
       when: l3out_node_profile is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets l3out_node_profile --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: l3out_node_profile is defined and diff_mode_enabled == true
+
     - name: Add an L3Out Interface Profile
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -205,6 +240,11 @@
       delegate_to: localhost
       loop: "{{ l3out_int_profile }}"
       when: l3out_int_profile is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets l3out_int_profile --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: l3out_int_profile is defined and diff_mode_enabled == true
 
     - name: L3Out Interface
       cisco.aci.aci_rest:
@@ -290,6 +330,11 @@
       loop: "{{ l3out_interfaces }}"
       when: l3out_interfaces is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets l3out_interfaces --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: l3out_interfaces is defined and diff_mode_enabled == true
+
     - name: Add a new ExtEpg
       cisco.aci.aci_l3out_extepg:
         <<: *aci_login
@@ -304,6 +349,11 @@
       loop: "{{ external_epg }}"
       when: external_epg is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets external_epg --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: external_epg is defined and diff_mode_enabled == true
+
     - name: Add a new External Subnet
       cisco.aci.aci_l3out_extsubnet:
         <<: *aci_login
@@ -317,6 +367,11 @@
       delegate_to: localhost
       loop: "{{ external_epg_subnet }}"
       when: external_epg_subnet is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets external_epg_subnet --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: external_epg_subnet is defined and diff_mode_enabled == true
 
     - name: Create BGP Peer Prefix Policy
       cisco.aci.aci_rest:
@@ -352,6 +407,11 @@
       delegate_to: localhost
       loop: "{{ bgp_peer_prefix_policy }}"
       when: bgp_peer_prefix_policy is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets bgp_peer_prefix_policy --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: bgp_peer_prefix_policy is defined and diff_mode_enabled == true
 
     - name: Set Rules
       cisco.aci.aci_rest:
@@ -392,6 +452,11 @@
       loop: "{{ set_rules }}"
       when: set_rules is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets set_rules --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: set_rules is defined and diff_mode_enabled == true
+
     - name: Match Rules
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -426,6 +491,11 @@
       loop: "{{ match_rules }}"
       when: match_rules is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets match_rules --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: match_rules is defined and diff_mode_enabled == true
+
     - name: L3out Route Maps
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -458,6 +528,11 @@
       delegate_to: localhost
       loop: "{{ l3out_route_maps }}"
       when: l3out_route_maps is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets l3out_route_maps --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: l3out_route_maps is defined and diff_mode_enabled == true
 
     - name: Route Maps
       cisco.aci.aci_rest:
@@ -496,6 +571,11 @@
       delegate_to: localhost
       loop: "{{ route_maps }}"
       when: route_maps is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets route_maps --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: route_maps is defined and diff_mode_enabled == true
 
     - name: Interface BGP Peers
       cisco.aci.aci_rest:
@@ -641,6 +721,11 @@
       loop: "{{ interfaceBgpPeer }}"
       when: interfaceBgpPeer is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets interfaceBgpPeer --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: interfaceBgpPeer is defined and diff_mode_enabled == true
+
     - name: Create static routes
       cisco.aci.aci_l3out_static_routes:
         <<: *aci_login
@@ -671,5 +756,10 @@
       delegate_to: localhost
       loop: "{{ node_static_route }}"
       when: node_static_route is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets node_static_route --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: node_static_route is defined and diff_mode_enabled == true
 
 

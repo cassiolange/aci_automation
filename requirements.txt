@@ -4,3 +4,4 @@ pandas
 lxml
 xmljson
 openpyxl
+deepdiff

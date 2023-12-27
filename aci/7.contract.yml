@@ -137,6 +137,7 @@
         contract: "{{ item.contract }}"
         subject: "{{ item.name }}"
         filter: "{{ item.filter }}"
+        action: "{{ item.action if item.action is defined and item.action !='' else omit }}"
         state: "{{ item.status if item.status is defined else omit }}"
       delegate_to: localhost
       loop: "{{ subject }}"

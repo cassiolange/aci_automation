@@ -8,8 +8,11 @@ import argparse
 import logging
 import sys
 import re
-from deepdiff import DeepDiff
-
+try:
+    from deepdiff import DeepDiff
+except:
+    logging.error('deepdiff not available, please install deepdiff')
+    pass
 
 def list_all_excel_files():
     ###loop all the input file and folder to determine if the input file or folder exist
@@ -312,11 +315,11 @@ def update_status_file(hostname, sheets, automation_type):
         yaml.dump(diff_yaml, file)
         file.close()
 
-def diff_mode():
+def diff_mode(only_yes=True):
     pattern = r"root\['(.*?)'\]"
     pattern_values_changed = r"root\['(\w+)'\]\[(\d+)\]"
 
-    yaml_data = excel_to_yaml(only_yes=False)
+    yaml_data = excel_to_yaml(only_yes=only_yes)
     yaml_data = create_ansible_hosts(data=yaml_data)
     diff_dict = {}
     folder = {
@@ -360,15 +363,26 @@ def diff_mode():
     create_ansible_hosts_data(data=diff_dict)
     create_ansible_hosts_data_full(data=yaml_data)
 
+def parse_boolean(value):
+    value = value.lower()
+
+    if value in ["true", "yes", "y", "1", "t"]:
+        return True
+    elif value in ["false", "no", "n", "0", "f"]:
+        return False
+
+    return False
+
 
 def main():
     start = time.time()
     logging.basicConfig(filename='excel_to_yaml.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
-    parser = argparse.ArgumentParser(description="Script to Update and Fix the Excel File.")
+    parser = argparse.ArgumentParser(description="Generate and maintain yaml files.")
     parser.add_argument("--mode", required=False, choices=['normal', 'diff_mode','update_status_file'], default='normal', help="Operation mode")
     parser.add_argument("--hostname", type=str, required=False, help="current_hostname")
     parser.add_argument("--sheets", required=False, type=str, nargs='+', help="list of sheets")
     parser.add_argument("--automation_type", required=False, choices=['aci', 'ndo'], help="Automation Type")
+    parser.add_argument("--only_yes", type=parse_boolean, default=True, help="Build Task, only lines marked as yes. False read all tabs")
 
     args = parser.parse_args()
     if args.mode == 'normal':
@@ -377,7 +391,7 @@ def main():
         logging.info(msg='Normal mode completed')
     elif args.mode == 'diff_mode':
         logging.info(msg='Running in diff mode')
-        diff_mode()
+        diff_mode(only_yes=args.only_yes)
         logging.info(msg='Diff mode completed')
     else:
         logging.info(msg='Running in update status file mode')

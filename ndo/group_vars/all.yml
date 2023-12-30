@@ -4,3 +4,5 @@ ansible_httpapi_validate_certs: False
 ansible_httpapi_use_ssl: True
 ansible_httpapi_use_proxy: True
 validate_certs: False
+diff_mode_enabled: true
+automation_type: ndo

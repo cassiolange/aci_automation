@@ -6,7 +6,6 @@
   hosts: all
 
   tasks:
-    -
     - name: Create a Static route
       cisco.nd.nd_cluster_config_route:
         destination_ip: "{{ item.prefix }}"

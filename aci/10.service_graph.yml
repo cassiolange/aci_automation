@@ -5,11 +5,11 @@
   gather_facts: false
   hosts: all
   vars:
-     - aci_login: &aci_login
-          host: '{{ ansible_host }}'
-          user: '{{ ansible_user }}'
-          password: '{{ ansible_password }}'
-          validate_certs: "{{ validate_certs }}"
+    aci_login: &aci_login
+      host: '{{ ansible_host }}'
+      user: '{{ ansible_user }}'
+      password: '{{ ansible_password }}'
+      validate_certs: "{{ validate_certs }}"
 
   tasks:
     - name: Creates a L4-L7 device
@@ -32,6 +32,11 @@
       delegate_to: localhost
       loop: "{{ sg_device }}"
       when: sg_device is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets sg_device --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: sg_device is defined and diff_mode_enabled == true
 
     - name: Creates L4-L7 concrete device
       cisco.aci.aci_rest:
@@ -65,6 +70,11 @@
       loop: "{{ sg_concrete_device }}"
       when: sg_concrete_device is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets sg_concrete_device --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: sg_concrete_device is defined and diff_mode_enabled == true
+
     - name: Creates L4-L7 Cluster Interface
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -90,6 +100,11 @@
       loop: "{{ sg_cluster_interfaces }}"
       when: sg_cluster_interfaces is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets sg_cluster_interfaces --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: sg_cluster_interfaces is defined and diff_mode_enabled == true
+
     - name: Create PBR
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -108,6 +123,11 @@
       delegate_to: localhost
       loop: "{{ sg_pbr_policy }}"
       when: sg_pbr_policy is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets sg_pbr_policy --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: sg_pbr_policy is defined and diff_mode_enabled == true
 
     - name: Create L4-L7 Service Graph Template
       cisco.aci.aci_rest:
@@ -151,6 +171,11 @@
       loop: "{{ sg_template }}"
       when: sg_template is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets sg_template --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: sg_template is defined and diff_mode_enabled == true
+
     - name: Create L4-L7 Device Selection Policy
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -167,6 +192,11 @@
       delegate_to: localhost
       loop: "{{ sg_device_selection_policy }}"
       when: sg_device_selection_policy is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets sg_device_selection_policy --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: sg_device_selection_policy is defined and diff_mode_enabled == true
 
     - name: Create L4-L7 Logical Device Context
       cisco.aci.aci_rest:
@@ -190,6 +220,10 @@
       loop: "{{ sg_logical_device_context }}"
       when: sg_logical_device_context is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets sg_logical_device_context --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: sg_logical_device_context is defined and diff_mode_enabled == true
 
     - name: Bind contract subject to service graph
       cisco.aci.aci_contract_subject_to_service_graph:
@@ -202,3 +236,8 @@
       delegate_to: localhost
       loop: "{{ bind_subject_to_sg }}"
       when: bind_subject_to_sg is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets bind_subject_to_sg --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: bind_subject_to_sg is defined and diff_mode_enabled == true

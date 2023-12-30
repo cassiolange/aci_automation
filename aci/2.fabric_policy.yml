@@ -29,6 +29,11 @@
       loop: "{{ power_supply_policy }}"
       when: power_supply_policy is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets power_supply_policy --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: power_supply_policy is defined and diff_mode_enabled == true
+
     - name: Add Fabric Node Controls Policies
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -44,6 +49,11 @@
       delegate_to: localhost
       loop: "{{ node_control }}"
       when: node_control is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets node_control --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: node_control is defined and diff_mode_enabled == true
 
     - name: Add Fabric Spine Switch Policy Group
       cisco.aci.aci_rest:
@@ -69,6 +79,11 @@
       loop: "{{ fabric_spine_policy_group }}"
       when: fabric_spine_policy_group is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets fabric_spine_policy_group --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: fabric_spine_policy_group is defined and diff_mode_enabled == true
+
     - name: Add Fabric Leaf Switch Policy Group
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -92,6 +107,11 @@
       delegate_to: localhost
       loop: "{{ fabric_leaf_policy_group }}"
       when: fabric_leaf_policy_group is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets fabric_leaf_policy_group --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: fabric_leaf_policy_group is defined and diff_mode_enabled == true
 
     - name: Add Spine Fabric Switch Profile
       cisco.aci.aci_rest:
@@ -137,6 +157,11 @@
       with_items: "{{ fabric_switch_profile }}"
       when: fabric_switch_profile is defined and item.switch_profile_type == 'leaf'
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets fabric_switch_profile --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: fabric_switch_profile is defined and diff_mode_enabled == true
+
     - name: BGP AS and Route Reflector
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -158,6 +183,11 @@
       delegate_to: localhost
       with_items: "{{ bgp_rr }}"
       when: bgp_rr is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets bgp_rr --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: bgp_rr is defined and diff_mode_enabled == true
 
     - name: POD Policy Group
       cisco.aci.aci_rest:
@@ -184,6 +214,11 @@
       with_items: "{{ pod_policy_group }}"
       when: pod_policy_group is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets pod_policy_group --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: pod_policy_group is defined and diff_mode_enabled == true
+
     - name: POD Profile
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -200,6 +235,11 @@
       delegate_to: localhost
       with_items: "{{ pod_profile }}"
       when: pod_profile is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets pod_profile --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: pod_profile is defined and diff_mode_enabled == true
 
     - name: POD Selector
       cisco.aci.aci_rest:
@@ -226,6 +266,11 @@
       with_items: "{{ pod_selector }}"
       when: pod_selector is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets pod_selector --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: pod_selector is defined and diff_mode_enabled == true
+
     - name: DNS Profile
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -246,6 +291,11 @@
       with_items: "{{ dns_profile }}"
       when: dns_profile is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets dns_profile --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: dns_profile is defined and diff_mode_enabled == true
+
     - name: DNS Provider
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -263,6 +313,11 @@
       with_items: "{{ dns_provider }}"
       when: dns_provider is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets dns_provider --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: dns_provider is defined and diff_mode_enabled == true
+
     - name: Datetime Policy
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -278,6 +333,11 @@
       delegate_to: localhost
       with_items: "{{ datetime_pol }}"
       when: datetime_pol is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets datetime_pol --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: datetime_pol is defined and diff_mode_enabled == true
 
     - name: Datetime NTP Provider
       cisco.aci.aci_rest:
@@ -301,6 +361,11 @@
       with_items: "{{ datetime_ntp_prov }}"
       when: datetime_ntp_prov is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets datetime_ntp_prov --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: datetime_ntp_prov is defined and diff_mode_enabled == true
+
     - name: Configure an SNMP policy
       cisco.aci.aci_snmp_policy:
         <<: *aci_login
@@ -313,6 +378,11 @@
       loop: "{{ snmp_policy }}"
       when: snmp_policy is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets snmp_policy --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: snmp_policy is defined and diff_mode_enabled == true
+
     - name: Configure an SNMP community policy
       cisco.aci.aci_snmp_community_policy:
         <<: *aci_login
@@ -323,6 +393,11 @@
       delegate_to: localhost
       loop: "{{ snmp_community }}"
       when: snmp_community is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets snmp_community --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: snmp_community is defined and diff_mode_enabled == true
 
     - name: Configure an SNMP user
       cisco.aci.aci_snmp_user:
@@ -337,6 +412,11 @@
       delegate_to: localhost
       loop: "{{ snmp_v3_users }}"
       when: snmp_v3_users is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets snmp_v3_users --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: snmp_v3_users is defined and diff_mode_enabled == true
 
     - name: Configure an SNMP client group
       cisco.aci.aci_snmp_client_group:
@@ -361,6 +441,11 @@
       loop: "{{ snmp_client_group }}"
       when: snmp_client_group is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets snmp_client_group --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: snmp_client_group is defined and diff_mode_enabled == true
+
     - name: Configure SNMP Trap Forwarder
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -377,6 +462,11 @@
       delegate_to: localhost
       loop: "{{ snmp_trap_forwarder }}"
       when: snmp_trap_forwarder is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets snmp_trap_forwarder --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: snmp_trap_forwarder is defined and diff_mode_enabled == true
 
     - name: Fabric interface Policy Group
       cisco.aci.aci_rest:
@@ -414,3 +504,8 @@
       delegate_to: localhost
       loop: "{{ fabric_interface_policy_group }}"
       when: fabric_interface_policy_group is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets fabric_interface_policy_group --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: fabric_interface_policy_group is defined and diff_mode_enabled == true

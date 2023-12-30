@@ -5,11 +5,11 @@
   gather_facts: false
   hosts: all
   vars:
-     - aci_login: &aci_login
-          host: '{{ ansible_host }}'
-          user: '{{ ansible_user }}'
-          password: '{{ ansible_password }}'
-          validate_certs: "{{ validate_certs }}"
+    aci_login: &aci_login
+      host: '{{ ansible_host }}'
+      user: '{{ ansible_user }}'
+      password: '{{ ansible_password }}'
+      validate_certs: "{{ validate_certs }}"
 
   tasks:
     - name: Configure POD and TEP Pool
@@ -30,6 +30,11 @@
       when: pod_tep_pool is defined
       register: result
       until: result is not failed
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets pod_tep_pool --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: pod_tep_pool is defined and diff_mode_enabled == true
 
     - name: Fabric Connectivity Profile
       cisco.aci.aci_rest:
@@ -56,6 +61,11 @@
       register: result
       until: result is not failed
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets fabric_conn_prof --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: fabric_conn_prof is defined and diff_mode_enabled == true
+
     - name: POD Connection Profile
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -76,6 +86,11 @@
       when: pod_connection_profile is defined
       register: result
       until: result is not failed
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets pod_connection_profile --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: pod_connection_profile is defined and diff_mode_enabled == true
 
     - name: Fabric External Routing Profile
       cisco.aci.aci_rest:
@@ -98,6 +113,11 @@
       register: result
       until: result is not failed
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets fabric_external_routing_profile --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: fabric_external_routing_profile is defined and diff_mode_enabled == true
+
     - name: DSCP Class CoS Translation Policy For L3 Traffic
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -119,10 +139,7 @@
       register: result
       until: result is not failed
 
-
-
-
-
-
-
-
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets dscp_cos_translation --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: dscp_cos_translation is defined and diff_mode_enabled == true

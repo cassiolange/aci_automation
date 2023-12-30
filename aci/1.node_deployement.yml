@@ -4,14 +4,12 @@
 - name : Node Provisioning
   gather_facts: false
   hosts: all
-  vars_files:
-   - "{{ aci_variable_filename }}"
   vars:
-     - aci_login: &aci_login
-          host: '{{ ansible_host }}'
-          user: '{{ ansible_user }}'
-          password: '{{ ansible_password }}'
-          validate_certs: "{{ validate_certs }}"
+    aci_login: &aci_login
+      host: '{{ ansible_host }}'
+      user: '{{ ansible_user }}'
+      password: '{{ ansible_password }}'
+      validate_certs: "{{ validate_certs }}"
   tasks:
     - name: Add fabric node
       cisco.aci.aci_fabric_node:
@@ -86,6 +84,11 @@
       loop: "{{ apic_controller }}"
       when: apic_controller is defined and item.inband_ipv4 != "" and inb_mgmt_epg is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets apic_controller --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: apic_controller is defined and diff_mode_enabled == true
+
     - name: Add Leaf address to in band mgmt interface
       cisco.aci.aci_static_node_mgmt_address:
         <<: *aci_login
@@ -102,6 +105,11 @@
       loop: "{{ node_provisioning }}"
       when: node_provisioning is defined and item.inband_ip != "" and inb_mgmt_epg is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets node_provisioning --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: node_provisioning is defined and diff_mode_enabled == true
+
     - name: Configure the APIC Connectivity Preference
       cisco.aci.aci_rest:
         <<: *aci_login
@@ -116,6 +124,11 @@
       delegate_to: localhost
       with_items: "{{ apic_con_pref }}"
       when: apic_con_pref is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets apic_con_pref --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: apic_con_pref is defined and diff_mode_enabled == true
 
     - name: Create Spine Access Switch Policy Group
       cisco.aci.aci_rest:
@@ -138,6 +151,11 @@
       delegate_to: localhost
       with_items: "{{ access_spine_policy_group }}"
       when: access_spine_policy_group is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets access_spine_policy_group --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: access_spine_policy_group is defined and diff_mode_enabled == true
 
     - name: Create Leaf Access Switch Policy Group
       cisco.aci.aci_rest:
@@ -168,6 +186,11 @@
       delegate_to: localhost
       with_items: "{{ access_leaf_policy_group }}"
       when: access_leaf_policy_group is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets access_leaf_policy_group --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: access_leaf_policy_group is defined and diff_mode_enabled == true
 
     - name: Creating a Leaf Profile
       cisco.aci.aci_switch_policy_leaf_profile:
@@ -215,6 +238,11 @@
       loop: "{{ switch_profile }}"
       when: switch_profile is defined and item.switch_profile_type == 'leaf'
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets switch_profile --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: switch_profile is defined and diff_mode_enabled == true
+
     - name: Add vPC Protection Group
       cisco.aci.aci_switch_policy_vpc_protection_group:
         <<: *aci_login
@@ -226,6 +254,11 @@
       delegate_to: localhost
       loop: "{{ vpc_domain }}"
       when: vpc_domain is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets vpc_domain --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: vpc_domain is defined and diff_mode_enabled == true
 
     - name: Change Ports from Uplink to Downlink
       cisco.aci.aci_rest:
@@ -243,5 +276,10 @@
       delegate_to: localhost
       with_items: "{{ port_direction }}"
       when: port_direction is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets port_direction --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: port_direction is defined and diff_mode_enabled == true
 
 

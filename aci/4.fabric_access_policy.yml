@@ -5,11 +5,11 @@
   gather_facts: false
   hosts: all
   vars:
-     - aci_login: &aci_login
-          host: '{{ ansible_host }}'
-          user: '{{ ansible_user }}'
-          password: '{{ ansible_password }}'
-          validate_certs: "{{ validate_certs }}"
+    aci_login: &aci_login
+      host: '{{ ansible_host }}'
+      user: '{{ ansible_user }}'
+      password: '{{ ansible_password }}'
+      validate_certs: "{{ validate_certs }}"
 
   tasks:
     - name: Add a new VLAN pool

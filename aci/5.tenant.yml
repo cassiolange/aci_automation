@@ -10,27 +10,6 @@
       user: '{{ ansible_user }}'
       password: '{{ ansible_password }}'
       validate_certs: "{{ validate_certs }}"
-    sheets:
-      - tenant
-      - vrf
-      - vrf_bgp_route_target
-      - vrf_bgp_route_sum
-      - vrf_bgp_route_sum_nodes
-      - vrf_bgp_route_sum_subnet
-      - bridge_domain
-      - bd_subnet
-      - bd_l3out
-      - application_profile
-      - end_point_group
-      - epg_domain_association
-      - epg_static_binding
-      - dhcp_relay_policy
-      - dhcp_relay_policy_provider
-      - bd_dhcp
-      - custom_qos_policy
-      - custom_qos_dscp_to_priority
-      - custom_qos_dot1p_to_priority
-      - static_route_on_bd
 
   tasks:
 

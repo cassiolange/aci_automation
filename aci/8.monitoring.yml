@@ -5,11 +5,11 @@
   gather_facts: false
   hosts: all
   vars:
-     - aci_login: &aci_login
-          host: '{{ ansible_host }}'
-          user: '{{ ansible_user }}'
-          password: '{{ ansible_password }}'
-          validate_certs: "{{ validate_certs }}"
+    aci_login: &aci_login
+      host: '{{ ansible_host }}'
+      user: '{{ ansible_user }}'
+      password: '{{ ansible_password }}'
+      validate_certs: "{{ validate_certs }}"
 
   tasks:
     - name: Configure a syslog group
@@ -29,6 +29,11 @@
       loop: "{{ syslog_group }}"
       when: syslog_group is defined
 
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets syslog_group --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: syslog_group is defined and diff_mode_enabled == true
+
     - name: Configure a syslog remote destination
       cisco.aci.aci_syslog_remote_dest:
         <<: *aci_login
@@ -43,6 +48,11 @@
       delegate_to: localhost
       loop: "{{ syslog_destination }}"
       when: syslog_destination is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets syslog_destination --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: syslog_destination is defined and diff_mode_enabled == true
 
     - name: Configure SNMP Group and an SNMP TRAP destination
       cisco.aci.aci_rest:
@@ -62,3 +72,8 @@
       delegate_to: localhost
       loop: "{{ snmp_trap_dest }}"
       when: snmp_trap_dest is defined
+
+    - name: Update Diff mode
+      ansible.builtin.shell: python3 "{{ playbook_dir }}"/../scripts/excel_to_yaml.py --mode update_status_file --hostname {{ inventory_hostname }} --sheets snmp_trap_dest --automation_type {{ automation_type }}
+      delegate_to: localhost
+      when: snmp_trap_dest is defined and diff_mode_enabled == true

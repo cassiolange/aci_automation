@@ -12,9 +12,7 @@
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ fabric_resources_template }}"
       when: fabric_resources_template is defined
-      register: result
-      retries: 3
-      until: result is not failed
+
 
     - name: Add a site to Fabric Policies Template
       cisco.mso.ndo_fabric_policies_template_site:
@@ -24,9 +22,6 @@
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ fabric_resources_template_site }}"
       when: fabric_resources_template_site is defined
-      register: result
-      retries: 3
-      until: result is not failed
 
     - name: Fabric Resources Interfaces
       cisco.mso.ndo_fabric_resources_interfaces:
@@ -45,7 +40,5 @@
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ interfaces }}"
       when: interfaces is defined
-      register: result
-      retries: 3
-      until: result is not failed
+
 

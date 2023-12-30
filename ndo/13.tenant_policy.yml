@@ -15,7 +15,6 @@
       loop: "{{ tenant_policy_template }}"
       when: tenant_policy_template is defined
 
-
     - name: Add a site to Tenant Policies Template
       cisco.mso.ndo_fabric_policies_template_site:
         template: "{{ item.name }}"

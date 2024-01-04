@@ -2419,6 +2419,9 @@ tenant_security:
       type: data_validation_from_worksheet
       source: filter
       column: name
+    action:
+      type: data_validation_static_list
+      formula: permit,deny
     name_alias:
     target_dscp:
       type: data_validation_static_list

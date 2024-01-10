@@ -385,6 +385,9 @@
                   {% if item['next_hop_propagation'] is defined and item['next_hop_propagation'] == 'yes'  %}
                       <rtctrlSetNhUnchanged annotation="" descr="" name="" nameAlias="" type="nh-unchanged"/>
                   {% endif %}
+                  {% if item['local_preference'] is defined and item['local_preference'] != ''  %}
+          		      <rtctrlSetPref annotation="" descr="" localPref="{{item['local_preference'] | int}}" name="" nameAlias="" type="local-pref" userdom=":all:common:"/>
+                  {% endif %}
                   </rtctrlAttrP>
               </fvTenant>
           </polUni>

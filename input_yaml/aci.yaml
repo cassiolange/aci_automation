@@ -2254,6 +2254,7 @@ tenant_l3out:
       source_table: external_epg
     prepend_last_as:
     next_hop_propagation: yes_no
+    local_preference:
     status: status
     build_tasks_description: Set Rules
   match_rules:

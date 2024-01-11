@@ -110,7 +110,7 @@
         content: |
           <polUni>
           	<fvTenant name="{{item['tenant']}}" status="modified">
-          	  <l3extOut descr="" enforceRtctrl="{{item['route_control_enforcement']|default('export',True)}}" name="{{item['name']}}" targetDscp="unspecified" annotation="orchestrator:ansible">
+          	  <l3extOut descr="{{item['description'] | default('')}}" enforceRtctrl="{{item['route_control_enforcement']|default('export',True)}}" name="{{item['name']}}" targetDscp="unspecified" nameAlias="{{item['name_alias'] | default('')}}" annotation="orchestrator:ansible">
           		<l3extRsEctx tnFvCtxName="{{item['vrf']}}" />
           		<l3extRsL3DomAtt tDn="uni/l3dom-{{item['l3out_domain']}}" />
               {% if item['enable_pim'] == "yes" %}

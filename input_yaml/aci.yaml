@@ -1800,6 +1800,8 @@ tenant_protocol_policies:
 tenant_l3out:
   l3out:
     name:
+    name_alias:
+    description:
     tenant:
       type: data_validation_from_worksheet
       source: tenant

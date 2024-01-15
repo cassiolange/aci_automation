@@ -1,5 +1,5 @@
 ---
-#- import_playbook: update.yml
+- import_playbook: update.yml
 
 - name : Fabric External Access Policy
   gather_facts: false

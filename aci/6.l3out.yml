@@ -297,9 +297,10 @@
         l3out: "{{ item.l3_out }}"
         name: "{{ item.name }}"
         description: "{{ item.description if item.description else omit}}"
-        state: "{{ item.status if item.status is defined else omit }}"
         dscp: "{{ item.dscp if item.dscp is defined and item.dscp !='' else omit }}"
         preferred_group: "{{ item.preferred_group if item.preferred_group is defined and item.preferred_group !='' else omit }}"
+        name_alias: "{{ item.alias if item.alias is defined and item.alias !='' else omit }}"
+        state: "{{ item.status if item.status is defined else omit }}"
       delegate_to: localhost
       loop: "{{ external_epg }}"
       when: external_epg is defined

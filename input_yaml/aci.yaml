@@ -2177,6 +2177,7 @@ tenant_l3out:
     build_tasks_description: BGP Peer at interface Profile
   external_epg:
     name:
+    alias:
     description:
     l3_out:
       type: data_validation_from_worksheet

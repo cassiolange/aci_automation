@@ -1464,9 +1464,92 @@ l3out_interfaces:
     tint: 0.5999938962981048
   category: L3Out
   playbook: 8.l3out.yml
+dhcp_relay_policy:
+  dhcp_relay_policy:
+    name:
+    description:
+    tenant_policy_template:
+      type: data_validation_from_worksheet
+      source: tenant_policy_template
+      column: name
+    status: status
+  ignore_build_task: yes
+  tab_color:
+    type: theme
+    theme: 7
+    tint: 0.5999938962981048
+dhcp_relay_policy_provider:
+  dhcp_relay_policy_provider:
+    dhcp_relay_policy:
+      type: data_validation_from_worksheet
+      source: dhcp_relay_policy
+      column: name
+    template:
+      type: xlookup
+      lookup_field: dhcp_relay_policy
+      match_field: name
+      return_field: tenant_policy_template
+      source_table: dhcp_relay_policy
+    dhcp_relay_policy_description:
+      type: formula_static
+      formula: =IF(ISBLANK(dhcp_relay_policy_provider[[#This Row],[dhcp_relay_policy]]),"",IF(ISBLANK(_xlfn.XLOOKUP(dhcp_relay_policy_provider[[#This Row],[dhcp_relay_policy]],dhcp_relay_policy[name],dhcp_relay_policy[description])),"",_xlfn.XLOOKUP(dhcp_relay_policy_provider[[#This Row],[dhcp_relay_policy]],dhcp_relay_policy[name],dhcp_relay_policy[description])))
+    epg:
+      type: data_validation_from_worksheet
+      source: epg
+      column: name
+    anp:
+      type: xlookup
+      lookup_field: epg
+      match_field: name
+      return_field: app_profile_name
+      source_table: epg
+#    tenant:
+#      type: xlookup
+#      lookup_field: epg
+#      match_field: name
+#      return_field: tenant
+#      source_table: epg
+    epg_template:
+      type: xlookup
+      lookup_field: epg
+      match_field: name
+      return_field: template
+      source_table: epg
+    epg_schema:
+      type: xlookup
+      lookup_field: epg
+      match_field: name
+      return_field: schema
+      source_table: epg
+    external_epg:
+      type: data_validation_from_worksheet
+      source: external_epg
+      column: name
+    external_epg_template:
+      type: xlookup
+      lookup_field: external_epg
+      match_field: name
+      return_field: template
+      source_table: external_epg
+    external_epg_schema:
+      type: xlookup
+      lookup_field: external_epg
+      match_field: name
+      return_field: schema
+      source_table: external_epg
+    ip:
+    use_server_vrf: yes_no
+    status: status
+    build_tasks_description: DHCP Relay Policy Provider
+  tab_color:
+    type: theme
+    theme: 7
+    tint: 0.5999938962981048
+  category: DHCP Relay
+  playbook: 10.dhcp.yaml
 data_source:
   version:
-    name: aci
+    name: ndo
     version: 1.0
 
 

@@ -1,11 +1,11 @@
 ---
-- import_playbook: update.yml
+#- import_playbook: update.yml
 
 - name : DHCP
   gather_facts: false
   hosts: all
   tasks:
-    - name: DHCP Relay Policy
+    - name: DHCP Relay Policy and Relay Provider
       cisco.mso.ndo_tenant_policies_dhcp_relay_policy:
         dhcp_relay_policy_name: "{{ item.dhcp_relay_policy }}"
         template: "{{ item.template }}"
@@ -25,56 +25,16 @@
       loop: "{{ dhcp_relay_policy_provider }}"
       when: dhcp_relay_policy_provider is defined
 
-#    - name: Add a new DHCP Relay Policy
-#      cisco.mso.mso_dhcp_relay_policy:
-#        dhcp_relay_policy: "{{ item.name }}"
-#        description: "{{ item.description if item.status is defined else omit }}"
-#        tenant: "{{ item.tenant }}"
-#        state: "{{ item.status if item.status is defined else omit }}"
-#      loop: "{{ dhcp_relay_policy }}"
-#      when: dhcp_relay_policy is defined
-#
-#    - name: Add a new provider to a DHCP Relay Policy
-#      cisco.mso.mso_dhcp_relay_policy_provider:
-#        dhcp_relay_policy: "{{ item.dhcp_relay_policy }}"
-#        tenant: "{{ item.tenant }}"
-#        state: "{{ item.status if item.status is defined else omit }}"
-#        schema: "{{ item.epg_schema_name if item.epg_schema_name is defined and item.epg_schema_name != '' else item.external_epg_schema_name }}"
-#        template: "{{ item.epg_template_name if item.epg_template_name is defined and item.epg_template_name != '' else item.external_epg_template_name  }}"
-#        application_profile: "{{ item.anp if item.anp is defined and item.anp != '' else omit }}"
-#        endpoint_group: "{{ item.epg_name if item.epg_name is defined and item.epg_name != '' else omit }}"
-#        external_endpoint_group: "{{ item.external_epg if item.external_epg is defined and item.external_epg != '' else omit }}"
-#        ip: "{{ item.ip }}"
-#      loop: "{{ dhcp_relay_policy_provider }}"
-#      when: dhcp_relay_policy_provider is defined
-#
-#    - name: Add a new DHCP Option Policy
-#      cisco.mso.mso_dhcp_option_policy:
-#        dhcp_option_policy: "{{ item.name }}"
-#        description: "{{ item.description if item.status is defined else omit }}"
-#        tenant: "{{ item.tenant }}"
-#        state: "{{ item.status if item.status is defined else omit }}"
-#      loop: "{{ dhcp_option_policy }}"
-#      when: dhcp_option_policy is defined
-#
-#    - name: Add a new option to a DHCP Option Policy
-#      cisco.mso.mso_dhcp_option_policy_option:
-#        dhcp_option_policy: "{{ item.dhcp_option_name }}"
-#        option: "{{ item.name }}"
-#        id: "{{ item.id | int }}"
-#        data: "{{ item.data }}"
-#        state: "{{ item.status if item.status is defined else omit }}"
-#      loop: "{{ dhcp_option_policy_options }}"
-#      when: dhcp_option_policy_options is defined
-
-#    - name: Add a new DHCP policy to a BD
-#      cisco.mso.mso_schema_template_bd_dhcp_policy:
-#        schema: "{{ item.schema_name }}"
-#        template: "{{ item.template_name }}"
-#        bd: "{{ item.bd }}"
-#        dhcp_policy: "{{ item.dhcp_relay_policy }}"
-#        version: 1
+    - name: Add a new DHCP policy to a BD
+      cisco.mso.ndo_schema_template_bd_dhcp_policy:
+        schema: "{{ item.schema }}"
+        template: "{{ item.template }}"
+        bd: "{{ item.bridge_domain }}"
+        dhcp_policy:
+          name: "{{ item.dhcp_relay_policy }}"
+          template: "{{ item.dhcp_relay_policy_template }}"
 #        dhcp_option_policy:
 #          name: "{{ item.dhcp_relay_option if item.dhcp_relay_option is defined and item.dhcp_relay_option != '' else omit }}"
-#          version: "{{ '1' if item.dhcp_relay_option is defined and item.dhcp_relay_option != '' else omit }}"
-#        state: present
+        state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
+      loop: "{{ bd_dhcp }}"
+      when: bd_dhcp is defined

@@ -1503,12 +1503,6 @@ dhcp_relay_policy_provider:
       match_field: name
       return_field: app_profile_name
       source_table: epg
-#    tenant:
-#      type: xlookup
-#      lookup_field: epg
-#      match_field: name
-#      return_field: tenant
-#      source_table: epg
     epg_template:
       type: xlookup
       lookup_field: epg
@@ -1541,6 +1535,37 @@ dhcp_relay_policy_provider:
     use_server_vrf: yes_no
     status: status
     build_tasks_description: DHCP Relay Policy Provider
+  bd_dhcp:
+    bridge_domain:
+      type: data_validation_from_worksheet
+      source: bridge_domain
+      column: name
+    schema:
+      type: xlookup
+      lookup_field: bridge_domain
+      match_field: name
+      return_field: schema
+      source_table: bridge_domain
+    template:
+      type: xlookup
+      lookup_field: bridge_domain
+      match_field: name
+      return_field: template
+      source_table: bridge_domain
+    dhcp_relay_policy:
+      type: data_validation_from_worksheet
+      source: dhcp_relay_policy
+      column: name
+    dhcp_relay_policy_template:
+      type: xlookup
+      lookup_field: dhcp_relay_policy
+      match_field: name
+      return_field: tenant_policy_template
+      source_table: dhcp_relay_policy
+#    dhcp_option_policy:
+#    dhcp_option_policy_template:
+    status: status
+    build_tasks_description: Associate BD to DHCP Relay Policy
   tab_color:
     type: theme
     theme: 7

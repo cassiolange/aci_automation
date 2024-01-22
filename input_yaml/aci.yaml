@@ -81,6 +81,7 @@ node_deployement:
   apic_controller:
     apic_id:
     apic_hostname:
+    serial_number:
     pod_id:
     oob_ipv4:
     oob_ipv4_gw:

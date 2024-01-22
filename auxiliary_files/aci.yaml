@@ -194,3 +194,22 @@ vrf:
 bridge_domain:
   - name: inb
     status: ignored
+fabric_initial_config:
+  - Parameters: Fabric Name
+    Value:
+  - Parameters: Fabric Id
+    Value:
+  - Parameters: Number of controllers
+    Value:
+  - Parameters: VLAN ID infra network
+    Value:
+  - Parameters: BD Multicast Address pool
+    Value:
+  - Parameters: Username
+    Value:
+  - Parameters: Admin password
+    Value:
+  - Parameters: CIMC Password
+    Value:
+  - Parameters: BiOS Password
+    Value:

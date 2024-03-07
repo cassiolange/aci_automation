@@ -12,9 +12,9 @@
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ fabric_policies_template }}"
       when: fabric_policies_template is defined
-      register: result
-      retries: 3
-      until: result is not failed
+#      register: result
+#      retries: 3
+#      until: result is not failed
 
     - name: Add a site to Fabric Policies Template
       cisco.mso.ndo_fabric_policies_template_site:
@@ -24,9 +24,9 @@
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ fabric_policies_template_site }}"
       when: fabric_policies_template_site is defined
-      register: result
-      retries: 3
-      until: result is not failed
+#      register: result
+#      retries: 3
+#      until: result is not failed
 
     - name: Add a new VLAN encap block
       cisco.mso.ndo_fabric_policies_vlan_pool_encap_block:
@@ -37,9 +37,9 @@
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ vlan_encap_block }}"
       when: vlan_encap_block is defined
-      register: result
-      retries: 3
-      until: result is not failed
+#      register: result
+#      retries: 3
+#      until: result is not failed
 
     - name: Add a new Domain
       cisco.mso.ndo_fabric_policies_domain:
@@ -51,9 +51,9 @@
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ domain }}"
       when: domain is defined
-      register: result
-      retries: 3
-      until: result is not failed
+#      register: result
+#      retries: 3
+#      until: result is not failed
 
     - name: Interface Configuration
       cisco.mso.ndo_fabric_policies_interface_settings:
@@ -103,9 +103,9 @@
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ interface_settings_domain }}"
       when: interface_settings_domain is defined
-      register: result
-      retries: 3
-      until: result is not failed
+#      register: result
+#      retries: 3
+#      until: result is not failed
 
     - name: NTP Policy
       cisco.mso.ndo_fabric_policies_domain_ntp_policy:
@@ -120,9 +120,9 @@
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ datetime_pol }}"
       when: datetime_pol is defined
-      register: result
-      retries: 3
-      until: result is not failed
+#      register: result
+#      retries: 3
+#      until: result is not failed
 
     - name: NTP Providers
       cisco.mso.ndo_fabric_policies_domain_ntp_provider:
@@ -138,9 +138,9 @@
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ datetime_ntp_prov }}"
       when: datetime_ntp_prov is defined
-      register: result
-      retries: 3
-      until: result is not failed
+#      register: result
+#      retries: 3
+#      until: result is not failed
 
     - name: POD Policy Group
       cisco.mso.ndo_fabric_policies_pod:
@@ -151,6 +151,6 @@
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ pod_policy_group }}"
       when: pod_policy_group is defined
-      register: result
-      retries: 3
-      until: result is not failed
+#      register: result
+#      retries: 3
+#      until: result is not failed

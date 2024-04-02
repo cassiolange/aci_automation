@@ -41,6 +41,7 @@
         subnet: "{{ item.gateway_ip }}"
         scope: "{{ item.subnet_scope }}"
         shared: "{{ item.shared if item.shared is defined and item.shared != '' else omit }}"
+        primary: "{{ item.is_primary_address if item.is_primary_address is defined and item.is_primary_address != '' else omit }}"
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
       loop: "{{ bridge_domain_subnet }}"
       when: bridge_domain_subnet is defined and item.site == ''
@@ -64,6 +65,7 @@
         subnet: "{{ item.bd_subnet }}"
         scope: "{{ item.subnet_scope }}"
         shared: "{{ item.shared if item.shared is defined and item.shared != '' else omit }}"
+        primary: "{{ item.is_primary_address if item.is_primary_address is defined and item.is_primary_address != '' else omit }}"
         site: "{{ item.site }}"
         state: "{{ item.status if item.status is defined and item.status != '' else omit }}"
 

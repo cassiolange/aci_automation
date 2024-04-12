@@ -760,7 +760,7 @@
                                   {% endif %}
                                   <bgpLocalAsnP annotation="" asnPropagate="{{asnP}}" descr="" localAsn="{{item['Local_AS'] | int }}" name="" nameAlias=""/>
                               {% endif %}
-                              <bgpAsP asn="{{item['bgp_peer_as']}}" descr="" name="" nameAlias=""/>
+                              <bgpAsP asn="{{item['bgp_peer_as'] | int }}" descr="" name="" nameAlias=""/>
                           </bgpPeerP>
                       </l3extLNodeP>
                   </l3extOut>

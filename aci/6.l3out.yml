@@ -154,6 +154,31 @@
       loop: "{{ l3out_route_prof_redistribution }}"
       when: l3out_route_prof_redistribution is defined
 
+    - name: L3out Default Route
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
+          {% if item['criteria'] is defined and item['criteria'] == 'default_route_in_addition' %}
+          {% set criteria = 'in-addition' %}
+          {% else %}
+          {% set criteria = 'only' %}
+          {% endif %}
+          {% set scope = ['ctx' if item['scope_context'] is defined and item['scope_context'] == 'yes', 'l3-out' if item['scope_outside'] is defined and item['scope_outside'] == 'yes'] | reject('undefined') | join(',') | default('l3-out',true) %}
+          <polUni>
+            <fvTenant name="{{item['tenant']}}" status="modified">
+              <l3extOut name="{{item['l3out']}}" status="modified">
+                <l3extDefaultRouteLeakP always="{{item['always'] | default('no',true)}}" annotation="orchestrator:ansible" criteria="{{criteria}}" scope="{{scope}}"/>
+              </l3extOut>
+            </fvTenant>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ l3out_default_route }}"
+      when: l3out_default_route is defined
+
     - name: Add a new L3Out Node profile
       cisco.aci.aci_rest:
         <<: *aci_login

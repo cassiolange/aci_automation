@@ -9,7 +9,7 @@ build_tasks:
   tab_color:
     type: rgb
     rgb: FF800000
-equipaments:
+equipment:
   equipment_types:
     equipment_type:
     installation_guide:
@@ -1883,6 +1883,25 @@ tenant_l3out:
       column: name
     status: status
     build_tasks_description: L3Out Route Maps
+  l3out_default_route:
+    l3out:
+      type: data_validation_from_worksheet
+      source: l3out
+      column: name
+    tenant:
+      type: xlookup
+      lookup_field: l3out
+      match_field: name
+      return_field: tenant
+      source_table: l3out
+    always: yes_no
+    criteria:
+      type: data_validation_static_list
+      formula: default_route_only,default_route_in_addition
+    scope_context: yes_no
+    scope_outside: yes_no
+    status: status
+    build_tasks_description: L3Out Default Route
   l3out_node_profile:
     name:
     l3out:

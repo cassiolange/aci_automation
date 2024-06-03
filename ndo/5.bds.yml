@@ -36,9 +36,9 @@
       cisco.mso.mso_schema_template_bd_subnet:
         schema: "{{ item.schema }}"
         template: "{{ item.template }}"
-        bd: "{{ item.bd_name }}"
+        bd: "{{ item.bridge_domain }}"
         description: "{{ item.description if item.status is defined else omit }}"
-        subnet: "{{ item.gateway_ip }}"
+        subnet: "{{ item.bd_subnet }}"
         scope: "{{ item.subnet_scope }}"
         shared: "{{ item.shared if item.shared is defined and item.shared != '' else omit }}"
         primary: "{{ item.is_primary_address if item.is_primary_address is defined and item.is_primary_address != '' else omit }}"

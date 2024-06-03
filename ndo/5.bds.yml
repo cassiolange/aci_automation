@@ -34,8 +34,8 @@
 
     - name: Add a new subnet to a Stretched BD
       cisco.mso.mso_schema_template_bd_subnet:
-        schema: "{{ item.schema_name }}"
-        template: "{{ item.template_name }}"
+        schema: "{{ item.schema }}"
+        template: "{{ item.template }}"
         bd: "{{ item.bd_name }}"
         description: "{{ item.description if item.status is defined else omit }}"
         subnet: "{{ item.gateway_ip }}"

@@ -15,9 +15,9 @@
       when: tenant is defined
 
     - name: Associate Tenant to Site
-      cisco.mso.mso_tenant:
+      cisco.mso.mso_tenant_site:
         tenant: "{{ item.tenant }}"
         state: "{{ item.status if item.status is defined else omit }}"
-        sites: "{{ item.site }}"
+        site: "{{ item.site }}"
       loop: "{{ tenant_site_association }}"
       when: tenant_site_association is defined

@@ -1,0 +1,51 @@
+- import_playbook: update.yml
+
+- name : Interface Description using Override Policy
+  gather_facts: false
+  hosts: all
+  vars:
+    aci_login: &aci_login
+      host: '{{ ansible_host }}'
+      user: '{{ ansible_user }}'
+      password: '{{ ansible_password }}'
+      validate_certs: "{{ validate_certs }}"
+
+  tasks:
+    - name: Interface Description
+      cisco.aci.aci_interface_description:
+        <<: *aci_login
+        pod_id: "{{ item.pod_id }}"
+        node_id: "{{ item.node1 }}"
+        node_type: "{{ item.role }}"
+        interface: "{{ item.interface }}"
+        description: "{{ item.description }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ interface_description }}"
+      when: interface_description is defined and item.interface.lower() != "mgmt0" and item.type == "port"
+
+    - name: PO/VPC Interface Description
+      cisco.aci.aci_rest:
+        <<: *aci_login
+        path: /api/mo/uni.xml
+        method: post
+        content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
+          <polUni>
+              <infraInfra>
+                  {% if item['type'] == "vpc" %}
+                  <infraHPathS annotation="orchestrator:ansible" descr="{{ item['description'] }}" name="{{ item['node1'] | int }}_{{ item['node2'] | int }}_{{ item['interface_policy_group']}}" status="{{ status }}">
+                      <infraRsHPathAtt tDn="topology/pod-{{ item['pod_id'] | int }}/protpaths-{{ item['node1'] | int }}-{{ item['node2'] | int }}/pathep-[{{ item['interface_policy_group']}}]"/>
+                  {% else %}
+                  <infraHPathS annotation="orchestrator:ansible" descr="{{ item['description'] }}" name="{{ item['node1'] | int }}_{{ item['interface_policy_group']}}" status="{{ status }}">
+                      <infraRsHPathAtt tDn="topology/pod-{{ item['pod_id'] | int }}/paths-{{ item['node1'] | int }}/pathep-[{{ item['interface_policy_group']}}]"/>
+                  {% endif %}
+                  </infraHPathS>
+              </infraInfra>
+          </polUni>
+      delegate_to: localhost
+      loop: "{{ interface_description }}"
+      when: interface_description is defined and item.interface.lower() != "mgmt0" and item.type != "port"
+
+

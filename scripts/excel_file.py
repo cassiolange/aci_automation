@@ -69,14 +69,17 @@ def create_data_validation(formula, worksheet, cell_position, dv_type='list', ch
     return worksheet
 
 def create_defined_names(workbook, name, formula):
-    defined_name = DefinedName(name, attr_text=formula)
-    workbook.defined_names.update(defined_name)
+    local_defined_name = DefinedName(name, attr_text=formula)
+    # workbook.defined_names.update(defined_name)
+    workbook.defined_names.add(local_defined_name)
     return workbook
+
 def data_validation_from_worksheet(worksheet, source_worksheet_name, source_column_name, yaml_source_file, cell_position, max_cell=None):
     defined_name = source_worksheet_name+'_'+source_column_name
     defined_name_formula = f'{source_worksheet_name}[{source_column_name}]'
-    if defined_name in worksheet and defined_name not in worksheet.defined_names:
-        worksheet = create_defined_names(workbook=worksheet, name=defined_name, formula=defined_name_formula)
+    # if defined_name in worksheet and defined_name not in worksheet.defined_names:
+    # if defined_name not in worksheet.defined_names:
+    worksheet = create_defined_names(workbook=worksheet, name=defined_name, formula=defined_name_formula)
     worksheet = create_data_validation(formula=defined_name, worksheet=worksheet, cell_position=cell_position, check_quotes=False, max_cell=max_cell)
     return worksheet
 

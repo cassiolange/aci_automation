@@ -319,6 +319,22 @@
       loop: "{{ l3out_interfaces }}"
       when: l3out_interfaces is defined
 
+    - name: Add a new secondary IP the L3Out Interface
+      cisco.aci.aci_l3out_interface_secondary_ip:
+        <<: *aci_login
+        tenant: "{{ item.tenant }}"
+        l3out: "{{ item.l3out }}"
+        node_profile: "{{ item.l3out_node_profile }}"
+        interface_profile: "{{ item.name }}"
+        pod_id: "{{ item.pod_id }}"
+        node_id: "{{ '%s-%s' % (item.left_node_id | int , item.right_node_id | int) if item.path_type == 'vPC' else item.left_node_id | int }}"
+        path_ep: "{{ item.int_pol_group if item.path_type == 'vPC' else 'eth%s' % item.port_id }}"
+        address: "{{ item.secondary_ip }}"
+        state: "{{ item.status if item.status is defined else omit }}"
+      delegate_to: localhost
+      loop: "{{ l3out_interfaces_secondary_ips }}"
+      when: l3out_interfaces_secondary_ips is defined
+
     - name: Add a new ExtEpg
       cisco.aci.aci_l3out_extepg:
         <<: *aci_login

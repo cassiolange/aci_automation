@@ -594,57 +594,75 @@
       when: access_span_source_group is defined
 
     - name: Configure interfaces using per-port configuration
-      cisco.aci.aci_rest:
+      cisco.aci.aci_interface_config:
         <<: *aci_login
-        path: /api/mo/uni.xml
-        method: post
-        content: |
-          {% set interface = item['interface'].split('/') %}
-          {% if item['shutdown'] == '' %}
-          {% set shutdown = 'no' %}
-          {% else %}
-          {% set shutdown = item['shutdown'] %}
-          {% endif %}
-          {% import "macros/functions.j2" as functions %}
-          {% set status = functions.status(item['status']) %}
-          <polUni>
-              {% if item['port_type'] is defined and item['port_type'] == "fabric" %}
-              <fabricInst>
-              {% if item['node_type'] == "leaf" %}
-                  <fabricPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int  }}" assocGrp="uni/fabric/funcprof/leportgrp-{{ item['interface_policy_group']}}" status="{{ status }}" description="{{ item['description'] }}"/>
-              {% else %}
-                  <fabricPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int }}" assocGrp="uni/fabric/funcprof/spportgrp-{{ item['interface_policy_group']}}" role="spine" status="{{ status }}" description="{{ item['description'] }}"/>
-              {% endif %}
-              </fabricInst>
-              {% else %}
-              <infraInfra>
-                  {% if item['node_type'] == "leaf" %}
-                  {% if item['brekout_interface'] %}
-                  <infraPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int }}" brkoutMap="{{ item['brekout_interface'] }}"/>
-                  {% elif item['connected_fex'] %}
-                  <infraPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int  }}" connectedFex="{{ item['connected_fex'] | int }}"/>
-                  {% elif item['interface_type_type'] | lower == "access" %}
-                  {% if interface | length  == 2 %}
-                  <infraPortConfig node="{{ item['node_id'] | int  }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int }}" description="{{ item['description'] }}" shutdown="{{ shutdown }}" assocGrp="uni/infra/funcprof/accportgrp-{{ item['interface_policy_group']}}"/>
-                  {% else %}
-                  <infraPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int }}" subPort="{{ interface[2] }}" description="{{ item['description'] }}" shutdown="{{ shutdown }}" assocGrp="uni/infra/funcprof/accportgrp-{{ item['interface_policy_group']}}"/>
-                  {% endif %}
-                  {% elif item['interface_type_type'] | lower == "pc" or item['interface_type_type'] | lower == "vpc"%}
-                  {% if interface | length  == 2 %}
-                  <infraPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int  }}" port="{{ interface[1] | int }}" description="{{ item['description'] }}" shutdown="{{ shutdown }}" assocGrp="uni/infra/funcprof/accbundle-{{ item['interface_policy_group']}}"/>
-                  {% else %}
-                  <infraPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int }}" subPort="{{ interface[2] }}" description="{{ item['description'] }}" shutdown="{{ shutdown }}" assocGrp="uni/infra/funcprof/accbundle-{{ item['interface_policy_group']}}"/>
-                  {% endif %}
-                  {% endif %}
-                  {% else %}
-                  <infraPortConfig node="{{ item['node_id'] | int  }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int }}" description="{{ item['description'] }}" shutdown="{{ shutdown }}" assocGrp="uni/infra/funcprof/spaccportgrp-{{ item['interface_policy_group']}}"/>
-                  {% endif %}
-              </infraInfra>
-              {% endif %}
-          </polUni>
+        role: "{{ item.node_type }}"
+        port_type: "{{ item.port_type }}"
+        interface_type: "{{ 'pc_or_vpc' if item.interface_type_type == 'vPC' else 'pc_or_vpc' if item.interface_type_type == 'PC' else 'switch_port' if item.interface_type_type == 'Access' }}"
+        policy_group: "{{ item.interface_policy_group }}"
+        node: "{{ item.node_id }}"
+        interface: "{{ item.interface }}"
+        description: "{{ item.description if item.description is defined and item.description != '' else omit}}"
+        admin_state: "{{ item.shutdown if item.shutdown is defined and item.shutdown != '' else omit}}"
+        state: "{{ item.status if item.status is defined else omit }}"
       delegate_to: localhost
       loop: "{{ interface_configuration }}"
       when: interface_configuration is defined
+
+#    - name: Configure interfaces using per-port configuration
+#      cisco.aci.aci_rest:
+#        <<: *aci_login
+#        path: /api/mo/uni.xml
+#        method: post
+#        content: |
+#          {% set interface = item['interface'].split('/') %}
+#          {% if item['shutdown'] == '' %}
+#          {% set shutdown = 'no' %}
+#          {% else %}
+#          {% set shutdown = item['shutdown'] %}
+#          {% endif %}
+#          {% import "macros/functions.j2" as functions %}
+#          {% set status = functions.status(item['status']) %}
+#          <polUni>
+#              {% if item['port_type'] is defined and item['port_type'] == "fabric" %}
+#              <fabricInst>
+#              {% if item['node_type'] == "leaf" %}
+#                  <fabricPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int  }}" assocGrp="uni/fabric/funcprof/leportgrp-{{ item['interface_policy_group']}}" status="{{ status }}" description="{{ item['description'] }}"/>
+#              {% else %}
+#                  <fabricPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int }}" assocGrp="uni/fabric/funcprof/spportgrp-{{ item['interface_policy_group']}}" role="spine" status="{{ status }}" description="{{ item['description'] }}"/>
+#              {% endif %}
+#              </fabricInst>
+#              {% else %}
+#              <infraInfra>
+#                  {% if item['node_type'] == "leaf" %}
+#                  {% if item['brekout_interface'] %}
+#                  <infraPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int }}" brkoutMap="{{ item['brekout_interface'] }}"/>
+#                  {% elif item['connected_fex'] %}
+#                  <infraPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int  }}" connectedFex="{{ item['connected_fex'] | int }}"/>
+#                  {% elif item['interface_type_type'] | lower == "access" %}
+#                  {% if interface | length  == 2 %}
+#                  <infraPortConfig node="{{ item['node_id'] | int  }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int }}" description="{{ item['description'] }}" shutdown="{{ shutdown }}" assocGrp="uni/infra/funcprof/accportgrp-{{ item['interface_policy_group']}}"/>
+#                  {% else %}
+#                  <infraPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int }}" subPort="{{ interface[2] }}" description="{{ item['description'] }}" shutdown="{{ shutdown }}" assocGrp="uni/infra/funcprof/accportgrp-{{ item['interface_policy_group']}}"/>
+#                  {% endif %}
+#                  {% elif item['interface_type_type'] | lower == "pc" or item['interface_type_type'] | lower == "vpc"%}
+#                  {% if interface | length  == 2 %}
+#                  <infraPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int  }}" port="{{ interface[1] | int }}" description="{{ item['description'] }}" shutdown="{{ shutdown }}" assocGrp="uni/infra/funcprof/accbundle-{{ item['interface_policy_group']}}"/>
+#                  {% else %}
+#                  <infraPortConfig node="{{ item['node_id'] | int }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int }}" subPort="{{ interface[2] }}" description="{{ item['description'] }}" shutdown="{{ shutdown }}" assocGrp="uni/infra/funcprof/accbundle-{{ item['interface_policy_group']}}"/>
+#                  {% endif %}
+#                  {% endif %}
+#                  {% else %}
+#                  <infraPortConfig node="{{ item['node_id'] | int  }}" card="{{ interface[0] | int }}" port="{{ interface[1] | int }}" description="{{ item['description'] }}" shutdown="{{ shutdown }}" assocGrp="uni/infra/funcprof/spaccportgrp-{{ item['interface_policy_group']}}"/>
+#                  {% endif %}
+#              </infraInfra>
+#              {% endif %}
+#          </polUni>
+#      delegate_to: localhost
+#      loop: "{{ interface_configuration }}"
+#      when: interface_configuration is defined
+
+
 
     - name: Switch Configuration
       cisco.aci.aci_rest:

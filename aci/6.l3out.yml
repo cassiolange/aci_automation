@@ -187,6 +187,8 @@
         path: /api/mo/uni.xml
         method: post
         content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
           {% if item['enable_mpod'] == "yes" %}
           	{% set fabricExtCtrlPeering %}yes{% endset %}
           {% else %}
@@ -195,7 +197,7 @@
           <polUni>
           	<fvTenant name="{{item['tenant']}}" status="modified">
           	 <l3extOut name="{{item['l3out']}}" status="modified">
-          	  <l3extLNodeP descr="" name="{{item['name']}}" tag="yellow-green" targetDscp="unspecified" annotation="orchestrator:ansible" >
+          	  <l3extLNodeP descr="" name="{{item['name']}}" tag="yellow-green" targetDscp="unspecified" annotation="orchestrator:ansible" status="{{status}}">
                   <l3extRsNodeL3OutAtt rtrId="{{item['router_id']}}" rtrIdLoopBack="{{item['router_id_as_loopback']}}" tDn="topology/pod-{{item['pod_id'] | int }}/node-{{item['node_id'] | int }}" >
           			{% if item['router_id_as_loopback'] == "no" and item['loopback_ip'] != "" %}
           			<l3extLoopBackIfP addr="{{item['loopback_ip']}}" />

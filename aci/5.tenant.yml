@@ -280,9 +280,11 @@
         path: /api/mo/uni.xml
         method: post
         content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
           <polUni>
               <fvTenant name="{{item['tenant']}}" status="modified">
-                  <dhcpRelayP annotation="" descr="{{item['description']}}" dn="uni/tn-{{item['tenant']}}/relayp-{{item['name']}}" mode="visible" name="{{item['name']}}" nameAlias="" owner="tenant" ownerKey="" ownerTag=""/>
+                  <dhcpRelayP annotation="" descr="{{item['description']}}" dn="uni/tn-{{item['tenant']}}/relayp-{{item['name']}}" mode="visible" name="{{item['name']}}" nameAlias="" owner="tenant" ownerKey="" ownerTag="" status="{{ status }}"/>
               </fvTenant>
           </polUni>
       delegate_to: localhost

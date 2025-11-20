@@ -528,7 +528,7 @@
           {% endif %}
           <polUni>
               <fvTenant name="{{item['tenant']}}" status="modified">
-                  <rtctrlProfile annotation="orchestrator:ansible" autoContinue="{{auto_continue}}" descr="{{item['description'] | default('') }}" name="{{item['name']}} status="{{ status }}">
+                  <rtctrlProfile annotation="orchestrator:ansible" autoContinue="{{auto_continue}}" descr="{{item['description'] | default('') }}" name="{{item['name']}}" status="{{ status }}">
                       {% if item['context_name'] and item['context_name'] != '' %}
                       <rtctrlCtxP action="{{action}}" descr="{{item['description'] | default('') }}" name="{{item['context_name']}}" order="{{item['order'] | int | default('') }}">
                           {% if item['match_rule'] and item['match_rule'] != '' %}

@@ -489,7 +489,7 @@
               {% elif item['type'] == 'match_prefix_and_routing_policy' %}
                 {% set route_map_type %}combinable{% endset %}
               {% endif %}
-                <rtctrlProfile annotation="" autoContinue="{{item['auto_continue']}}" descr="" dn="uni/tn-{{item['tenant']}}/out-{{item['l3out']}}/prof-{{item['name']}}" name="{{item['name']}}" nameAlias="" ownerKey="" ownerTag="" type="{{route_map_type}} status="{{ status }}">
+                <rtctrlProfile annotation="" autoContinue="{{item['auto_continue']}}" descr="" dn="uni/tn-{{item['tenant']}}/out-{{item['l3out']}}/prof-{{item['name']}}" name="{{item['name']}}" nameAlias="" ownerKey="" ownerTag="" type="{{route_map_type}}">
                   <rtctrlCtxP action="{{item['action']}}" annotation="" descr="" name="{{item['context_name']}}" nameAlias="" order="{{item['order']}}">
                   {% if item['set_rule'] | length %}
                     <rtctrlScope annotation="" descr="" name="" nameAlias="">
@@ -528,7 +528,7 @@
           {% endif %}
           <polUni>
               <fvTenant name="{{item['tenant']}}" status="modified">
-                  <rtctrlProfile annotation="orchestrator:ansible" autoContinue="{{auto_continue}}" descr="{{item['description'] | default('') }}" name="{{item['name']}}">
+                  <rtctrlProfile annotation="orchestrator:ansible" autoContinue="{{auto_continue}}" descr="{{item['description'] | default('') }}" name="{{item['name']}} status="{{ status }}">
                       {% if item['context_name'] and item['context_name'] != '' %}
                       <rtctrlCtxP action="{{action}}" descr="{{item['description'] | default('') }}" name="{{item['context_name']}}" order="{{item['order'] | int | default('') }}">
                           {% if item['match_rule'] and item['match_rule'] != '' %}

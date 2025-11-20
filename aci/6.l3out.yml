@@ -489,7 +489,7 @@
               {% elif item['type'] == 'match_prefix_and_routing_policy' %}
                 {% set route_map_type %}combinable{% endset %}
               {% endif %}
-                <rtctrlProfile annotation="" autoContinue="{{item['auto_continue']}}" descr="" dn="uni/tn-{{item['tenant']}}/out-{{item['l3out']}}/prof-{{item['name']}}" name="{{item['name']}}" nameAlias="" ownerKey="" ownerTag="" type="{{route_map_type}}">
+                <rtctrlProfile annotation="" autoContinue="{{item['auto_continue']}}" descr="" dn="uni/tn-{{item['tenant']}}/out-{{item['l3out']}}/prof-{{item['name']}}" name="{{item['name']}}" nameAlias="" ownerKey="" ownerTag="" type="{{route_map_type}} status="{{ status }}">
                   <rtctrlCtxP action="{{item['action']}}" annotation="" descr="" name="{{item['context_name']}}" nameAlias="" order="{{item['order']}}">
                   {% if item['set_rule'] | length %}
                     <rtctrlScope annotation="" descr="" name="" nameAlias="">
@@ -514,6 +514,8 @@
         path: /api/mo/uni.xml
         method: post
         content: |
+          {% import "macros/functions.j2" as functions %}
+          {% set status = functions.status(item['status']) %}
           {% if item['auto_continue'] == "yes" %}
               {% set auto_continue = "yes" %}
           {% else %}
